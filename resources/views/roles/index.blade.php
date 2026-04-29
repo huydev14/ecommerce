@@ -12,20 +12,18 @@
 @endsection
 
 @section('content')
-    <div class="tw-grid tw-grid-cols-1 md:tw-grid-cols-2 lg:tw-grid-cols-3 tw-gap-3 tw-p-4">
-
+    <div class="tw-grid tw-grid-cols-1 md:tw-grid-cols-2 lg:tw-grid-cols-3 tw-gap-3">
         @foreach ($roles as $role)
             <x-role-card title="{{ $role->name }}" description="{{ $role->description }}"
                 userCount="{{ $role->users_count ?? 0 }}" roleId="{{ $role->id }}"
-                isSuperAdmin="{{ $role->name === 'Super Admin' }}" editUrl="{{ route('roles.edit', $role->id) }}" />
+                editUrl="{{ route('roles.edit', $role->id) }}" />
         @endforeach
-
     </div>
 @endsection
 
 @push('scripts')
     <script>
-        $(function() {
+        $(function () {
             @if (session('success'))
                 fluentToast({
                     type: 'success',
@@ -36,7 +34,7 @@
                 });
             @endif
 
-            $(document).on('click', '.btn-role-dropdown', function(e) {
+            $(document).on('click', '.btn-role-dropdown', function (e) {
                 e.stopPropagation();
 
                 let $menu = $(this).siblings('.role-dropdown-menu');
@@ -45,13 +43,13 @@
                 $menu.toggleClass('tw-hidden');
             });
 
-            $(document).on('click', function(e) {
+            $(document).on('click', function (e) {
                 if (!$(e.target).closest('.role-dropdown-container').length) {
                     $('.role-dropdown-menu').addClass('tw-hidden');
                 }
             });
 
-            $(document).on('click', '#delete-role-btn', function() {
+            $(document).on('click', '#delete-role-btn', function () {
                 if (confirm(`Bạn có chắc muốn xóa vai trò này không?`)) {
                     let $btn = $(this);
                     let deleteUrl = $btn.data('delete-url');
@@ -61,14 +59,14 @@
                     $.ajax({
                         type: 'DELETE',
                         url: deleteUrl,
-                        success: function(res) {
+                        success: function (res) {
                             window.location.reload();
                         },
-                        error: function(xhr) {
+                        error: function (xhr) {
                             console.error('Load error:', xhr.status)
                             console.error('Load error:', xhr.responseText)
                         },
-                        complete: function() {
+                        complete: function () {
                             $btn.prop('disabled', false);
                         }
                     })

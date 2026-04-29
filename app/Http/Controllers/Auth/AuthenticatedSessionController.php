@@ -42,8 +42,8 @@ class AuthenticatedSessionController extends Controller
 
         return redirect()->intended(route('dashboard', absolute: false))
             ->withCookies([
-                cookie('access_token', $accessToken, config('jwt.ttl')),
-                cookie('refresh_token', $refreshToken, config('jwt.refresh_ttl'))
+                cookie('admin_access_token', $accessToken, config('jwt.ttl')),
+                cookie('admin_refresh_token', $refreshToken, config('jwt.refresh_ttl'))
             ]);
     }
 

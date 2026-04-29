@@ -24,8 +24,8 @@ class JwtAuthenticate
      */
     public function handle(Request $request, Closure $next)
     {
-        $accessToken  = $request->cookie('access_token');
-        $refreshToken = $request->cookie('refresh_token');
+        $accessToken  = $request->cookie('admin_access_token');
+        $refreshToken = $request->cookie('admin_refresh_token');
 
         // Default response
         $response = redirect()->route('login');

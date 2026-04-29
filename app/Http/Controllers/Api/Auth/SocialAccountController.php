@@ -25,8 +25,10 @@ class SocialAccountController extends Controller
 
     public function callback(Request $request, $provider)
     {
+        if (!OAuthConfigurationService::load($provider)) {
+            return view('auth.callback', ['error' => 'Cấu hình không hợp lệ.']);
+        }
         try {
-            OAuthConfigurationService::load($provider);
             $socialAuthService = new \App\Services\SocialAuthService();
             [$user, $type] = $socialAuthService->handleProviderCallback($provider);
 
