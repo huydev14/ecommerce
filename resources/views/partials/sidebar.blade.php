@@ -88,8 +88,8 @@
             </ul>
             <ul class="nav nav-treeview">
                 <li class="nav-item">
-                    <a href="{{ route('oauth-configs.index') }}" class="nav-link {{ request()->routeIs('oauth-configs.*') ? 'active' : '' }}">
-                        <p>Cấu hình OAuth</p>
+                    <a href="{{ route('settings.index') }}" class="nav-link {{ request()->routeIs('oauth-configs.*') ? 'active' : '' }}">
+                        <p>Cài đặt chung</p>
                     </a>
                 </li>
             </ul>

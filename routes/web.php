@@ -10,7 +10,7 @@ use App\Http\Controllers\BrandController;
 use App\Http\Controllers\CategoryController;
 use App\Http\Controllers\ProductController;
 use App\Http\Controllers\ProductVariantController;
-use App\Http\Controllers\OAuthConfigController;
+use App\Http\Controllers\SettingController;
 
 require __DIR__ . '/auth.php';
 
@@ -90,14 +90,15 @@ Route::prefix('admin')->middleware('jwt.cookie')->group(function () {
     });
     Route::resource('product-variants', ProductVariantController::class);
 
-    // --- OAuth Settings -------------------------------
-    Route::prefix('oauth-configs')->name('oauth-configs.')->group(function () {
-        Route::get('/', [OAuthConfigController::class, 'index'])->name('index');
-        Route::patch('/{provider}', [OAuthConfigController::class, 'update'])->name('update');
+    // --- Admin Settings -------------------------------
+    Route::prefix('settings')->name('settings.')->group(function () {
+        Route::get('/', [SettingController::class, 'index'])->name('index');
+        Route::patch('oauth/{provider}', [SettingController::class, 'updateOAuth'])->name('updateOAuth');
+        Route::patch('mail', [SettingController::class, 'updateMail'])->name('updateMail');
     });
 });
 
-// VueJS client
+// VueJS mount
 Route::get('/{any?}', function() {
     return view('client.index');
 })->where('any', '.*');

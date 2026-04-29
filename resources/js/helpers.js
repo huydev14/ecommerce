@@ -1,4 +1,4 @@
-window.loadingHtml = `
+globalThis.loadingHtml = `
     <div class="tw-flex tw-flex-col tw-items-center tw-justify-center tw-h-full tw-min-h-[300px] tw-text-gray-500">
         <i class="fas fa-spinner fa-spin tw-text-4xl tw-text-[#0063B1] tw-mb-4"></i>
         <p class="tw-text-sm">Đang tải dữ liệu...</p>
@@ -15,7 +15,7 @@ $(function () {
     });
 });
 
-window.renderOptions = function (selector, items) {
+globalThis.renderOptions = function (selector, items) {
     let $selector = $(selector);
     if (!items) items = [];
 
@@ -69,7 +69,7 @@ $(function () {
     });
 });
 
-window.previewBrandLogo = function (input) {
+globalThis.previewBrandLogo = function (input) {
     if (input.files && input.files[0]) {
         let reader = new FileReader();
         reader.onload = function (e) {
@@ -79,3 +79,22 @@ window.previewBrandLogo = function (input) {
         reader.readAsDataURL(input.files[0]);
     }
 };
+
+$(function () {
+    let params = new URLSearchParams(globalThis.location.search);
+    let activeTab = params.get('tab');
+
+    if (activeTab) {
+        let tabTriggerEl = document.querySelector('#v-pills-' + activeTab + '-tab');
+        if (tabTriggerEl) {
+            bootstrap.Tab.getOrCreateInstance(tabTriggerEl).show();
+        }
+    }
+
+    $('.fluent-tab-item').on('shown.bs.tab', function (e) {
+        let tabId = $(e.target).attr('data-tab');
+        let newUrl = globalThis.location.pathname + '?tab=' + tabId;
+
+        globalThis.history.replaceState(null, null, newUrl);
+    });
+});
