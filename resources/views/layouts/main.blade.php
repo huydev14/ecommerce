@@ -35,7 +35,7 @@
                 @yield('page-header')
             </div>
 
-            <div class="content-body tw-h-full tw-px-5 tw-py-3">
+            <div class="content-body tw-px-3 tw-py-4">
                 @yield('content')
             </div>
         </main>

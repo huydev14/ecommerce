@@ -17,10 +17,22 @@
                 </div>
 
                 <div class="tw-grid tw-grid-cols-1 md:tw-grid-cols-4 tw-gap-x-8 tw-gap-y-4">
-                    <x-filter-select id="f_productName" :label="__('product.filter.product')" :placeholder="__('product.filter.placeholder')" />
-                    <x-filter-select id="f_category" :label="__('product.filter.category')" :placeholder="__('product.filter.placeholder')" />
-                    <x-filter-select id="f_brand" :label="__('product.filter.brand')" :placeholder="__('product.filter.placeholder')" />
-                    <x-filter-select id="f_status" :label="__('product.filter.status')" :placeholder="__('product.filter.placeholder')" />
+                    <div>
+                        <x-label id="f_productName" :label="__('product.filter.product')" />
+                        <x-filter-select id="f_productName" :placeholder="__('product.filter.placeholder')" />
+                    </div>
+                    <div>
+                        <x-label id="f_category" :label="__('product.filter.category')" />
+                        <x-filter-select id="f_category" :placeholder="__('product.filter.placeholder')" />
+                    </div>
+                    <div>
+                        <x-label id="f_brand" :label="__('product.filter.brand')" />
+                        <x-filter-select id="f_brand" :placeholder="__('product.filter.placeholder')" />
+                    </div>
+                    <div>
+                        <x-label id="f_status" :label="__('product.filter.status')" />
+                        <x-filter-select id="f_status" :placeholder="__('product.filter.placeholder')" />
+                    </div>
                 </div>
             </div>
         </div>

@@ -2,7 +2,7 @@
 <nav class="mt-2">
     <ul class="nav nav-pills nav-sidebar flex-column" data-widget="treeview" role="menu" data-accordion="false">
         <li class="nav-item {{ request()->routeIs('dashboard') ? 'menu-open' : '' }}">
-            <a href="/" class="nav-link {{ request()->routeIs('dashboard') ? 'active' : '' }}">
+            <a href="{{ route('dashboard') }}" class="nav-link {{ request()->routeIs('dashboard') ? 'active' : '' }}">
                 <x-icon-home class="nav-icon" />
                 <p>Home</p>
             </a>
@@ -71,7 +71,7 @@
         </li>
 
          {{-- System configuration --}}
-        <li class="nav-item menu-open {{ request()->routeIs('audit-logs.*') || request()->routeIs('oauth-configs.*') ? 'menu-is-opening ' : '' }}">
+        <li class="nav-item menu-open {{ request()->routeIs('audit-logs.*') || request()->routeIs('settings.*') ? 'menu-is-opening ' : '' }}">
             <a href="#" class="nav-link">
                 <x-icon-setting class="nav-icon" />
                 <p>Hệ thống
@@ -88,7 +88,7 @@
             </ul>
             <ul class="nav nav-treeview">
                 <li class="nav-item">
-                    <a href="{{ route('settings.index') }}" class="nav-link {{ request()->routeIs('oauth-configs.*') ? 'active' : '' }}">
+                    <a href="{{ route('settings.index') . '?tab=mail'}}" class="nav-link {{ request()->routeIs('settings.*') ? 'active' : '' }}">
                         <p>Cài đặt chung</p>
                     </a>
                 </li>

@@ -16,8 +16,14 @@
                 </div>
 
                 <div class="tw-grid tw-grid-cols-1 md:tw-grid-cols-3 tw-gap-x-8 tw-gap-y-4">
-                    <x-filter-select id="f_logName" label="Phân hệ" />
-                    <x-filter-select id="f_causer" label="Actor / Causer" />
+                    <div>
+                        <x-label id="f_logName" label="Phân hệ" />
+                        <x-filter-select id="f_logName" />
+                    </div>
+                    <div>
+                        <x-label id="f_causer" label="Actor / Causer" />
+                        <x-filter-select id="f_causer" />
+                    </div>
                 </div>
             </div>
         </div>

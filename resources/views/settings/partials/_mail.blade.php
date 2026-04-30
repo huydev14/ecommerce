@@ -1,4 +1,4 @@
-<div class="tw-bg-white tw-rounded-lg tw-shadow-sm tw-border tw-border-[#edebe9]">
+<div class="tw-bg-white tw-rounded-md tw-shadow-sm tw-border tw-border-[#edebe9]">
     <div class="tw-p-6 tw-border-b">
         <h5 class="tw-text-lg tw-font-semibold tw-mb-0">SMTP Configuration</h5>
     </div>
@@ -14,11 +14,11 @@
                 <x-input label="Password" name="password" type="password" placeholder="••••••••" />
 
                 <div class="tw-col-span-full">
-                    <label for="encryption" class="tw-block tw-text-sm tw-font-medium tw-mb-1">Encryption</label>
-                    <select name="encryption" class="select2-theme tw-w-full">
+                    <x-label id="encryption" label="Encryption" />
+                    <x-filter-select id="encryption">
                         <option value="tls" {{ ($mail['encryption'] ?? '') == 'tls' ? 'selected' : '' }}>TLS</option>
                         <option value="ssl" {{ ($mail['encryption'] ?? '') == 'ssl' ? 'selected' : '' }}>SSL</option>
-                    </select>
+                    </x-filter-select>
                 </div>
             </div>
 

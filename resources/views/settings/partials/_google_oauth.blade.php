@@ -1,4 +1,4 @@
-<div class="tw-bg-white tw-rounded-lg tw-shadow-sm tw-border tw-border-[#edebe9]">
+<div class="tw-bg-white tw-rounded-md tw-shadow-sm tw-border tw-border-[#edebe9]">
     <div class="tw-p-6 tw-border-b tw-flex tw-justify-between tw-items-center">
         <h5 class="tw-text-lg tw-font-semibold tw-text-[#323130] tw-mb-0">Google OAuth Configuration</h5>
         <span class="tw-px-2 tw-py-1 tw-text-[11px] tw-font-medium tw-bg-[#f3f2f1] tw-text-[#605e5d] tw-rounded tw-border">

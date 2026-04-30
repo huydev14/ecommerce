@@ -17,8 +17,14 @@
                 </div>
 
                 <div class="tw-grid tw-grid-cols-1 md:tw-grid-cols-3 tw-gap-x-8 tw-gap-y-4">
-                    <x-filter-select id="f_product" :label="__('product_variant.filter.product')" :placeholder="__('product_variant.filter.placeholder')" />
-                    <x-filter-select id="f_isActive" :label="__('product_variant.filter.status')" :placeholder="__('product_variant.filter.placeholder')" />
+                    <div>
+                        <x-label id="f_product" :label="__('product_variant.filter.product')" />
+                        <x-filter-select id="f_product" :placeholder="__('product_variant.filter.placeholder')" />
+                    </div>
+                    <div>
+                        <x-label id="f_isActive" :label="__('product_variant.filter.status')" />
+                        <x-filter-select id="f_isActive" :placeholder="__('product_variant.filter.placeholder')" />
+                    </div>
                 </div>
             </div>
         </div>

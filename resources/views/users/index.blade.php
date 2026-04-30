@@ -18,10 +18,22 @@
                 </div>
 
                 <div class="tw-grid tw-grid-cols-1 md:tw-grid-cols-3 tw-gap-x-8 tw-gap-y-4">
-                    <x-filter-select id="f_department" label="Bộ phận" />
-                    <x-filter-select id="f_employment_type" label="Hình thức" />
-                    <x-filter-select id="f_status" label="Trạng thái" />
-                    <x-filter-select id="f_role" label="Loại tài khoản" />
+                    <div>
+                        <x-label id="f_department" label="Bộ phận" />
+                        <x-filter-select id="f_department" />
+                    </div>
+                    <div>
+                        <x-label id="f_employment_type" label="Hình thức" />
+                        <x-filter-select id="f_employment_type" />
+                    </div>
+                    <div>
+                        <x-label id="f_status" label="Trạng thái" />
+                        <x-filter-select id="f_status" />
+                    </div>
+                    <div>
+                        <x-label id="f_role" label="Loại tài khoản" />
+                        <x-filter-select id="f_role" />
+                    </div>
                 </div>
             </div>
         </div>

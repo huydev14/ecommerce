@@ -24,7 +24,7 @@ class SocialAccountController extends Controller
             ->redirect();
     }
 
-    public function callback(Request $request, $provider)
+    public function callback($provider)
     {
         if (!$this->loadOauthConfig($provider)) {
             return view('auth.callback', ['error' => 'Cấu hình không hợp lệ.']);

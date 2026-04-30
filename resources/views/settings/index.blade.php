@@ -13,14 +13,14 @@
         </div>
     @endif
 
-    <div class="tw-grid tw-grid-cols-1 lg:tw-grid-cols-12 tw-gap-6">
+    <div class="tw-grid tw-grid-cols-1 lg:tw-grid-cols-12 tw-gap-3">
         {{-- Navigation Left --}}
         <div class="lg:tw-col-span-3">
-            <div class="nav tw-flex tw-flex-col fluent-tab-list tw-bg-white tw-rounded-lg tw-shadow-sm tw-p-2"
+            <div class="nav tw-flex tw-flex-col fluent-tab-list tw-bg-white tw-rounded-md tw-shadow-sm tw-p-2"
                 id="v-pills-tab" role="tablist">
 
                 {{-- Group: Mail --}}
-                <div class="tw-px-3 tw-py-2 tw-text-[10px] tw-font-bold tw-text-gray-400 tw-uppercase">Giao tiếp</div>
+                <div class="tw-px-3 tw-py-2 tw-text-[10px] tw-font-bold tw-text-gray-400 tw-uppercase">Communication</div>
                 <a class="nav-link fluent-tab-item tw-mb-1 tw-flex tw-items-center tw-gap-3" id="v-pills-mail-tab"
                     data-bs-toggle="pill" href="#v-pills-mail" data-tab="mail" role="tab">
                     <i class="fas fa-envelope tw-text-lg tw-w-5"></i>
@@ -30,7 +30,7 @@
                 <hr class="tw-my-2 tw-border-gray-100">
 
                 {{-- Group: OAuth --}}
-                <div class="tw-px-3 tw-py-2 tw-text-[10px] tw-font-bold tw-text-gray-400 tw-uppercase">Định danh</div>
+                <div class="tw-px-3 tw-py-2 tw-text-[10px] tw-font-bold tw-text-gray-400 tw-uppercase">Authentication</div>
                 <a class="nav-link fluent-tab-item tw-mb-1 tw-flex tw-items-center tw-gap-3" id="v-pills-google-tab"
                     data-bs-toggle="pill" href="#v-pills-google" data-tab="google" role="tab">
                     <i class="fab fa-google tw-text-lg tw-w-5"></i>

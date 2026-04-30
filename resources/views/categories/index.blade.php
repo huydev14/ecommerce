@@ -17,8 +17,14 @@
                 </div>
 
                 <div class="tw-grid tw-grid-cols-1 md:tw-grid-cols-3 tw-gap-x-8 tw-gap-y-4">
-                    <x-filter-select id="f_categoryName" :label="__('category.filter.category')" :placeholder="__('category.filter.placeholder')" />
-                    <x-filter-select id="f_isActive" :label="__('category.filter.status')" :placeholder="__('category.filter.placeholder')" />
+                    <div>
+                        <x-label id="f_categoryName" :label="__('category.filter.category')" />
+                        <x-filter-select id="f_categoryName" :placeholder="__('category.filter.placeholder')" />
+                    </div>
+                    <div>
+                        <x-label id="f_isActive" :label="__('category.filter.status')" />
+                        <x-filter-select id="f_isActive" :placeholder="__('category.filter.placeholder')" />
+                    </div>
                 </div>
             </div>
         </div>
