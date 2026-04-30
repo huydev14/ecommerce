@@ -17,7 +17,7 @@ class Customer extends Authenticatable implements JWTSubject
 
     protected $hidden = [
         'password',
-        'provider_id',
+        'provider_user_id',
     ];
 
     protected $casts = [
@@ -26,9 +26,9 @@ class Customer extends Authenticatable implements JWTSubject
         'password' => 'hashed',
     ];
 
-    public function socialAccounts()
+    public function oauthAccounts()
     {
-        return $this->hasMany(SocialAccount::class);
+        return $this->hasMany(OAuthAccount::class);
     }
 
     public function getJWTIdentifier()

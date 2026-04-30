@@ -3,12 +3,21 @@
 namespace App\Http\Controllers\Api\Auth;
 
 use App\Http\Controllers\Controller;
-use App\Models\Setting;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Cache;
-use Laravel\Socialite\Facades\Socialite;
+use Illuminate\Support\Facades\Config;
+use Illuminate\Support\Facades\DB;
 
-class SocialAccountController extends Controller
+use Laravel\Socialite\Facades\Socialite;
+use App\Models\User;
+use App\Models\Customer;
+
+use App\Models\OAuthAccount;
+use App\Models\Setting;
+
+
+class OAuthController extends Controller
 {
 
     public function redirect(Request $request, $provider)
@@ -30,8 +39,7 @@ class SocialAccountController extends Controller
             return view('auth.callback', ['error' => 'Cấu hình không hợp lệ.']);
         }
         try {
-            $socialAuthService = new \App\Services\SocialAuthService();
-            [$user, $type] = $socialAuthService->handleProviderCallback($provider);
+            [$user, $type] = $this->handleProviderCallback($provider);
 
             //Login user and generate token
             $guard = ($type === 'customer') ? 'api_customer' : 'api';
@@ -50,6 +58,58 @@ class SocialAccountController extends Controller
                 'error' => 'Đăng nhập thất bại: ' . $e->getMessage()
             ]);
         }
+    }
+
+    public function handleProviderCallback($provider)
+    {
+        $socialUser = Socialite::driver($provider)->stateless()->user();
+
+        parse_str(request()->input('state'), $stateParams);
+        $type = $stateParams['type'] ?? 'user';
+
+        return DB::transaction(function () use ($provider, $socialUser, $type) {
+            $socialAccount = OAuthAccount::where('provider', $provider)
+                ->where('provider_user_id', $socialUser->getId())
+                ->first();
+
+            if ($socialAccount) {
+                $user = ($type === 'customer') ? $socialAccount->customer : $socialAccount->user;
+                return [$user, $type];
+            }
+
+            if ($type === 'customer') {
+                $user = Customer::firstOrCreate(
+                    ['email' => $socialUser->getEmail()],
+                    [
+                        'fullname' => $socialUser->getName(),
+                        'avatar' => $socialUser->getAvatar(),
+                        'email_verified_at' => now(),
+                    ]
+                );
+            } else {
+                $user = User::firstOrCreate(
+                    ['email' => $socialUser->getEmail()],
+                    [
+                        'name' => $socialUser->getName(),
+                        'email_verified_at' => now(),
+                    ]
+                );
+            }
+            //Create social account link
+            OAuthAccount::updateOrCreate(
+                [
+                    'provider' => $provider,
+                    'provider_user_id' => $socialUser->getId(),
+                ],
+                [
+                    'user_id' => ($type === 'customer') ? null : $user->id,
+                    'customer_id' => ($type === 'customer') ? $user->id : null,
+                ]
+            );
+
+            return [$user, $type];
+        });
+
     }
 
     public function loadOauthConfig($provider)
@@ -71,7 +131,7 @@ class SocialAccountController extends Controller
                 return false;
             }
 
-            Setting::set("services.{$provider}", [
+            Config::set("services.{$provider}", [
                 'client_id' => $settings['client_id'] ?? null,
                 'client_secret' => decrypt($settings['client_secret']) ?? null,
                 'redirect' => $settings['redirect_uri'] ?? null,
@@ -80,7 +140,7 @@ class SocialAccountController extends Controller
             return true;
 
         } catch (\Exception $e) {
-            \Log::error("Failed to load OAuth config for {$provider}: " . $e->getMessage());
+            Log::error("Failed to load OAuth config for {$provider}: " . $e->getMessage());
             return false;
         }
     }

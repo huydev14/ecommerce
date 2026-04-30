@@ -59,9 +59,9 @@ class User extends Authenticatable implements JWTSubject
         ];
     }
 
-    public function socialAccounts()
+    public function oauthAccounts()
     {
-        return $this->hasMany(SocialAccount::class);
+        return $this->hasMany(OAuthAccount::class);
     }
 
     public function department()

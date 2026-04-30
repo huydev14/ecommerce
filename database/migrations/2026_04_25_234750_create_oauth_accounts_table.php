@@ -11,17 +11,17 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('social_accounts', function (Blueprint $table) {
+        Schema::create('oauth_accounts', function (Blueprint $table) {
             $table->id();
-            $table->string('provider_name');
-            $table->string('provider_id');
+            $table->string('provider');
+            $table->string('provider_user_id');
 
             $table->foreignId('user_id')->nullable()->constrained()->onDelete('cascade');
             $table->foreignId('customer_id')->nullable()->constrained()->onDelete('cascade');
             
             $table->timestamps();
 
-            $table->unique(['provider_name', 'provider_id']);
+            $table->unique(['provider', 'provider_user_id']);
         });
     }
 
@@ -30,6 +30,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('social_accounts');
+        Schema::dropIfExists('oauth_accounts');
     }
 };

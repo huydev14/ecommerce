@@ -4,13 +4,15 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 
-class SocialAccount extends Model
+class OAuthAccount extends Model
 {
+    protected $table = 'oauth_accounts';
+
     protected $fillable = [
         'user_id',
         'customer_id',
-        'provider_name',
-        'provider_id',
+        'provider',
+        'provider_user_id',
     ];
 
     public function user()
