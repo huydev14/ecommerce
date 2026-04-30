@@ -81,7 +81,7 @@ class JwtAuthenticate
             $response = $next($request);
 
             return $response->withCookie(
-                cookie('access_token', $newAccessToken, config('jwt.ttl'))
+                cookie('admin_access_token', $newAccessToken, config('jwt.ttl'))
             );
         } catch (\Exception $e) {
             Log::error('Silent refresh token error: ' . $e->getMessage());

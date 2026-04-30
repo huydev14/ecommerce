@@ -54,7 +54,7 @@ class AuthenticatedSessionController extends Controller
     public function destroy(Request $request): RedirectResponse
     {
         try {
-            $accessToken = $request->cookie('access_token');
+            $accessToken = $request->cookie('admin_access_token');
             $user = Auth::user();
 
             if ($accessToken) {
@@ -74,8 +74,8 @@ class AuthenticatedSessionController extends Controller
 
         return redirect()->route('login')
             ->withCookies([
-                cookie()->forget('access_token'),
-                cookie()->forget('refresh_token')
+                cookie()->forget('admin_access_token'),
+                cookie()->forget('admin_refresh_token')
             ])
             ->with(['status' => 'Đăng xuất thành công']);
     }
