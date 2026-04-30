@@ -51,6 +51,7 @@ import { ref, onMounted } from 'vue';
 import { useRouter, useRoute } from 'vue-router';
 import api from '../services/api';
 import AuthLayout from '@/layouts/AuthLayout.vue';
+import { APP_CONFIG } from '@/config';
 
 const router = useRouter();
 const route = useRoute();

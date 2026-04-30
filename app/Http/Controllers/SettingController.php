@@ -35,6 +35,13 @@ class SettingController extends Controller
                 'redirect_uri' => 'required|url',
             ]);
 
+            if ($request->filled('client_secret')) {
+                $value['client_secret'] = encrypt($request->client_secret);
+            } else {
+                $oldConfig = Setting::where('key', $provider)->where('group', 'oauth')->first();
+                $value['client_secret'] = $oldConfig->value['client_secret'] ?? null;
+            }
+
             $value['is_active'] = $request->has('is_active');
 
             Setting::updateOrCreate(
@@ -43,7 +50,6 @@ class SettingController extends Controller
             );
 
             Cache::forget("config.oauth.{$provider}");
-            Cache::forget("global_oauth_configs");
 
             return redirect()
                 ->to(route('settings.index') . '?tab=' . $provider)
@@ -60,10 +66,18 @@ class SettingController extends Controller
             'host' => $request->host,
             'port' => $request->port,
             'username' => $request->username,
-            'password' => encrypt($request->password),
             'encryption' => $request->encryption,
             'from_address' => $request->from_address,
+            'from_name' => $request->from_name,
+            'is_active' => $request->has('is_active'),
         ];
+
+        if ($request->filled('password')) {
+            $value['password'] = encrypt($request->password);
+        } else {
+            $oldConfig = Setting::where('key', 'smtp')->where('group', 'mail')->first();
+            $value['password'] = $oldConfig->value['password'] ?? null;
+        }
 
         try {
             Setting::updateOrCreate(
@@ -71,8 +85,7 @@ class SettingController extends Controller
                 ['value' => $value]
             );
 
-            Cache::forget("config.oauth.mail");
-            Cache::forget("global_mail_config");
+            Cache::forget("config.mail.smtp");
             return redirect()
                 ->to(route('settings.index') . '?tab=mail')
                 ->with('success', "Cấu hình Mail đã được cập nhật.");

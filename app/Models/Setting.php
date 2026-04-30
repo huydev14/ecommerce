@@ -10,6 +10,5 @@ class Setting extends Model
     protected $casts  = [
         'value' => 'array',
         'is_active' => 'boolean',
-        'client_secret' => 'encrypted'
     ];
 }
