@@ -17,7 +17,7 @@
                     </button>
                 </div>
 
-                <div class="tw-grid tw-grid-cols-1 md:tw-grid-cols-3 tw-gap-x-8 tw-gap-y-4">
+                <div class="tw-grid tw-grid-cols-1 md:tw-grid-cols-4 tw-gap-x-8 tw-gap-y-4">
                     <div>
                         <x-label id="f_department" label="Bộ phận" />
                         <x-filter-select id="f_department" />
