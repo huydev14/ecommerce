@@ -1,7 +1,7 @@
 @extends('layouts.main')
 
 @section('content')
-    <div class="fluent-card ">
+    <div class="fluent-card !tw-pb-0">
         <div class="card-header tw-bg-white tw-border-b-0">
 
             {{-- Toolbar --}}
@@ -10,35 +10,29 @@
             </x-toolbar>
 
             <div id="filter-panel" class="tw-py-3">
-                <div class="tw-flex tw-justify-between tw-items-center tw-mb-2">
-                    <h4 class="tw-text-base tw-font-bold tw-text-gray-800">Filter</h4>
-                    <button id="close-filter-btn" class="tw-text-gray-400 hover:tw-text-gray-700 tw-transition-colors">
-                        <i class="fas fa-times tw-text-lg"></i>
-                    </button>
-                </div>
 
                 <div class="tw-grid tw-grid-cols-1 md:tw-grid-cols-4 tw-gap-x-8 tw-gap-y-4">
-                    <div>
-                        <x-label id="f_department" label="Bộ phận" />
+                    <div class="tw-flex tw-flex-col tw-gap-1">
+                        <x-label-small for="f_department">Bộ phận</x-label-small>
                         <x-filter-select id="f_department" />
                     </div>
-                    <div>
-                        <x-label id="f_employment_type" label="Hình thức" />
+                    <div class="tw-flex tw-flex-col tw-gap-1">
+                        <x-label-small for="f_employment_type">Hình thức</x-label-small>
                         <x-filter-select id="f_employment_type" />
                     </div>
-                    <div>
-                        <x-label id="f_status" label="Trạng thái" />
+                    <div class="tw-flex tw-flex-col tw-gap-1">
+                        <x-label-small for="f_status">Trạng thái</x-label-small>
                         <x-filter-select id="f_status" />
                     </div>
-                    <div>
-                        <x-label id="f_role" label="Loại tài khoản" />
+                    <div class="tw-flex tw-flex-col tw-gap-1">
+                        <x-label-small for="f_role">Loại tài khoản</x-label-small>
                         <x-filter-select id="f_role" />
                     </div>
                 </div>
             </div>
         </div>
 
-        <div class="card-body tw-pt-0">
+        <div class="table-responsive table-scroll-container card-body tw-pt-0">
             <table id="users-table" data-url="{{ route('users.data') }}" class="display table table-hover text-nowrap"
                 style="width: 100%;">
                 <thead>

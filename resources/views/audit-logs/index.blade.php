@@ -8,20 +8,14 @@
 
             <div id="filter-panel" class="tw-pt-3 tw-pb-5">
 
-                <div class="tw-flex tw-justify-between tw-items-center tw-mb-2">
-                    <h4 class="tw-text-base tw-font-bold tw-text-gray-800">Filter</h4>
-                    <button id="close-filter-btn" class="tw-text-gray-400 hover:tw-text-gray-700 tw-transition-colors">
-                        <i class="fas fa-times tw-text-lg"></i>
-                    </button>
-                </div>
 
                 <div class="tw-grid tw-grid-cols-1 md:tw-grid-cols-3 tw-gap-x-8 tw-gap-y-4">
-                    <div>
-                        <x-label id="f_logName" label="Phân hệ" />
+                    <div class="tw-flex tw-flex-col tw-gap-1">
+                        <x-label-small for="f_logName">Phân hệ</x-label-small>
                         <x-filter-select id="f_logName" />
                     </div>
-                    <div>
-                        <x-label id="f_causer" label="Actor / Causer" />
+                    <div class="tw-flex tw-flex-col tw-gap-1">
+                        <x-label-small for="f_causer">Actor / Causer</x-label-small>
                         <x-filter-select id="f_causer" />
                     </div>
                 </div>
@@ -117,8 +111,8 @@
                     layout: {
                         topStart: null,
                         topEnd: null,
-                        bottomStart: 'pageLength',
                         bottomEnd: 'paging',
+                        lengthChange: false,
                     },
                 });
                 $('#custom-search-input').on('keyup', function() {
@@ -126,7 +120,7 @@
                 });
 
                 // ---- FILTER PANEL TOGGLE ---------------------------
-                $('#toggle-filter-btn, #close-filter-btn').on('click', function() {
+                $('#toggle-filter-btn').on('click', function() {
                     $('#filter-panel').slideToggle('fast');
 
                     // Reset filter

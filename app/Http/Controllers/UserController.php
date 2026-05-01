@@ -182,7 +182,7 @@ class UserController extends Controller
                 ->addIndexColumn()
 
                 ->addColumn('role', function ($user) {
-                    return $user->roles->first()->name ?? '<div class="tw-text-gray-400 tw-text-xs">---</div>';
+                    return $user->roles->first()->name ?? 'Member';
                 })
 
                 ->editColumn('employment_type', function ($user) {

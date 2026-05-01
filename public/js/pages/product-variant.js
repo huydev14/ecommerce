@@ -189,7 +189,7 @@ $(function () {
         productVariantTable.search(this.value).draw();
     });
 
-    $('#toggle-filter-btn, #close-filter-btn').on('click', function () {
+    $('#toggle-filter-btn').on('click', function () {
         $('#filter-panel').slideToggle('fast');
 
         $('#f_product, #f_isActive').val('').trigger('change.select2');

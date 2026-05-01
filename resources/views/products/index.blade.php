@@ -9,28 +9,22 @@
             </x-toolbar>
 
             <div id="filter-panel" class="tw-py-3">
-                <div class="tw-flex tw-justify-between tw-items-center tw-mb-2">
-                    <h4 class="tw-text-base tw-font-bold tw-text-gray-800">{{ __('product.filter.title') }}</h4>
-                    <button id="close-filter-btn" class="tw-text-gray-400 hover:tw-text-gray-700 tw-transition-colors">
-                        <i class="fas fa-times tw-text-lg"></i>
-                    </button>
-                </div>
 
                 <div class="tw-grid tw-grid-cols-1 md:tw-grid-cols-4 tw-gap-x-8 tw-gap-y-4">
-                    <div>
-                        <x-label id="f_productName" :label="__('product.filter.product')" />
+                    <div class="tw-flex tw-flex-col tw-gap-1">
+                        <x-label-small for="f_productName">{{ __('product.filter.product') }}</x-label-small>
                         <x-filter-select id="f_productName" :placeholder="__('product.filter.placeholder')" />
                     </div>
-                    <div>
-                        <x-label id="f_category" :label="__('product.filter.category')" />
+                    <div class="tw-flex tw-flex-col tw-gap-1">
+                        <x-label-small for="f_category">{{ __('product.filter.category') }}</x-label-small>
                         <x-filter-select id="f_category" :placeholder="__('product.filter.placeholder')" />
                     </div>
-                    <div>
-                        <x-label id="f_brand" :label="__('product.filter.brand')" />
+                    <div class="tw-flex tw-flex-col tw-gap-1">
+                        <x-label-small for="f_brand">{{ __('product.filter.brand') }}</x-label-small>
                         <x-filter-select id="f_brand" :placeholder="__('product.filter.placeholder')" />
                     </div>
-                    <div>
-                        <x-label id="f_status" :label="__('product.filter.status')" />
+                    <div class="tw-flex tw-flex-col tw-gap-1">
+                        <x-label-small for="f_status">{{ __('product.filter.status') }}</x-label-small>
                         <x-filter-select id="f_status" :placeholder="__('product.filter.placeholder')" />
                     </div>
                 </div>

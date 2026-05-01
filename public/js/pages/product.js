@@ -185,7 +185,7 @@ $(function () {
         productTable.search(this.value).draw();
     });
 
-    $('#toggle-filter-btn, #close-filter-btn').on('click', function () {
+    $('#toggle-filter-btn').on('click', function () {
         $('#filter-panel').slideToggle('fast');
 
         $('#f_productName, #f_category, #f_brand, #f_status').val('').trigger('change.select2');

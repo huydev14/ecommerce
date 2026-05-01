@@ -8,29 +8,47 @@
                 Thông tin cá nhân
             </h3>
             {{-- Name --}}
-            <x-input id="name" name="name" label="Họ và tên" icon="far fa-user" placeholder="Nhập họ và tên"
-                required />
+            <div class="tw-flex tw-flex-col tw-gap-1">
+                <x-label for="name" class="is-required">Họ và tên</x-label>
+                <x-input id="name" name="name" icon="far fa-user" placeholder="Nhập họ và tên"
+                    required />
+            </div>
             {{-- Email --}}
-            <x-input type="email" id="email" name="email" label="Email" icon="far fa-envelope"
-                placeholder="email@congty.com" required />
+            <div class="tw-flex tw-flex-col tw-gap-1">
+                <x-label for="email" class="is-required">Email</x-label>
+                <x-input type="email" id="email" name="email" icon="far fa-envelope"
+                    placeholder="email@congty.com" required />
+            </div>
             {{-- Password --}}
-            <x-input type="password" id="password" name="password" label="Mật khẩu" icon="fas fa-lock"
-                placeholder="Tạo mật khẩu đăng nhập" />
+            <div class="tw-flex tw-flex-col tw-gap-1">
+                <x-label for="password" class="is-required">Mật khẩu</x-label>
+                <x-input type="password" id="password" name="password" icon="fas fa-lock"
+                    placeholder="Tạo mật khẩu đăng nhập" />
+            </div>
 
             <div class="tw-grid tw-grid-cols-2 tw-gap-4">
                 {{-- Phone number --}}
-                <x-input type="tel" id="phone" name="phone" label="Số điện thoại" icon="fas fa-phone-alt"
-                    placeholder="09xx..." />
+                <div class="tw-flex tw-flex-col tw-gap-1">
+                    <x-label for="phone">Số điện thoại</x-label>
+                    <x-input type="tel" id="phone" name="phone" icon="fas fa-phone-alt"
+                        placeholder="09xx..." />
+                </div>
                 {{-- Birthday --}}
-                <x-input type="date" id="birthday" name="birthday" label="Ngày sinh" />
+                <div class="tw-flex tw-flex-col tw-gap-1">
+                    <x-label for="birthday">Ngày sinh</x-label>
+                    <x-input type="date" id="birthday" name="birthday" />
+                </div>
             </div>
 
-            <x-input id="address" name="address" label="Địa chỉ" icon="fas fa-map-marker-alt"
-                placeholder="Nhập địa chỉ hiện tại" />
+            <div class="tw-flex tw-flex-col tw-gap-1">
+                <x-label for="address">Địa chỉ</x-label>
+                <x-input id="address" name="address" icon="fas fa-map-marker-alt"
+                    placeholder="Nhập địa chỉ hiện tại" />
+            </div>
 
             <div class="tw-flex tw-flex-col tw-gap-1">
                 {{-- Gender --}}
-                <label class="fluent-label">Giới tính</label>
+                <label class="fluent-label is-required">Giới tính</label>
                 <div class="tw-flex tw-gap-4 tw-pt-1">
                     <label class="tw-flex tw-items-center tw-gap-2 tw-cursor-pointer group">
                         <input type="radio" name="gender" value="0" class="tw-peer tw-sr-only" checked>
@@ -63,10 +81,13 @@
             <div class="tw-grid tw-grid-cols-2 tw-gap-4"></div>
 
             <div class="tw-grid tw-grid-cols-2 tw-gap-4">
-                <x-input type="date" id="start_date" name="start_date" label="Ngày bắt đầu" />
+                <div class="tw-flex tw-flex-col tw-gap-1">
+                    <x-label for="start_date">Ngày bắt đầu</x-label>
+                    <x-input type="date" id="start_date" name="start_date" />
+                </div>
 
                 <div class="tw-flex tw-flex-col tw-gap-1">
-                    <label class="fluent-label">Hình thức</label>
+                    <label class="fluent-label is-required">Hình thức</label>
                     <div class="tw-flex tw-gap-4 tw-pt-1">
                         <label class="tw-flex tw-items-center tw-gap-2 tw-cursor-pointer">
                             <input type="radio" name="employment_type" value="0" class="tw-peer tw-sr-only"

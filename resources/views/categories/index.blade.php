@@ -9,20 +9,14 @@
             </x-toolbar>
 
             <div id="filter-panel" class="tw-py-3">
-                <div class="tw-flex tw-justify-between tw-items-center tw-mb-2">
-                    <h4 class="tw-text-base tw-font-bold tw-text-gray-800">{{ __('category.filter.title') }}</h4>
-                    <button id="close-filter-btn" class="tw-text-gray-400 hover:tw-text-gray-700 tw-transition-colors">
-                        <i class="fas fa-times tw-text-lg"></i>
-                    </button>
-                </div>
 
                 <div class="tw-grid tw-grid-cols-1 md:tw-grid-cols-3 tw-gap-x-8 tw-gap-y-4">
-                    <div>
-                        <x-label id="f_categoryName" :label="__('category.filter.category')" />
+                    <div class="tw-flex tw-flex-col tw-gap-1">
+                        <x-label-small for="f_categoryName">{{ __('category.filter.category') }}</x-label-small>
                         <x-filter-select id="f_categoryName" :placeholder="__('category.filter.placeholder')" />
                     </div>
-                    <div>
-                        <x-label id="f_isActive" :label="__('category.filter.status')" />
+                    <div class="tw-flex tw-flex-col tw-gap-1">
+                        <x-label-small for="f_isActive">{{ __('category.filter.status') }}</x-label-small>
                         <x-filter-select id="f_isActive" :placeholder="__('category.filter.placeholder')" />
                     </div>
                 </div>

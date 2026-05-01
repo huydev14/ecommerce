@@ -7,7 +7,7 @@
         </span>
     </div>
 
-    <div class="tw-px-8">
+    <div class="tw-px-8 tw-py-6">
         @php $data = $configs['google']->value ?? []; @endphp
         <form method="POST" action="{{ route('settings.updateOAuth', 'google') }}" class="tw-space-y-6">
             @csrf @method('PATCH')
@@ -22,14 +22,23 @@
 
             <div class="tw-grid tw-grid-cols-1 md:tw-grid-cols-2 tw-gap-5">
                 <div class="tw-col-span-full">
-                    <x-input label="Client ID" name="client_id" :value="old('client_id', $data['client_id'] ?? '')" required="true" />
+                    <div class="tw-flex tw-flex-col tw-gap-1">
+                        <x-label for="client_id" class="is-required">Client ID</x-label>
+                        <x-input id="client_id" name="client_id" :value="old('client_id', $data['client_id'] ?? '')" required="true" />
+                    </div>
                 </div>
 
-                <x-input label="Redirect URI" name="redirect_uri" :value="old('redirect_uri', $data['redirect_uri'] ?? '')"
-                    helper="Copy URI này dán vào Google OAuth Console." />
+                <div class="tw-flex tw-flex-col tw-gap-1">
+                    <x-label for="redirect_uri" class="is-required">Redirect URI</x-label>
+                    <x-input id="redirect_uri" name="redirect_uri" :value="old('redirect_uri', $data['redirect_uri'] ?? '')"
+                        helper="Copy URI này dán vào Google OAuth Console." />
+                </div>
 
-                <x-input label="Client Secret" name="client_secret" type="password" placeholder="••••••••"
-                    :value="old('client_secret')" required="true" />
+                <div class="tw-flex tw-flex-col tw-gap-1">
+                    <x-label for="client_secret">Client Secret</x-label>
+                    <x-input id="client_secret" name="client_secret" type="password" placeholder="••••••••"
+                        :value="old('client_secret')" />
+                </div>
 
             </div>
 

@@ -1,5 +1,5 @@
-<div class="float-right d-none d-sm-inline-block">
-    <span class="tw-text-sm tw-font-semibold">&copy; {{ date('Y') }} <a
+<div class="float-right">
+    <span class="tw-text-sm tw-font-semibold tw-uppercase">&copy; {{ date('Y') }} <a
             href="https://github.com/huydev14/workhub-laravel">{{ config('app.name') }}</a>
-        by huydev14</span>
+        by GiaHuy.Codes</span>
 </div>

@@ -35,12 +35,12 @@
                 @yield('page-header')
             </div>
 
-            <div class="content-body tw-px-3 tw-py-4">
+            <div class="content-body">
                 @yield('content')
             </div>
         </main>
 
-        <footer class="footer tw-text-gray-400 tw-shadow-lg">
+        <footer class="footer tw-text-gray-500">
             @include('partials/footer')
         </footer>
 
@@ -49,5 +49,4 @@
 
         @stack('scripts')
 </body>
-
 </html>

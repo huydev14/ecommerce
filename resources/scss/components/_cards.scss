@@ -2,6 +2,9 @@
 
 .fluent-card {
     height: 100%;
+    display: flex;
+    flex-direction: column;
+    padding: 8px 15px;
     border: none !important;
     border-radius: 4px !important;
     box-shadow: $shadow-depth-4;
@@ -9,5 +12,12 @@
 
     .card-header {
         padding-bottom: 0px !important;
+    }
+
+    .card-body {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        min-height: 0;
     }
 }

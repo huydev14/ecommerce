@@ -1,5 +1,55 @@
 @use '../base/variables' as *;
 
+html, body {
+    height: 100%;
+    overflow: hidden;
+}
+
+.wrapper {
+    display: grid;
+    height: 100vh;
+    grid-template-columns: 200px 1fr;
+    grid-template-rows: auto 1fr auto;
+    grid-template-areas:
+        'header header'
+        'sidebar content'
+        'sidebar footer';
+    overflow: hidden;
+}
+
+.header {
+    grid-area: header;
+}
+
+.sidebar {
+    grid-area: sidebar;
+}
+
+.content {
+    grid-area: content;
+}
+
+.footer {
+    grid-area: footer;
+}
+
 body {
+    background-color: $surface-color;
     color: $text-main;
+    margin: 0;
+}
+
+.content {
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    flex-grow: 1;
+    overflow: hidden;
+    
+    .content-body {
+        flex-grow: 1;
+        display: flex;
+        flex-direction: column;
+        overflow: hidden;
+    }
 }

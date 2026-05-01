@@ -192,7 +192,7 @@ $(function () {
     });
 
     // ---- FILTER PANEL TOGGLE ---------------------------
-    $('#toggle-filter-btn, #close-filter-btn').on('click', function () {
+    $('#toggle-filter-btn').on('click', function () {
         $('#filter-panel').slideToggle('fast');
 
         // Reset filter
