@@ -62,35 +62,35 @@ class OAuthController extends Controller
 
     public function handleProviderCallback($provider)
     {
-        $socialUser = Socialite::driver($provider)->stateless()->user();
+        $oauth = Socialite::driver($provider)->stateless()->user();
 
         parse_str(request()->input('state'), $stateParams);
         $type = $stateParams['type'] ?? 'user';
 
-        return DB::transaction(function () use ($provider, $socialUser, $type) {
-            $socialAccount = OAuthAccount::where('provider', $provider)
-                ->where('provider_user_id', $socialUser->getId())
+        return DB::transaction(function () use ($provider, $oauth, $type) {
+            $oauthAccount = OAuthAccount::where('provider', $provider)
+                ->where('provider_user_id', $oauth->getId())
                 ->first();
 
-            if ($socialAccount) {
-                $user = ($type === 'customer') ? $socialAccount->customer : $socialAccount->user;
+            if ($oauthAccount) {
+                $user = ($type === 'customer') ? $oauthAccount->customer : $oauthAccount->user;
                 return [$user, $type];
             }
 
             if ($type === 'customer') {
                 $user = Customer::firstOrCreate(
-                    ['email' => $socialUser->getEmail()],
+                    ['email' => $oauth->getEmail()],
                     [
-                        'fullname' => $socialUser->getName(),
-                        'avatar' => $socialUser->getAvatar(),
+                        'fullname' => $oauth->getName(),
+                        'avatar' => $oauth->getAvatar(),
                         'email_verified_at' => now(),
                     ]
                 );
             } else {
                 $user = User::firstOrCreate(
-                    ['email' => $socialUser->getEmail()],
+                    ['email' => $oauth->getEmail()],
                     [
-                        'name' => $socialUser->getName(),
+                        'name' => $oauth->getName(),
                         'email_verified_at' => now(),
                     ]
                 );
@@ -99,7 +99,7 @@ class OAuthController extends Controller
             OAuthAccount::updateOrCreate(
                 [
                     'provider' => $provider,
-                    'provider_user_id' => $socialUser->getId(),
+                    'provider_user_id' => $oauth->getId(),
                 ],
                 [
                     'user_id' => ($type === 'customer') ? null : $user->id,

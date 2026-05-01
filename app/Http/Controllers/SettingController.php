@@ -2,16 +2,18 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Setting;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Log;
+
+use App\Models\Setting;
 
 class SettingController extends Controller
 {
     public function index()
     {
-        $configs = Setting::all()->groupBy('group');
+        $configs = Setting::all()->keyBy('key');
         return view('settings.index', compact('configs'));
     }
 
@@ -29,24 +31,24 @@ class SettingController extends Controller
     public function updateOAuth(Request $request, $provider)
     {
         try {
-            $value = $request->validate([
+            $validated = $request->validate([
                 'client_id' => 'required|string',
-                'client_secret' => 'required|string',
+                'client_secret' => 'nullable|string',
                 'redirect_uri' => 'required|url',
             ]);
 
             if ($request->filled('client_secret')) {
-                $value['client_secret'] = encrypt($request->client_secret);
+                $validated['client_secret'] = encrypt($request->client_secret);
             } else {
                 $oldConfig = Setting::where('key', $provider)->where('group', 'oauth')->first();
-                $value['client_secret'] = $oldConfig->value['client_secret'] ?? null;
+                $validated['client_secret'] = $oldConfig->value['client_secret'] ?? null;
             }
 
-            $value['is_active'] = $request->has('is_active');
+            $validated['is_active'] = $request->boolean('is_active');
 
             Setting::updateOrCreate(
                 ['key' => $provider, 'group' => 'oauth'],
-                ['value' => $value]
+                ['value' => $validated]
             );
 
             Cache::forget("config.oauth.{$provider}");
@@ -56,7 +58,10 @@ class SettingController extends Controller
                 ->with('success', "Đã lưu cấu hình " . ucfirst($provider) . " OAuth.");
         } catch (\Exception $e) {
             Log::error("OAuth Update Error: " . $e->getMessage());
-            return redirect()->back()->with('error', "Có lỗi xảy ra khi lưu cấu hình.");
+            return redirect()
+                ->back()
+                ->withInput()
+                ->with('error', "Có lỗi xảy ra khi lưu cấu hình.");
         }
     }
 
@@ -86,6 +91,8 @@ class SettingController extends Controller
             );
 
             Cache::forget("config.mail.smtp");
+            Artisan::call('queue:restart');
+
             return redirect()
                 ->to(route('settings.index') . '?tab=mail')
                 ->with('success', "Cấu hình Mail đã được cập nhật.");
