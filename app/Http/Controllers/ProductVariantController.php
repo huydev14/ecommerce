@@ -77,17 +77,17 @@ class ProductVariantController extends Controller
     private function renderStatusBadge(bool $isActive): string
     {
         if ($isActive) {
-            return '<span class="tw-px-2 tw-py-1 tw-bg-green-100 tw-text-green-700 tw-text-xs tw-font-medium tw-rounded-full">' . __('product_variant.status.active') . '</span>';
+            return '<span class="tw-px-2 tw-py-1 tw-bg-green-100 tw-text-green-700 tw-text-xs tw-font-medium tw-rounded-full">' . __('product_variant.active') . '</span>';
         }
 
-        return '<span class="tw-px-2 tw-py-1 tw-bg-gray-100 tw-text-gray-600 tw-text-xs tw-font-medium tw-rounded-full">' . __('product_variant.status.hidden') . '</span>';
+        return '<span class="tw-px-2 tw-py-1 tw-bg-gray-100 tw-text-gray-600 tw-text-xs tw-font-medium tw-rounded-full">' . __('product_variant.hidden') . '</span>';
     }
 
     public function getFilterData(Request $request)
     {
         $status = collect([
-            ['id' => 1, 'text' => __('product_variant.status.active')],
-            ['id' => 0, 'text' => __('product_variant.status.inactive')],
+            ['id' => 1, 'text' => __('product_variant.active')],
+            ['id' => 0, 'text' => __('product_variant.inactive')],
         ]);
 
         $products = Product::select('id', 'name as text')->orderBy('name')->get();
@@ -121,12 +121,12 @@ class ProductVariantController extends Controller
             'attributes' => 'nullable|json',
             'position' => 'nullable|integer|min:0',
         ], [
-            'product_id.required' => __('product_variant.validation.product_required'),
-            'sku.required' => __('product_variant.validation.sku_required'),
-            'sku.unique' => __('product_variant.validation.sku_unique'),
-            'barcode.unique' => __('product_variant.validation.barcode_unique'),
-            'price.required' => __('product_variant.validation.price_required'),
-            'attributes.json' => __('product_variant.validation.attributes_json'),
+            'product_id.required' => __('product_variant.product_required'),
+            'sku.required' => __('product_variant.sku_required'),
+            'sku.unique' => __('product_variant.sku_unique'),
+            'barcode.unique' => __('product_variant.barcode_unique'),
+            'price.required' => __('product_variant.price_required'),
+            'attributes.json' => __('product_variant.attributes_json'),
         ]);
 
         try {
@@ -143,15 +143,15 @@ class ProductVariantController extends Controller
             ]);
 
             if ($request->ajax()) {
-                session()->flash('success', __('product_variant.messages.create_success'));
+                session()->flash('success', __('product_variant.create_success'));
 
                 return response()->json([
                     'success' => true,
-                    'msg' => __('product_variant.messages.create_success'),
+                    'msg' => __('product_variant.create_success'),
                 ], 200);
             }
 
-            return redirect()->route('product-variants.index')->with('success', __('product_variant.messages.create_success'));
+            return redirect()->route('product-variants.index')->with('success', __('product_variant.create_success'));
         } catch (Exception $e) {
             Log::error('Create product variant failed: ' . $e->getMessage(), [
                 'trace' => $e->getTraceAsString(),
@@ -159,7 +159,7 @@ class ProductVariantController extends Controller
 
             return response()->json([
                 'status' => 'error',
-                'msg' => __('product_variant.messages.system_error'),
+                'msg' => __('product_variant.system_error'),
             ], 500);
         }
     }
@@ -188,12 +188,12 @@ class ProductVariantController extends Controller
             'attributes' => 'nullable|json',
             'position' => 'nullable|integer|min:0',
         ], [
-            'product_id.required' => __('product_variant.validation.product_required'),
-            'sku.required' => __('product_variant.validation.sku_required'),
-            'sku.unique' => __('product_variant.validation.sku_unique'),
-            'barcode.unique' => __('product_variant.validation.barcode_unique'),
-            'price.required' => __('product_variant.validation.price_required'),
-            'attributes.json' => __('product_variant.validation.attributes_json'),
+            'product_id.required' => __('product_variant.product_required'),
+            'sku.required' => __('product_variant.sku_required'),
+            'sku.unique' => __('product_variant.sku_unique'),
+            'barcode.unique' => __('product_variant.barcode_unique'),
+            'price.required' => __('product_variant.price_required'),
+            'attributes.json' => __('product_variant.attributes_json'),
         ]);
 
         try {
@@ -211,7 +211,7 @@ class ProductVariantController extends Controller
 
             return response()->json([
                 'success' => true,
-                'msg' => __('product_variant.messages.update_success'),
+                'msg' => __('product_variant.update_success'),
             ], 200);
         } catch (Exception $e) {
             Log::error('Update product variant failed: ' . $e->getMessage(), [
@@ -220,7 +220,7 @@ class ProductVariantController extends Controller
 
             return response()->json([
                 'success' => false,
-                'msg' => __('product_variant.messages.system_error'),
+                'msg' => __('product_variant.system_error'),
             ], 500);
         }
     }
@@ -233,7 +233,7 @@ class ProductVariantController extends Controller
             return response()->json([
                 'success' => true,
                 'status' => 200,
-                'msg' => __('product_variant.messages.delete_success'),
+                'msg' => __('product_variant.delete_success'),
             ]);
         } catch (Exception $e) {
             Log::error('Delete product variant failed: ' . $e->getMessage(), [
@@ -242,7 +242,7 @@ class ProductVariantController extends Controller
 
             return response()->json([
                 'success' => false,
-                'msg' => __('product_variant.messages.system_error'),
+                'msg' => __('product_variant.system_error'),
             ], 500);
         }
     }
@@ -255,7 +255,7 @@ class ProductVariantController extends Controller
 
             return response()->json([
                 'success' => true,
-                'msg' => __('product_variant.messages.restore_success'),
+                'msg' => __('product_variant.restore_success'),
             ]);
         } catch (Exception $e) {
             Log::error('Restore product variant failed: ' . $e->getMessage(), [
@@ -264,7 +264,7 @@ class ProductVariantController extends Controller
 
             return response()->json([
                 'success' => false,
-                'msg' => __('product_variant.messages.restore_error'),
+                'msg' => __('product_variant.restore_error'),
             ], 500);
         }
     }

@@ -35,9 +35,9 @@ class CategoryController extends Controller
                 })
                 ->editColumn('is_active', function ($category) {
                     if ($category->is_active) {
-                        return '<span class="tw-px-2 tw-py-1 tw-bg-green-100 tw-text-green-700 tw-text-xs tw-font-medium tw-rounded-full">' . __('category.status.active') . '</span>';
+                        return '<span class="tw-px-2 tw-py-1 tw-bg-green-100 tw-text-green-700 tw-text-xs tw-font-medium tw-rounded-full">' . __('category.active') . '</span>';
                     }
-                    return '<span class="tw-px-2 tw-py-1 tw-bg-gray-100 tw-text-gray-600 tw-text-xs tw-font-medium tw-rounded-full">' . __('category.status.hidden') . '</span>';
+                    return '<span class="tw-px-2 tw-py-1 tw-bg-gray-100 tw-text-gray-600 tw-text-xs tw-font-medium tw-rounded-full">' . __('category.hidden') . '</span>';
                 })
                 ->editColumn('created_at', function ($category) {
                     return $category->created_at ? $category->created_at->format('d/m/Y') : '';
@@ -56,8 +56,8 @@ class CategoryController extends Controller
     public function getFilterData(Request $request)
     {
         $isActive = collect([
-            ['id' => 1, 'text' => __('category.status.active')],
-            ['id' => 0, 'text' => __('category.status.inactive')],
+            ['id' => 1, 'text' => __('category.active')],
+            ['id' => 0, 'text' => __('category.inactive')],
         ]);
 
         $categoryNames = Category::select('id', 'name as text')->orderBy('name')->get();
@@ -83,9 +83,9 @@ class CategoryController extends Controller
             'parent_id' => 'nullable|exists:categories,id',
             'order' => 'nullable|integer|min:0',
         ], [
-            'name.required' => __('category.validation.name_required'),
-            'name.unique' => __('category.validation.name_unique'),
-            'description.required' => __('category.validation.description_required'),
+            'name.required' => __('category.name_required'),
+            'name.unique' => __('category.name_unique'),
+            'description.required' => __('category.description_required'),
         ]);
 
         try {
@@ -99,15 +99,15 @@ class CategoryController extends Controller
             ]);
 
             if ($request->ajax()) {
-                session()->flash('success', __('category.messages.create_success'));
+                session()->flash('success', __('category.create_success'));
 
                 return response()->json([
                     'success' => true,
-                    'msg' => __('category.messages.create_success'),
+                    'msg' => __('category.create_success'),
                 ], 200);
             }
 
-            return redirect()->route('categories.index')->with('success', __('category.messages.create_success'));
+            return redirect()->route('categories.index')->with('success', __('category.create_success'));
         } catch (Exception $e) {
             Log::error('Create category failed: ' . $e->getMessage(), [
                 'trace' => $e->getTraceAsString(),
@@ -135,10 +135,10 @@ class CategoryController extends Controller
             'parent_id' => 'nullable|exists:categories,id|not_in:' . $category->id,
             'order' => 'nullable|integer|min:0',
         ], [
-            'name.required' => __('category.validation.name_required'),
-            'name.unique' => __('category.validation.name_unique'),
-            'description.required' => __('category.validation.description_required'),
-            'parent_id.not_in' => __('category.validation.parent_not_self'),
+            'name.required' => __('category.name_required'),
+            'name.unique' => __('category.name_unique'),
+            'description.required' => __('category.description_required'),
+            'parent_id.not_in' => __('category.parent_not_self'),
         ]);
 
         try {
@@ -153,7 +153,7 @@ class CategoryController extends Controller
 
             return response()->json([
                 'success' => true,
-                'msg' => __('category.messages.update_success'),
+                'msg' => __('category.update_success'),
             ], 200);
         } catch (Exception $e) {
             Log::error('Update category failed: ' . $e->getMessage(), [
@@ -162,7 +162,7 @@ class CategoryController extends Controller
 
             return response()->json([
                 'success' => false,
-                'msg' => __('category.messages.system_error'),
+                'msg' => __('category.system_error'),
             ], 500);
         }
     }
@@ -175,7 +175,7 @@ class CategoryController extends Controller
             return response()->json([
                 'success' => true,
                 'status' => 200,
-                'msg' => __('category.messages.delete_success'),
+                'msg' => __('category.delete_success'),
             ]);
         } catch (Exception $e) {
             Log::error('Delete category failed: ' . $e->getMessage(), [
@@ -184,7 +184,7 @@ class CategoryController extends Controller
 
             return response()->json([
                 'success' => false,
-                'msg' => __('category.messages.system_error'),
+                'msg' => __('category.system_error'),
             ], 500);
         }
     }
@@ -197,7 +197,7 @@ class CategoryController extends Controller
 
             return response()->json([
                 'success' => true,
-                'msg' => __('category.messages.restore_success'),
+                'msg' => __('category.restore_success'),
             ]);
         } catch (Exception $e) {
             Log::error('Restore category failed: ' . $e->getMessage(), [
@@ -206,7 +206,7 @@ class CategoryController extends Controller
 
             return response()->json([
                 'success' => false,
-                'msg' => __('category.messages.restore_error'),
+                'msg' => __('category.restore_error'),
             ], 500);
         }
     }

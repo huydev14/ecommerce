@@ -6,13 +6,13 @@
         <a href="/" class="brand-link">
             <img src="{{ asset('adminlte/dist/img/AdminLTELogo.png') }}" alt="App logo" class="brand-logo">
             <span class="brand-name">{{ config('app.name') }}</span>
-            <span class="brand-module">Field Service</span>
+            <span class="brand-module">{{ __('header.field_service') }}</span>
         </a>
     </div>
 
     <div class="search-wrap">
         <i class="fas fa-search search-icon"></i>
-        <input type="text" class="form-control search-input" placeholder="Search resources, services, and docs (G+/)"
+        <input type="text" class="form-control search-input" placeholder="{{ __('header.search_placeholder') }}"
             aria-label="Search">
     </div>
 
@@ -40,14 +40,14 @@
                 </div>
 
             </a>
-            <div class="dropdown-menu tw-right-0 tw-left-auto">
+            <div class="dropdown-menu dropdown-menu-right">
                 <a href="{{ route('lang.switch', 'vi') }}"
                     class="dropdown-item {{ App::getLocale() == 'vi' ? 'active !tw' : '' }}">
-                    <i class="fi fi-vn"></i> Tiếng Việt
+                    <i class="fi fi-vn"></i> {{ __('header.vi') }}
                 </a>
                 <a href="{{ route('lang.switch', 'en') }}"
                     class="dropdown-item {{ App::getLocale() == 'en' ? 'active' : '' }}">
-                    <i class="fi fi-gb"></i> English
+                    <i class="fi fi-gb"></i> {{ __('header.en') }}
                 </a>
             </div>
         </li>
@@ -61,14 +61,14 @@
                 <img src="{{ asset('adminlte/dist/img/user2-160x160.jpg') }}" class="img-circle" alt="User">
             </a>
 
-            <div class="dropdown-menu dropdown-menu-end">
+            <div class="dropdown-menu dropdown-menu-right">
                 <a href="{{ route('profile.edit') }}" class="dropdown-item">
-                    <i class="fas fa-user mr-2"></i> Profile
+                    <i class="fas fa-user mr-2"></i> {{ __('header.profile') }}
                 </a>
                 <form method="POST" action="{{ route('logout') }}">
                     @csrf
                     <button type="submit" class="dropdown-item">
-                        <i class="fas fa-sign-out-alt mr-2"></i> Đăng xuất
+                        <i class="fas fa-sign-out-alt mr-2"></i> {{ __('actions.log_out') }}
                     </button>
                 </form>
             </div>

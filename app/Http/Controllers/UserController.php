@@ -68,10 +68,10 @@ class UserController extends Controller
                 $user->assignRole($role);
             }
 
-            return response()->json(['success' => true, 'msg' => 'Thêm nhân viên thành công'], 200);
+            return response()->json(['success' => true, 'msg' => __('user.success_description')], 200);
         } catch (Exception $e) {
             Log::error('Create user failed', ['error' => $e->getMessage(), 'trace' => $e->getTraceAsString()]);
-            return response()->json(['status' => 'error', 'msg' => 'Lỗi hệ thống'], 500);
+            return response()->json(['status' => 'error', 'msg' => __('user.system_error_description')], 500);
         }
     }
 
@@ -119,10 +119,10 @@ class UserController extends Controller
                 $user->syncRoles([]);
             }
 
-            return response()->json(['success' => true, 'msg' => 'Cập nhật người dùng thành công'], 200);
+            return response()->json(['success' => true, 'msg' => __('user.success_description')], 200);
         } catch (Exception $e) {
             Log::error('Update user failed', ['error' => $e->getMessage(), 'trace' => $e->getTraceAsString(),]);
-            return response()->json(['success' => false, 'msg' => 'Lỗi hệ thống'], 500);
+            return response()->json(['success' => false, 'msg' => __('user.system_error_description')], 500);
         }
     }
 
@@ -134,10 +134,10 @@ class UserController extends Controller
             }
             $user->delete();
 
-            return response()->json(['success' => true, 'msg' => 'Đã xóa nhân viên']);
+            return response()->json(['success' => true, 'msg' => __('user.delete_description')]);
         } catch (Exception $e) {
             Log::error('Remove user failed', ['error' => $e->getMessage(), 'trace' => $e->getTraceAsString(),]);
-            return response()->json(['msg' => 'Đã xảy ra lỗi!'], 500);
+            return response()->json(['msg' => __('user.system_error_description')], 500);
         }
     }
 
@@ -147,10 +147,10 @@ class UserController extends Controller
             $user = User::withTrashed()->findOrFail($id);
             $user->restore();
 
-            return response()->json(['success' => true, 'msg' => 'Đã khôi phục nhân viên thành công']);
+            return response()->json(['success' => true, 'msg' => __('user.undo_success_description')]);
         } catch (Exception $e) {
             Log::error('Restore user failed', ['error' => $e->getMessage(), 'trace' => $e->getTraceAsString(),]);
-            return response()->json(['success' => false, 'msg' => 'Lỗi hệ thống, không thể khôi phục!'], 500);
+            return response()->json(['success' => false, 'msg' => __('user.restore_error_description')], 500);
         }
     }
 

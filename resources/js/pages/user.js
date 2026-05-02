@@ -8,7 +8,7 @@ let ajaxUserFormRequest = function (formSelector, dataTableInstance = null, relo
         let submitBtn = form.find('button[type="submit"]');
         let originalBtnText = submitBtn.html();
 
-        submitBtn.prop('disabled', true).html('<i class="fas fa-spinner fa-spin tw-mr-2"></i> Đang xử lý...');
+        submitBtn.prop('disabled', true).html('<i class="fas fa-spinner fa-spin tw-mr-2"></i> ' + Lang.get('user.processing'));
 
         form.find('.field-error').remove();
         form.find('.tw-border-red-500').removeClass('tw-border-red-500').addClass('tw-border-gray-300');
@@ -39,8 +39,8 @@ let ajaxUserFormRequest = function (formSelector, dataTableInstance = null, relo
 
                     fluentToast({
                         type: 'success',
-                        title: 'Thành công',
-                        description: res.msg || 'Dữ liệu đã được lưu vào hệ thống',
+                        title: Lang.get('user.success_title'),
+                        description: res.msg || Lang.get('user.success_description'),
                         subtitle: 'Code: ' + xhr.status,
                         actionType: 'close',
                     });
@@ -64,16 +64,16 @@ let ajaxUserFormRequest = function (formSelector, dataTableInstance = null, relo
 
                     fluentToast({
                         type: 'error',
-                        title: 'Xử lý thất bại',
-                        description: 'Hãy kiểm tra lại các trường thông tin.',
+                        title: Lang.get('user.process_failed_title'),
+                        description: Lang.get('user.process_failed_description'),
                         subtitle: 'Mã lỗi: ' + xhr.status,
                         actionType: 'close',
                     });
                 } else {
                     fluentToast({
                         type: 'error',
-                        title: 'Lỗi hệ thống',
-                        description: xhr.responseJSON?.msg || 'Đã có lỗi xảy ra, vui lòng thử lại!',
+                        title: Lang.get('user.system_error_title'),
+                        description: xhr.responseJSON?.msg || Lang.get('user.system_error_description'),
                         subtitle: 'Mã lỗi: ' + xhr.status,
                         actionType: 'close',
                     });
@@ -93,7 +93,7 @@ $(function () {
         lengthChange: false,
         paging: false,
         ajax: {
-            url: globalThis.UserRoutes.tableData,
+            url: route('users.data'),
             data: function (d) {
                 d.status = $('#f_status').val() || '';
                 d.department_id = $('#f_department').val() || '';
@@ -147,7 +147,7 @@ $(function () {
             },
         ],
         createdRow: function (row, data) {
-            let url = globalThis.UserRoutes.showUser.replace(':id', data.id);
+            let url = route('users.show', data.id);
 
             $(row)
                 .css('cursor', 'pointer')
@@ -185,7 +185,7 @@ $(function () {
     });
 
     // ---- RENDER OPTIONS FOR SELECT FIELDs ----------------
-    $.getJSON(globalThis.UserRoutes.filterOptions)
+    $.getJSON(route('users.filter_data'))
         .done(function (res) {
             renderOptions('#f_department', res.department_data);
             renderOptions('#f_status', res.status_data);
@@ -202,7 +202,7 @@ $(function () {
         let isCreateForm = $(this).attr('id') === 'create-department';
         let targetTeamSelector = isCreateForm ? '#create-team' : '#edit-team';
 
-        $.getJSON(globalThis.UserRoutes.teams_data, {
+        $.getJSON(route('users.teams_data'), {
             department_id: departmentId,
         }).done(function (res) {
             renderOptions(targetTeamSelector, res.teams_data);
@@ -212,7 +212,7 @@ $(function () {
     // --- Open create user slide-over -------------------------
     let preloadedCreateHtml = null;
     setTimeout(() => {
-        $.get(window.UserRoutes.slideCreate, function (html) {
+        $.get(route('users.create'), function (html) {
             $('#content-create').html(html);
             preloadedCreateHtml = html;
         });
@@ -248,7 +248,7 @@ $(function () {
         let deleteUrl = $btn.data('delete-url');
         let restoreUrl = $btn.data('restore-url');
 
-        if (!confirm('Confirm delete?')) {
+        if (!confirm(Lang.get('user.confirm_delete'))) {
             return;
         }
 
@@ -261,13 +261,13 @@ $(function () {
                 usersTable.ajax.reload(null, false);
                 fluentToast({
                     type: 'info',
-                    title: 'Đã xóa nhân viên',
-                    description: 'Tài khoản nhân viên đã được chuyển vào thùng rác.',
+                    title: Lang.get('user.delete_toast_title'),
+                    description: Lang.get('user.delete_description'),
                     subtitle: res.status,
                     actionType: 'close',
                     bottomActions: [
                         {
-                            text: 'Hoàn tác',
+                            text: Lang.get('user.undo'),
 
                             // Restore soft-deleted user
                             onClick: function () {
@@ -279,16 +279,16 @@ $(function () {
 
                                         fluentToast({
                                             type: 'success',
-                                            title: 'Hoàn tác thành công',
-                                            description: 'Tài khoản nhân viên đã được khôi phục hoạt động.',
+                                            title: Lang.get('user.undo_success_title'),
+                                            description: Lang.get('user.undo_success_description'),
                                             actionType: 'close',
                                         });
                                     },
                                     error: function (xhr) {
                                         fluentToast({
                                             type: 'error',
-                                            title: 'Lỗi khôi phục',
-                                            description: 'Không thể hoàn tác thao tác này.',
+                                            title: Lang.get('user.restore_error_title'),
+                                            description: Lang.get('user.restore_error_description'),
                                             subtitle: 'Mã lỗi: ' + xhr.status,
                                         });
                                         console.error('Load error:', xhr.status);
@@ -303,8 +303,8 @@ $(function () {
             error: function (xhr) {
                 fluentToast({
                     type: 'error',
-                    title: 'Đã xảy ra lỗi!',
-                    description: 'Hãy thử lại sau',
+                    title: Lang.get('user.toast.generic_error_title') || 'Đã xảy ra lỗi!',
+                    description: Lang.get('user.toast.generic_error_description') || 'Hãy thử lại sau',
                     subtitle: 'Mã lỗi: ' + xhr.status,
                     actionType: 'close',
                 });

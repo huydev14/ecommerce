@@ -17,7 +17,9 @@
     <!-- Theme style -->
     <link rel="stylesheet" href="{{ asset('adminlte/dist/css/adminlte.min.css') }}">
 
+    @routes
     @vite(['resources/scss/app.scss', 'resources/js/app.js'])
+    @stack('styles')
 </head>
 
 <body class="hold-transition sidebar-mini">

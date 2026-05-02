@@ -12,20 +12,20 @@
 
                 <div class="tw-grid tw-grid-cols-1 md:tw-grid-cols-4 tw-gap-x-8 tw-gap-y-4">
                     <div class="tw-flex tw-flex-col tw-gap-1">
-                        <x-label-small for="f_productName">{{ __('product.filter.product') }}</x-label-small>
-                        <x-filter-select id="f_productName" :placeholder="__('product.filter.placeholder')" />
+                        <x-label-small for="f_productName">{{ __('product.product') }}</x-label-small>
+                        <x-filter-select id="f_productName" :placeholder="__('product.placeholder')" />
                     </div>
                     <div class="tw-flex tw-flex-col tw-gap-1">
-                        <x-label-small for="f_category">{{ __('product.filter.category') }}</x-label-small>
-                        <x-filter-select id="f_category" :placeholder="__('product.filter.placeholder')" />
+                        <x-label-small for="f_category">{{ __('product.category') }}</x-label-small>
+                        <x-filter-select id="f_category" :placeholder="__('product.placeholder')" />
                     </div>
                     <div class="tw-flex tw-flex-col tw-gap-1">
-                        <x-label-small for="f_brand">{{ __('product.filter.brand') }}</x-label-small>
-                        <x-filter-select id="f_brand" :placeholder="__('product.filter.placeholder')" />
+                        <x-label-small for="f_brand">{{ __('product.brand') }}</x-label-small>
+                        <x-filter-select id="f_brand" :placeholder="__('product.placeholder')" />
                     </div>
                     <div class="tw-flex tw-flex-col tw-gap-1">
-                        <x-label-small for="f_status">{{ __('product.filter.status') }}</x-label-small>
-                        <x-filter-select id="f_status" :placeholder="__('product.filter.placeholder')" />
+                        <x-label-small for="f_status">{{ __('product.status') }}</x-label-small>
+                        <x-filter-select id="f_status" :placeholder="__('product.placeholder')" />
                     </div>
                 </div>
             </div>
@@ -35,15 +35,15 @@
             <table id="productTable" class="display table table-hover text-nowrap" style="width: 100%;">
                 <thead>
                     <tr>
-                        <th>{{ __('product.table.name') }}</th>
-                        <th>{{ __('product.table.slug') }}</th>
-                        <th>{{ __('product.table.category') }}</th>
-                        <th>{{ __('product.table.brand') }}</th>
-                        <th>{{ __('product.table.status') }}</th>
-                        <th>{{ __('product.table.created_at') }}</th>
-                        <th>{{ __('product.table.updated_at') }}</th>
+                        <th>{{ __('product.name') }}</th>
+                        <th>{{ __('product.slug') }}</th>
+                        <th>{{ __('product.category') }}</th>
+                        <th>{{ __('product.brand') }}</th>
+                        <th>{{ __('product.status') }}</th>
+                        <th>{{ __('product.created_at') }}</th>
+                        <th>{{ __('product.updated_at') }}</th>
                         <th>
-                            <div class="tw-text-center">{{ __('product.table.action') }}</div>
+                            <div class="tw-text-center">{{ __('product.action') }}</div>
                         </th>
                     </tr>
                 </thead>
@@ -56,15 +56,15 @@
     </x-modal>
 
     @push('scripts')
-        <script src="{{ asset('js/pages/product.js') }}" defer></script>
+        @vite('resources/js/pages/product.js')
         <script type="module">
             $(function() {
                 @if (session('success'))
                     fluentToast({
                         type: 'success',
-                        title: @json(__('product.js.toast.success_title')),
+                        title: Lang.get('product.success_title'),
                         description: "{{ session('success') }}",
-                        subtitle: @json(__('product.js.code_prefix')) + ' 200',
+                        subtitle: Lang.get('product.code_prefix') + ' 200',
                         actionType: 'close',
                     });
                 @endif
@@ -76,31 +76,6 @@
                 });
             });
 
-            window.ProductRoutes = {
-                data: "{{ route('products.data') }}",
-                filterData: "{{ route('products.filter_data') }}",
-                create: "{{ route('products.create') }}",
-            };
-
-            window.ProductI18n = {
-                confirmDelete: @json(__('product.js.confirm_delete')),
-                deletingTitle: @json(__('product.js.toast.delete_title')),
-                deletingDescription: @json(__('product.js.toast.delete_description')),
-                undo: @json(__('product.js.undo')),
-                undoSuccessTitle: @json(__('product.js.toast.undo_success_title')),
-                undoSuccessDescription: @json(__('product.js.toast.undo_success_description')),
-                restoreErrorTitle: @json(__('product.js.toast.restore_error_title')),
-                restoreErrorDescription: @json(__('product.js.toast.restore_error_description')),
-                genericErrorTitle: @json(__('product.js.toast.generic_error_title')),
-                genericErrorDescription: @json(__('product.js.toast.generic_error_description')),
-                saveLoading: @json(__('product.js.save_loading')),
-                processFailedTitle: @json(__('product.js.toast.process_failed_title')),
-                processFailedDescription: @json(__('product.js.toast.process_failed_description')),
-                systemErrorTitle: @json(__('product.js.toast.system_error_title')),
-                systemErrorDescription: @json(__('product.js.toast.system_error_description')),
-                codePrefix: @json(__('product.js.code_prefix')),
-                successTitle: @json(__('product.js.toast.success_title')),
-            };
         </script>
     @endpush
 @endsection

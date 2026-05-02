@@ -14,9 +14,11 @@
         "laravel/framework": "^12.0",
         "laravel/socialite": "^5.26",
         "laravel/tinker": "^2.10.1",
+        "mariuzzo/laravel-js-localization": "^2.1",
         "predis/predis": "^3.4",
         "spatie/laravel-activitylog": "^4.12",
         "spatie/laravel-permission": "^6.25",
+        "tightenco/ziggy": "^2.6",
         "tymon/jwt-auth": "^2.3",
         "yajra/laravel-datatables-oracle": "12.0"
     },

@@ -48,9 +48,9 @@ class ProductController extends Controller
                 })
                 ->editColumn('status', function ($product) {
                     return match ($product->status) {
-                        'published' => '<span class="tw-px-2 tw-py-1 tw-bg-green-100 tw-text-green-700 tw-text-xs tw-font-medium tw-rounded-full">' . __('product.status.published') . '</span>',
-                        'archived' => '<span class="tw-px-2 tw-py-1 tw-bg-gray-100 tw-text-gray-600 tw-text-xs tw-font-medium tw-rounded-full">' . __('product.status.archived') . '</span>',
-                        default => '<span class="tw-px-2 tw-py-1 tw-bg-yellow-100 tw-text-yellow-700 tw-text-xs tw-font-medium tw-rounded-full">' . __('product.status.draft') . '</span>',
+                        'published' => '<span class="tw-px-2 tw-py-1 tw-bg-green-100 tw-text-green-700 tw-text-xs tw-font-medium tw-rounded-full">' . __('product.published') . '</span>',
+                        'archived' => '<span class="tw-px-2 tw-py-1 tw-bg-gray-100 tw-text-gray-600 tw-text-xs tw-font-medium tw-rounded-full">' . __('product.archived') . '</span>',
+                        default => '<span class="tw-px-2 tw-py-1 tw-bg-yellow-100 tw-text-yellow-700 tw-text-xs tw-font-medium tw-rounded-full">' . __('product.draft') . '</span>',
                     };
                 })
                 ->editColumn('created_at', function ($product) {
@@ -70,9 +70,9 @@ class ProductController extends Controller
     public function getFilterData(Request $request)
     {
         $status = collect([
-            ['id' => 'draft', 'text' => __('product.status.draft')],
-            ['id' => 'published', 'text' => __('product.status.published')],
-            ['id' => 'archived', 'text' => __('product.status.archived')],
+            ['id' => 'draft', 'text' => __('product.draft')],
+            ['id' => 'published', 'text' => __('product.published')],
+            ['id' => 'archived', 'text' => __('product.archived')],
         ]);
 
         $products = Product::select('id', 'name as text')->orderBy('name')->get();
@@ -105,11 +105,11 @@ class ProductController extends Controller
             'status' => 'required|in:draft,published,archived',
             'metadata' => 'nullable|json',
         ], [
-            'name.required' => __('product.validation.name_required'),
-            'name.unique' => __('product.validation.name_unique'),
-            'category_id.required' => __('product.validation.category_required'),
-            'status.required' => __('product.validation.status_required'),
-            'metadata.json' => __('product.validation.metadata_json'),
+            'name.required' => __('product.name_required'),
+            'name.unique' => __('product.name_unique'),
+            'category_id.required' => __('product.category_required'),
+            'status.required' => __('product.status_required'),
+            'metadata.json' => __('product.metadata_json'),
         ]);
 
         try {
@@ -124,15 +124,15 @@ class ProductController extends Controller
             ]);
 
             if ($request->ajax()) {
-                session()->flash('success', __('product.messages.create_success'));
+                session()->flash('success', __('product.create_success'));
 
                 return response()->json([
                     'success' => true,
-                    'msg' => __('product.messages.create_success'),
+                    'msg' => __('product.create_success'),
                 ], 200);
             }
 
-            return redirect()->route('products.index')->with('success', __('product.messages.create_success'));
+            return redirect()->route('products.index')->with('success', __('product.create_success'));
         } catch (Exception $e) {
             Log::error('Create product failed: ' . $e->getMessage(), [
                 'trace' => $e->getTraceAsString(),
@@ -140,7 +140,7 @@ class ProductController extends Controller
 
             return response()->json([
                 'status' => 'error',
-                'msg' => __('product.messages.system_error'),
+                'msg' => __('product.system_error'),
             ], 500);
         }
     }
@@ -163,11 +163,11 @@ class ProductController extends Controller
             'status' => 'required|in:draft,published,archived',
             'metadata' => 'nullable|json',
         ], [
-            'name.required' => __('product.validation.name_required'),
-            'name.unique' => __('product.validation.name_unique'),
-            'category_id.required' => __('product.validation.category_required'),
-            'status.required' => __('product.validation.status_required'),
-            'metadata.json' => __('product.validation.metadata_json'),
+            'name.required' => __('product.name_required'),
+            'name.unique' => __('product.name_unique'),
+            'category_id.required' => __('product.category_required'),
+            'status.required' => __('product.status_required'),
+            'metadata.json' => __('product.metadata_json'),
         ]);
 
         try {
@@ -183,7 +183,7 @@ class ProductController extends Controller
 
             return response()->json([
                 'success' => true,
-                'msg' => __('product.messages.update_success'),
+                'msg' => __('product.update_success'),
             ], 200);
         } catch (Exception $e) {
             Log::error('Update product failed: ' . $e->getMessage(), [
@@ -192,7 +192,7 @@ class ProductController extends Controller
 
             return response()->json([
                 'success' => false,
-                'msg' => __('product.messages.system_error'),
+                'msg' => __('product.system_error'),
             ], 500);
         }
     }
@@ -205,7 +205,7 @@ class ProductController extends Controller
             return response()->json([
                 'success' => true,
                 'status' => 200,
-                'msg' => __('product.messages.delete_success'),
+                'msg' => __('product.delete_success'),
             ]);
         } catch (Exception $e) {
             Log::error('Delete product failed: ' . $e->getMessage(), [
@@ -214,7 +214,7 @@ class ProductController extends Controller
 
             return response()->json([
                 'success' => false,
-                'msg' => __('product.messages.system_error'),
+                'msg' => __('product.system_error'),
             ], 500);
         }
     }
@@ -227,7 +227,7 @@ class ProductController extends Controller
 
             return response()->json([
                 'success' => true,
-                'msg' => __('product.messages.restore_success'),
+                'msg' => __('product.restore_success'),
             ]);
         } catch (Exception $e) {
             Log::error('Restore product failed: ' . $e->getMessage(), [
@@ -236,7 +236,7 @@ class ProductController extends Controller
 
             return response()->json([
                 'success' => false,
-                'msg' => __('product.messages.restore_error'),
+                'msg' => __('product.restore_error'),
             ], 500);
         }
     }

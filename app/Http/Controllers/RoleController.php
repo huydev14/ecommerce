@@ -57,7 +57,7 @@ class RoleController extends Controller
 
             DB::commit();
 
-            session()->flash('success', 'Tạo mới vai trò thành công');
+            session()->flash('success', __('Create role successfully'));
 
             return response()->json([
                 'success' => true,
@@ -141,7 +141,7 @@ class RoleController extends Controller
 
             AuditLogService::log("Cập nhật vai trò: {$role->name}", $role, 'role', Auth::user(), $changes);
 
-            session()->flash('success', 'Cập nhật vai trò thành công');
+            session()->flash('success', __('Update role successfully'));
 
             return response()->json([
                 'success' => true,
@@ -172,7 +172,7 @@ class RoleController extends Controller
             $role->delete();
             DB::commit();
 
-            session()->flash('success', 'Xoá vai trò thành công');
+            session()->flash('success', __('Delete role successfully'));
 
             return response()->json([
                 'status' => 'success',

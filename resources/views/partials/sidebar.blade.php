@@ -4,7 +4,7 @@
         <li class="nav-item {{ request()->routeIs('dashboard') ? 'menu-open' : '' }}">
             <a href="{{ route('dashboard') }}" class="nav-link {{ request()->routeIs('dashboard') ? 'active' : '' }}">
                 <x-icon-home class="nav-icon" />
-                <p>Home</p>
+                <p>{{ __('header.home') }}</p>
             </a>
         </li>
 
@@ -12,29 +12,29 @@
         <li class="nav-item menu-open {{ request()->routeIs('brands.*') || request()->routeIs('categories.*') || request()->routeIs('products.*') || request()->routeIs('product-variants.*') ? 'menu-is-opening ' : '' }}">
             <a href="#" class="nav-link">
                 <x-icon-shopping class="nav-icon" />
-                <p> Bán hàng
+                <p> {{ __('header.sales') }}
                     <x-icon-chevron-left class="right" />
                 </p>
             </a>
             <ul class="nav nav-treeview ">
                 <li class="nav-item">
                     <a class="nav-link {{ request()->routeIs('brands.index') ? 'active' : '' }}" href="{{ route('brands.index') }}">
-                        <p>Thương hiệu</p>
+                        <p>{{ __('brand.management_title') }}</p>
                     </a>
                 </li>
                  <li class="nav-item">
                     <a href="{{ route('categories.index') }}" class="nav-link {{ request()->routeIs('categories.index') ? 'active' : '' }}">
-                        <p>Categories</p>
+                        <p>{{ __('category.management_title') }}</p>
                     </a>
                 </li>
                 <li class="nav-item">
                     <a href="{{ route('products.index') }}" class="nav-link {{ request()->routeIs('products.index') ? 'active' : '' }}">
-                        <p>Products</p>
+                        <p>{{ __('product.management_title') }}</p>
                     </a>
                 </li>
                 <li class="nav-item">
                     <a href="{{ route('product-variants.index') }}" class="nav-link {{ request()->routeIs('product-variants.index') ? 'active' : '' }}">
-                        <p>Product Variants</p>
+                        <p>{{ __('product.variant_management_title') }}</p>
                     </a>
                 </li>
                 {{-- ---<li class="nav-item">
@@ -50,7 +50,7 @@
             class="nav-item menu-open {{ request()->routeIs('users.*') && request()->routeIs('roles.*') ? 'menu-is-opening ' : '' }}">
             <a href="#" class="nav-link">
                 <x-icon-people-setting class="nav-icon" />
-                <p>Tài khoản
+                <p>{{ __('header.accounts') }}
                     <x-icon-chevron-left class="right" />
                 </p>
             </a>
@@ -58,13 +58,13 @@
                 <li class="nav-item ">
                     <a href="{{ route('users.index') }}"
                         class="nav-link {{ request()->routeIs('users.index') ? 'active' : '' }}">
-                        <p>Quản lý tài khoản</p>
+                        <p>{{ __('user.management_title') }}</p>
                     </a>
                 </li>
                 <li class="nav-item">
                     <a href="{{ route('roles.index') }}"
                         class="nav-link {{ request()->routeIs('roles.index') ? 'active' : '' }}">
-                        <p>Roles & Permissions</p>
+                        <p>{{ __('role.management_title') }}</p>
                     </a>
                 </li>
             </ul>
@@ -74,7 +74,7 @@
         <li class="nav-item menu-open {{ request()->routeIs('audit-logs.*') || request()->routeIs('settings.*') ? 'menu-is-opening ' : '' }}">
             <a href="#" class="nav-link">
                 <x-icon-setting class="nav-icon" />
-                <p>Hệ thống
+                <p>{{ __('header.system') }}
                     <x-icon-chevron-left class="right" />
                 </p>
             </a>
@@ -82,14 +82,14 @@
                 <li class="nav-item">
                     <a href="{{ route('audit-logs.index') }}"
                         class="nav-link {{ request()->routeIs('audit-logs.index') ? 'active' : '' }}">
-                        <p>Audit logs</p>
+                        <p>{{ __('audit.management_title') }}</p>
                     </a>
                 </li>
             </ul>
             <ul class="nav nav-treeview">
                 <li class="nav-item">
                     <a href="{{ route('settings.index') . '?tab=mail'}}" class="nav-link {{ request()->routeIs('settings.*') ? 'active' : '' }}">
-                        <p>Cài đặt chung</p>
+                        <p>{{ __('header.settings') }}</p>
                     </a>
                 </li>
             </ul>

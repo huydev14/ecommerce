@@ -1,31 +1,29 @@
 $(function () {
-    const routes = globalThis.ProductRoutes;
-    const i18n = globalThis.ProductI18n;
 
     function toastSuccess(description, statusCode) {
         fluentToast({
             type: 'success',
-            title: i18n.successTitle,
+            title: Lang.get('category.success_title'),
             description: description,
             subtitle: 'Code: ' + statusCode,
             actionType: 'close',
         });
     }
 
-    function openProductModal(url) {
+    function openCategoryModal(url) {
         ModalHelper.open('modal');
-        $('#product-modal-content').html(loadingHtml);
+        $('#category-modal-content').html(loadingHtml);
 
         $.get(url, function (html) {
-            $('#product-modal-content').html(html);
+            $('#category-modal-content').html(html);
         }).fail(function (xhr) {
-            $('#product-modal-content').html(loadingHtml);
-            console.error('Load product modal error:', xhr.status);
-            console.error('Load product modal error:', xhr.responseText);
+            $('#category-modal-content').html(loadingHtml);
+            console.error('Load category modal error:', xhr.status);
+            console.error('Load category modal error:', xhr.responseText);
         });
     }
 
-    function handleProductFormSubmit(formSelector) {
+    function handleCategoryFormSubmit(formSelector) {
         $(document).on('submit', formSelector, function (e) {
             e.preventDefault();
             let form = $(this);
@@ -34,7 +32,7 @@ $(function () {
 
             let originalBtnText = submitBtn.html();
             submitBtn
-                .html('<i class="fas fa-spinner fa-spin tw-mr-2"></i> ' + (i18n.saveLoading || 'Saving...'))
+                .html('<i class="fas fa-spinner fa-spin tw-mr-2"></i> ' + (Lang.get('category.save_loading') || 'Saving...'))
                 .prop('disabled', true);
 
             $.ajax({
@@ -46,7 +44,7 @@ $(function () {
                 success: function (res, textStatus, xhr) {
                     if (res.success) {
                         ModalHelper.close('modal');
-                        productTable.ajax.reload(null, false);
+                        categoryTable.ajax.reload(null, false);
                         toastSuccess(res.msg, xhr.status);
                     }
                 },
@@ -57,8 +55,8 @@ $(function () {
                         if (!Object.keys(errors).length) {
                             fluentToast({
                                 type: 'error',
-                                title: i18n.processFailedTitle || 'Process failed',
-                                description: i18n.processFailedDescription || 'Invalid data. Please check your inputs.',
+                                title: Lang.get('category.process_failed_title') || 'Process failed',
+                                description: Lang.get('category.process_failed_description') || 'Invalid data. Please check your inputs.',
                                 subtitle: 'Code: ' + ' ' + xhr.status,
                                 actionType: 'close',
                             });
@@ -68,7 +66,7 @@ $(function () {
                         let firstErrorMsg = Object.values(errors)[0][0];
                         fluentToast({
                             type: 'error',
-                            title: i18n.processFailedTitle,
+                            title: Lang.get('category.process_failed_title'),
                             description: firstErrorMsg,
                             subtitle: 'Code: ' + xhr.status,
                             actionType: 'close',
@@ -76,8 +74,8 @@ $(function () {
                     } else {
                         fluentToast({
                             type: 'error',
-                            title: i18n.systemErrorTitle,
-                            description: xhr.responseJSON?.msg || i18n.systemErrorDescription,
+                            title: Lang.get('category.system_error_title'),
+                            description: xhr.responseJSON?.msg || Lang.get('category.system_error_description'),
                             subtitle: 'Code: ' + ' ' + xhr.status,
                             actionType: 'close',
                         });
@@ -90,25 +88,25 @@ $(function () {
         });
     }
 
-    function attemptRestoreProduct(restoreUrl) {
+    function attemptRestoreCategory(restoreUrl) {
         $.ajax({
             type: 'POST',
             url: restoreUrl,
             success: function (res) {
-                productTable.ajax.reload(null, false);
+                categoryTable.ajax.reload(null, false);
 
                 fluentToast({
                     type: 'success',
-                    title: i18n.undoSuccessTitle,
-                    description: res.msg || i18n.undoSuccessDescription,
+                    title: Lang.get('category.undo_success_title'),
+                    description: res.msg || Lang.get('category.undo_success_description'),
                     actionType: 'close',
                 });
             },
             error: function (xhr) {
                 fluentToast({
                     type: 'error',
-                    title: i18n.restoreErrorTitle,
-                    description: xhr.responseJSON?.msg || i18n.restoreErrorDescription,
+                    title: Lang.get('category.restore_error_title'),
+                    description: xhr.responseJSON?.msg || Lang.get('category.restore_error_description'),
                     subtitle: 'Code: ' + ' ' + xhr.status,
                 });
                 console.error('Load error:', xhr.status);
@@ -117,18 +115,16 @@ $(function () {
         });
     }
 
-    globalThis.productTable = new DataTable('#productTable', {
+    globalThis.categoryTable = new DataTable('#categoryTable', {
         processing: true,
         serverSide: true,
         autoWidth: false,
         order: [[0, 'asc']],
         ajax: {
-            url: routes.data,
+            url: route('categories.data'),
             data: function (d) {
-                d.product_id = $('#f_productName').val() || '';
-                d.category_id = $('#f_category').val() || '';
-                d.brand_id = $('#f_brand').val() || '';
-                d.status = $('#f_status').val() || '';
+                d.category_id = $('#f_categoryName').val() || '';
+                d.is_active = $('#f_isActive').val() || '';
             },
         },
         columns: [
@@ -141,20 +137,18 @@ $(function () {
                 name: 'slug',
             },
             {
-                data: 'category_name',
-                name: 'category.name',
+                data: 'parent_name',
+                name: 'parent.name',
                 orderable: false,
                 searchable: false,
             },
             {
-                data: 'brand_name',
-                name: 'brand.name',
-                orderable: false,
-                searchable: false,
+                data: 'description',
+                name: 'description',
             },
             {
-                data: 'status',
-                name: 'status',
+                data: 'is_active',
+                name: 'is_active',
             },
             {
                 data: 'created_at',
@@ -182,38 +176,36 @@ $(function () {
     });
 
     $('#custom-search-input').on('keyup', function () {
-        productTable.search(this.value).draw();
+        categoryTable.search(this.value).draw();
     });
 
     $('#toggle-filter-btn').on('click', function () {
         $('#filter-panel').slideToggle('fast');
 
-        $('#f_productName, #f_category, #f_brand, #f_status').val('').trigger('change.select2');
-        productTable.ajax.reload();
+        $('#f_categoryName, #f_isActive').val('').trigger('change.select2');
+        categoryTable.ajax.reload();
     });
 
     $(document).on('change', '#filter-panel select', function () {
-        productTable.ajax.reload();
+        categoryTable.ajax.reload();
     });
 
-    $.getJSON(routes.filterData)
+    $.getJSON(route('categories.filter_data'))
         .done(function (res) {
-            renderOptions('#f_productName', res.products);
-            renderOptions('#f_category', res.categories);
-            renderOptions('#f_brand', res.brands);
-            renderOptions('#f_status', res.status);
+            renderOptions('#f_categoryName', res.categoryName);
+            renderOptions('#f_isActive', res.isActive);
         })
         .fail(function (xhr) {
             console.error('Load error:', xhr.status);
             console.error('Load error:', xhr.responseText);
         });
 
-    $(document).on('click', '#delete-product-btn', function () {
+    $(document).on('click', '#delete-category-btn', function () {
         let $btn = $(this);
         let deleteUrl = $btn.data('delete-url');
         let restoreUrl = $btn.data('restore-url');
 
-        if (!confirm(i18n.confirmDelete)) {
+        if (!confirm(Lang.get('category.confirm_delete'))) {
             return;
         }
 
@@ -223,18 +215,18 @@ $(function () {
             type: 'DELETE',
             url: deleteUrl,
             success: function (res) {
-                productTable.ajax.reload(null, false);
+                categoryTable.ajax.reload(null, false);
                 fluentToast({
                     type: 'info',
-                    title: i18n.deletingTitle,
-                    description: i18n.deletingDescription,
+                    title: Lang.get('category.delete_toast_title'),
+                    description: Lang.get('category.delete_description'),
                     subtitle: res.status,
                     actionType: 'close',
                     bottomActions: [
                         {
-                            text: i18n.undo,
+                            text: Lang.get('category.undo'),
                             onClick: function () {
-                                attemptRestoreProduct(restoreUrl);
+                                attemptRestoreCategory(restoreUrl);
                             },
                         },
                     ],
@@ -243,8 +235,8 @@ $(function () {
             error: function (xhr) {
                 fluentToast({
                     type: 'error',
-                    title: i18n.genericErrorTitle,
-                    description: xhr.responseJSON?.msg || i18n.genericErrorDescription,
+                    title: Lang.get('category.generic_error_title'),
+                    description: xhr.responseJSON?.msg || Lang.get('category.generic_error_description'),
                     subtitle: 'Code: ' + xhr.status,
                     actionType: 'close',
                 });
@@ -257,14 +249,14 @@ $(function () {
         });
     });
 
-    $(document).on('click', '#create-product', function () {
-        openProductModal(routes.create);
+    $(document).on('click', '#create-category', function () {
+        openCategoryModal(route('categories.create'));
     });
 
-    $(document).on('click', '#edit-product-btn', function () {
+    $(document).on('click', '#edit-category-btn', function () {
         let editUrl = $(this).data('edit-url');
-        openProductModal(editUrl);
+        openCategoryModal(editUrl);
     });
 
-    handleProductFormSubmit('#form-create-product, #form-edit-product');
+    handleCategoryFormSubmit('#form-create-category, #form-edit-category');
 });

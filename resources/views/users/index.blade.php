@@ -67,15 +67,5 @@
 @endsection
 
 @push('scripts')
-    <script>
-        window.UserRoutes = {
-            tableData: "{!! route('users.data') !!}",
-            filterOptions: "{!! route('users.filter_data') !!}",
-            teamsData: "{{ route('users.teams_data') }}",
-            slideCreate: "{{ route('users.create') }}",
-
-            showUser: "{{ route('users.show', ':id') }}"
-        };
-    </script>
-    <script src="{{ asset('js/pages/user.js') }}" defer></script>
+    @vite('resources/js/pages/user.js')
 @endpush

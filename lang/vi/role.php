@@ -1,0 +1,46 @@
+<?php
+
+return [
+    'check_all' => 'Chọn tất cả',
+    'uncheck_all' => 'Bỏ chọn tất cả',
+    'processing' => 'Đang xử lý...',
+
+    'process_failed_title' => 'Xử lý thất bại',
+    'process_failed_description' => 'Hãy kiểm tra lại các trường thông tin.',
+    
+    'success_title' => 'Thành công',
+    'success_description' => 'Dữ liệu đã được lưu vào hệ thống',
+    'system_error_title' => 'Lỗi hệ thống',
+    'system_error_description' => 'Đã có lỗi xảy ra, vui lòng thử lại!',
+    'undo' => 'Hoàn tác',
+    'generic_error_title' => 'Đã xảy ra lỗi!',
+    'generic_error_description' => 'Hãy thử lại sau',
+
+    'description' => 'Mô tả',
+    'role_description' => 'Mô tả vai trò',
+
+    'delete_confirm' => 'Bạn có chắc muốn xóa vai trò ":name" không?',
+    'assign_permissions' => 'Phân quyền',
+    'manage_permission_groups' => 'Quản lý các nhóm quyền hạn trong hệ thống',
+    'management_title' => 'Vai trò và Phân quyền',
+    'create_title' => 'Tạo mới vai trò và phân quyền',
+    'create_success' => 'Tạo mới vai trò thành công',
+    'delete_error' => 'Không thể xóa vai trò này',
+    'delete_title' => 'Xóa vai trò và phân quyền',
+    'delete_success' => 'Xoá vai trò thành công',
+    'edit_role' => 'Chỉnh sửa Vai trò',
+    'edit_title' => 'Chỉnh sửa vai trò và phân quyền',
+    'new_role' => 'Thêm Vai trò',
+    'no_description' => 'Chưa có mô tả cho vai trò này.',
+    'page_title' => 'Vai trò và Phân quyền',
+    'page_description' => 'Xem xét vai trò của các thành viên và cấp quyền hạn',
+    'permissions_description' => 'Quản lý các nhóm quyền hạn trong hệ thống',
+    'role_info' => 'Thông tin Vai trò',
+    'role_name' => 'Tên vai trò',
+    'role_name_placeholder' => 'VD: Quản trị viên, Nhân sự...',
+    'role_desc_placeholder' => 'Nhập mô tả cho vai trò...',
+    'permissions_list' => 'Danh sách Quyền hạn',
+    'update_success' => 'Cập nhật vai trò thành công',
+    'view_roles_permissions' => 'Xem vai trò và phân quyền',
+    'update_role_title' => 'Cập nhật thông tin và quyền hạn cho vai trò:',
+];

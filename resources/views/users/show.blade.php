@@ -11,13 +11,13 @@
                         class="tw-w-8 tw-h-8 tw-flex tw-items-center tw-justify-center tw-rounded-full hover:tw-bg-gray-200 tw-text-gray-600 tw-transition-colors">
                         <i class="fas fa-arrow-left"></i>
                     </a>
-                    <h1 class="tw-text-2xl tw-font-semibold tw-text-gray-900">Hồ sơ nhân sự</h1>
+                    <h1 class="tw-text-2xl tw-font-semibold tw-text-gray-900">{{ __('user.staff_profile') }}</h1>
                 </div>
 
                 <div class="tw-flex tw-gap-3">
                     <button type="button" class="fluent-btn-cancel edit-user-btn"
                         data-edit-url="{{ route('users.edit', $user->id) }}">
-                        <i class="fas fa-pen tw-mr-2"></i> Chỉnh sửa
+                        <i class="fas fa-pen tw-mr-2"></i> {{ __('actions.edit') }}
                     </button>
                 </div>
             </div>
@@ -49,18 +49,18 @@
                             </div>
 
                             <h2 class="tw-text-xl tw-font-bold tw-text-gray-900">{{ $user->name }}</h2>
-                            <p class="tw-text-sm tw-text-gray-500 tw-mt-1">{{ $user->role->name ?? 'Nhân viên' }}</p>
+                            <p class="tw-text-sm tw-text-gray-500 tw-mt-1">{{ $user->role->name ?? __('user.staff') }}</p>
 
                             <div class="tw-mt-4">
                                 @if ($user->status === 0)
                                     <span
                                         class="tw-inline-flex tw-items-center tw-px-3 tw-py-1 tw-rounded-full tw-text-xs tw-font-medium tw-bg-green-100 tw-text-green-800">
-                                        Đang làm việc
+                                        {{ __('user.active') }}
                                     </span>
                                 @else
                                     <span
                                         class="tw-inline-flex tw-items-center tw-px-3 tw-py-1 tw-rounded-full tw-text-xs tw-font-medium tw-bg-gray-100 tw-text-gray-800">
-                                        Đã nghỉ việc
+                                        {{ __('user.inactive') }}
                                     </span>
                                 @endif
                             </div>
@@ -68,7 +68,7 @@
 
                         <div class="tw-border-t tw-border-gray-100 tw-p-6">
                             <h3 class="tw-text-xs tw-font-semibold tw-text-gray-400 tw-uppercase tw-tracking-wider tw-mb-4">
-                                Liên hệ
+                                {{ __('user.contact') }}
                             </h3>
 
                             <div class="tw-space-y-4">
@@ -78,15 +78,15 @@
                                         <div class="tw-text-sm tw-font-medium tw-text-gray-900 break-all">
                                             {{ $user->email }}
                                         </div>
-                                        <div class="tw-text-xs tw-text-gray-500">Email công việc</div>
+                                        <div class="tw-text-xs tw-text-gray-500">{{ __('user.work_email') }}</div>
                                     </div>
                                 </div>
                                 <div class="tw-flex tw-items-start tw-gap-3">
                                     <i class="fas fa-phone-alt tw-text-gray-400 tw-mt-1 tw-w-5"></i>
                                     <div>
                                         <div class="tw-text-sm tw-font-medium tw-text-gray-900">
-                                            {{ $user->phone ?? 'Chưa cập nhật' }}</div>
-                                        <div class="tw-text-xs tw-text-gray-500">Số điện thoại</div>
+                                            {{ $user->phone ?? __('user.not_updated') }}</div>
+                                        <div class="tw-text-xs tw-text-gray-500">{{ __('user.phone_number') }}</div>
                                     </div>
                                 </div>
                             </div>
@@ -94,7 +94,7 @@
 
                         <div class="tw-border-t tw-border-gray-100 tw-p-6">
                             <h3 class="tw-text-xs tw-font-semibold tw-text-gray-400 tw-uppercase tw-tracking-wider tw-mb-4">
-                                Người quản lý trực tiếp
+                                {{ __('user.direct_manager') }}
                             </h3>
 
                             <div
@@ -120,11 +120,11 @@
                             <nav class="tw--mb-px tw-flex tw-space-x-8" aria-label="Tabs">
                                 @php
                                     $tabs = [
-                                        'tab-overview' => 'Tổng quan',
-                                        'tab-work' => 'Công tác',
-                                        'tab-timeline' => 'Lộ trình',
-                                        'tab-activity' => 'Activity Logs',
-                                        'tab-documents' => 'Tài liệu & Hợp đồng',
+                                        'tab-overview' => __('user.tab_overview'),
+                                        'tab-work' => __('user.tab_work'),
+                                        'tab-timeline' => __('user.tab_timeline'),
+                                        'tab-activity' => __('user.tab_activity'),
+                                        'tab-documents' => __('user.tab_documents'),
                                     ];
                                 @endphp
                                 @foreach ($tabs as $id => $title)
@@ -152,7 +152,7 @@
     </div>
 
     {{-- Panel: Edit user --}}
-    <x-slide-over id="slideover-edit-user" title="Cập nhật thông tin nhân viên">
+    <x-slide-over id="slideover-edit-user" title="{{ __('user.update_staff_info') }}">
         <div id="content-edit" class="tw-flex tw-flex-col tw-flex-1 tw-min-h-0"></div>
     </x-slide-over>
 @endsection

@@ -1,0 +1,46 @@
+<?php
+
+return [
+    'check_all' => 'Check all',
+    'uncheck_all' => 'Uncheck all',
+    'processing' => 'Processing...',
+
+    'process_failed_title' => 'Process failed',
+    'process_failed_description' => 'Please check the information fields.',
+    
+    'success_title' => 'Success',
+    'success_description' => 'Data has been saved to the system',
+    'system_error_title' => 'System error',
+    'system_error_description' => 'An error has occurred, please try again!',
+    'undo' => 'Undo',
+    'generic_error_title' => 'Something went wrong!',
+    'generic_error_description' => 'Please try again later',
+
+    'description' => 'Description',
+    'role_description' => 'Role description',
+
+    'delete_confirm' => 'Are you sure you want to delete role ":name"?',
+    'assign_permissions' => 'Assign Permissions',
+    'manage_permission_groups' => 'Manage system permission groups',
+    'management_title' => 'Roles and Permissions',
+    'create_title' => 'Create Roles and Permissions',
+    'create_success' => 'Create role successfully',
+    'delete_error' => 'Could not delete this role',
+    'delete_title' => 'Delete Roles and Permissions',
+    'delete_success' => 'Delete role successfully',
+    'edit_role' => 'Edit Role',
+    'edit_title' => 'Edit Roles and Permissions',
+    'new_role' => 'New Role',
+    'no_description' => 'No description for this role.',
+    'page_title' => 'Roles and Permissions',
+    'page_description' => 'Review your members roles and allocate permissions',
+    'permissions_description' => 'Manage system permission groups',
+    'role_info' => 'Role Information',
+    'role_name' => 'Role Name',
+    'role_name_placeholder' => 'e.g. Administrator, HR...',
+    'role_desc_placeholder' => 'Enter role description...',
+    'permissions_list' => 'Permissions List',
+    'update_success' => 'Update role successfully',
+    'view_roles_permissions' => 'View Roles and Permissions',
+    'update_role_title' => 'Update information and permissions for role:',
+];

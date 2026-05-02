@@ -12,12 +12,12 @@
 
                 <div class="tw-grid tw-grid-cols-1 md:tw-grid-cols-3 tw-gap-x-8 tw-gap-y-4">
                     <div class="tw-flex tw-flex-col tw-gap-1">
-                        <x-label-small for="f_categoryName">{{ __('category.filter.category') }}</x-label-small>
-                        <x-filter-select id="f_categoryName" :placeholder="__('category.filter.placeholder')" />
+                        <x-label-small for="f_categoryName">{{ __('category.category') }}</x-label-small>
+                        <x-filter-select id="f_categoryName" :placeholder="__('category.placeholder')" />
                     </div>
                     <div class="tw-flex tw-flex-col tw-gap-1">
-                        <x-label-small for="f_isActive">{{ __('category.filter.status') }}</x-label-small>
-                        <x-filter-select id="f_isActive" :placeholder="__('category.filter.placeholder')" />
+                        <x-label-small for="f_isActive">{{ __('category.status') }}</x-label-small>
+                        <x-filter-select id="f_isActive" :placeholder="__('category.placeholder')" />
                     </div>
                 </div>
             </div>
@@ -27,15 +27,15 @@
             <table id="categoryTable" class="display table table-hover text-nowrap" style="width: 100%;">
                 <thead>
                     <tr>
-                        <th>{{ __('category.table.name') }}</th>
-                        <th>{{ __('category.table.slug') }}</th>
-                        <th>{{ __('category.table.parent') }}</th>
-                        <th>{{ __('category.table.description') }}</th>
-                        <th>{{ __('category.table.status') }}</th>
-                        <th>{{ __('category.table.created_at') }}</th>
-                        <th>{{ __('category.table.updated_at') }}</th>
+                        <th>{{ __('category.name') }}</th>
+                        <th>{{ __('category.slug') }}</th>
+                        <th>{{ __('category.parent') }}</th>
+                        <th>{{ __('category.description') }}</th>
+                        <th>{{ __('category.status') }}</th>
+                        <th>{{ __('category.created_at') }}</th>
+                        <th>{{ __('category.updated_at') }}</th>
                         <th>
-                            <div class="tw-text-center">{{ __('category.table.action') }}</div>
+                            <div class="tw-text-center">{{ __('category.action') }}</div>
                         </th>
                     </tr>
                 </thead>
@@ -48,41 +48,15 @@
     </x-modal>
 
     @push('scripts')
-        <script src="{{ asset('js/pages/category.js') }}"></script>
+        @vite('resources/js/pages/category.js')
         <script>
-            window.CategoryRoutes = {
-                data: "{{ route('categories.data') }}",
-                filterData: "{{ route('categories.filter_data') }}",
-                create: "{{ route('categories.create') }}",
-            };
-
-            window.CategoryI18n = {
-                confirmDelete: @json(__('category.js.confirm_delete')),
-                deletingTitle: @json(__('category.js.toast.delete_title')),
-                deletingDescription: @json(__('category.js.toast.delete_description')),
-                undo: @json(__('category.js.undo')),
-                undoSuccessTitle: @json(__('category.js.toast.undo_success_title')),
-                undoSuccessDescription: @json(__('category.js.toast.undo_success_description')),
-                restoreErrorTitle: @json(__('category.js.toast.restore_error_title')),
-                restoreErrorDescription: @json(__('category.js.toast.restore_error_description')),
-                genericErrorTitle: @json(__('category.js.toast.generic_error_title')),
-                genericErrorDescription: @json(__('category.js.toast.generic_error_description')),
-                saveLoading: @json(__('category.js.save_loading')),
-                processFailedTitle: @json(__('category.js.toast.process_failed_title')),
-                processFailedDescription: @json(__('category.js.toast.process_failed_description')),
-                systemErrorTitle: @json(__('category.js.toast.system_error_title')),
-                systemErrorDescription: @json(__('category.js.toast.system_error_description')),
-                codePrefix: @json(__('category.js.code_prefix')),
-                successTitle: @json(__('category.js.toast.success_title')),
-            };
-
             $(function() {
                 @if (session('success'))
                     fluentToast({
                         type: 'success',
-                        title: @json(__('category.js.toast.success_title')),
+                        title: Lang.get('category.success_title'),
                         description: "{{ session('success') }}",
-                        subtitle: @json(__('category.js.code_prefix')) + ' 200',
+                        subtitle: Lang.get('category.code_prefix') + ' 200',
                         actionType: 'close',
                     });
                 @endif

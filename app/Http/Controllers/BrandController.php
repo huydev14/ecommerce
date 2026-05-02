@@ -28,13 +28,13 @@ class BrandController extends Controller
                         $url = asset('storage/' . $brand->logo);
                         return '<img src="' . $url . '" alt="' . $brand->name . '" class="tw-h-8 tw-w-auto tw-object-contain tw-rounded">';
                     }
-                    return '<span class="tw-text-gray-400 tw-italic tw-text-sm">' . __('brand.table.no_logo') . '</span>';
+                    return '<span class="tw-text-gray-400 tw-italic tw-text-sm">' . __('brand.no_logo') . '</span>';
                 })
                 ->editColumn('is_active', function ($brand) {
                     if ($brand->is_active) {
-                        return '<span class="tw-px-2 tw-py-1 tw-bg-green-100 tw-text-green-700 tw-text-xs tw-font-medium tw-rounded-full">' . __('brand.status.active') . '</span>';
+                        return '<span class="tw-px-2 tw-py-1 tw-bg-green-100 tw-text-green-700 tw-text-xs tw-font-medium tw-rounded-full">' . __('brand.active') . '</span>';
                     }
-                    return '<span class="tw-px-2 tw-py-1 tw-bg-gray-100 tw-text-gray-600 tw-text-xs tw-font-medium tw-rounded-full">' . __('brand.status.hidden') . '</span>';
+                    return '<span class="tw-px-2 tw-py-1 tw-bg-gray-100 tw-text-gray-600 tw-text-xs tw-font-medium tw-rounded-full">' . __('brand.hidden') . '</span>';
                 })
 
                 ->editColumn('created_at', function ($brand) {
@@ -54,8 +54,8 @@ class BrandController extends Controller
     public function getFilterData(Request $request)
     {
         $isActive = collect([
-            ['id' => 1, 'text' => __('brand.status.active')],
-            ['id' => 0, 'text' => __('brand.status.inactive')],
+            ['id' => 1, 'text' => __('brand.active')],
+            ['id' => 0, 'text' => __('brand.inactive')],
         ]);
         $brandNames = Brand::select('id', 'name as text')->orderBy('name')->get();
 
@@ -77,9 +77,9 @@ class BrandController extends Controller
             'website' => 'nullable|url|max:255',
             'logo' => 'nullable|image|mimes:jpeg,png,jpg,webp|max:2048',
         ], [
-            'name.required' => __('brand.validation.name_required'),
-            'name.unique' => __('brand.validation.name_unique'),
-            'logo.max' => __('brand.validation.logo_max'),
+            'name.required' => __('brand.name_required'),
+            'name.unique' => __('brand.name_unique'),
+            'logo.max' => __('brand.logo_max'),
         ]);
 
         $logoPath = null;
@@ -96,14 +96,14 @@ class BrandController extends Controller
             ]);
 
             if ($request->ajax()) {
-                session()->flash('success', __('brand.messages.create_success'));
+                session()->flash('success', __('brand.create_success'));
 
                 return response()->json([
                     'success' => true,
-                    'msg' => __('brand.messages.create_success'),
+                    'msg' => __('brand.create_success'),
                 ], 200);
             }
-            return redirect()->route('brands.index')->with('success', __('brand.messages.create_success'));
+            return redirect()->route('brands.index')->with('success', __('brand.create_success'));
         } catch (Exception $e) {
             if ($logoPath) {
                 Storage::disk('public')->delete($logoPath);
@@ -114,7 +114,7 @@ class BrandController extends Controller
             ]);
             return response()->json([
                 'status' => 'error',
-                'msg' => __('brand.messages.system_error')
+                'msg' => __('brand.system_error')
             ], 500);
         }
     }
@@ -131,9 +131,9 @@ class BrandController extends Controller
             'website' => 'nullable|url|max:255',
             'logo' => 'nullable|image|mimes:jpeg,png,jpg,webp|max:2048',
         ], [
-            'name.required' => __('brand.validation.name_required'),
-            'name.unique' => __('brand.validation.name_unique'),
-            'logo.max' => __('brand.validation.logo_max'),
+            'name.required' => __('brand.name_required'),
+            'name.unique' => __('brand.name_unique'),
+            'logo.max' => __('brand.logo_max'),
         ]);
 
         $oldLogoPath = $brand->logo;
@@ -158,7 +158,7 @@ class BrandController extends Controller
 
             return response()->json([
                 'success' => true,
-                'msg' => __('brand.messages.update_success'),
+                'msg' => __('brand.update_success'),
             ], 200);
         } catch (Exception $e) {
             if ($request->hasFile('logo') && $newLogoPath && $newLogoPath !== $oldLogoPath) {
@@ -184,7 +184,7 @@ class BrandController extends Controller
             return response()->json([
                 'success' => true,
                 'status' => 200,
-                'msg' => __('brand.messages.delete_success'),
+                'msg' => __('brand.delete_success'),
             ]);
         } catch (Exception $e) {
             Log::error('Delete brand failed: ' . $e->getMessage(), [
@@ -206,7 +206,7 @@ class BrandController extends Controller
 
             return response()->json([
                 'success' => true,
-                'msg' => __('brand.messages.restore_success'),
+                'msg' => __('brand.restore_success'),
             ]);
         } catch (Exception $e) {
             Log::error('Restore brand failed: ' . $e->getMessage(), [
@@ -215,7 +215,7 @@ class BrandController extends Controller
 
             return response()->json([
                 'success' => false,
-                'msg' => __('brand.messages.restore_error'),
+                'msg' => __('brand.restore_error'),
             ], 500);
         }
     }

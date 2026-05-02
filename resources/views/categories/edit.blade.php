@@ -5,14 +5,14 @@
 
     <div class="tw-flex tw-items-center tw-justify-between tw-px-6 tw-py-4 tw-border-b tw-border-gray-100 tw-bg-white">
         <div>
-            <h3 class="tw-text-lg tw-font-semibold tw-text-gray-900 tw-tracking-tight">{{ __('category.modal.edit_title') }}</h3>
-            <p class="tw-text-sm tw-text-gray-500 tw-mt-0.5">{{ __('category.modal.edit_subtitle') }}</p>
+            <h3 class="tw-text-lg tw-font-semibold tw-text-gray-900 tw-tracking-tight">{{ __('category.edit_title') }}</h3>
+            <p class="tw-text-sm tw-text-gray-500 tw-mt-0.5">{{ __('category.edit_subtitle') }}</p>
         </div>
 
         <div>
             <button type="submit" id="submit-edit-category"
                 class="tw-bg-[#0078D4] tw-border tw-border-transparent tw-px-4 tw-py-1.5 tw-text-sm tw-font-medium tw-text-white hover:tw-bg-[#106ebe] tw-transition-colors tw-rounded-sm shadow-sm">
-                {{ __('category.modal.save_edit') }}
+                {{ __('category.save_edit') }}
             </button>
         </div>
     </div>
@@ -20,27 +20,27 @@
     <div class="tw-px-6 tw-py-5 tw-bg-white tw-overflow-y-auto tw-flex-1 tw-space-y-5">
         <div>
             <label for="name" class="tw-block tw-text-sm tw-font-medium tw-text-gray-700 tw-mb-1.5">
-                {{ __('category.form.name') }} <span class="tw-text-red-500">*</span>
+                {{ __('category.category_name') }} <span class="tw-text-red-500">*</span>
             </label>
             <input type="text" name="name" id="name" required value="{{ $category->name }}"
-                placeholder="{{ __('category.form.name_placeholder') }}"
+                placeholder="{{ __('category.name_placeholder') }}"
                 class="tw-w-full tw-rounded-md tw-border-gray-300 tw-shadow-sm focus:tw-border-[#0078D4] focus:tw-ring-[#0078D4] tw-text-sm tw-px-3 tw-py-2 tw-transition-colors tw-outline-none">
         </div>
 
         <div>
             <label for="description" class="tw-block tw-text-sm tw-font-medium tw-text-gray-700 tw-mb-1.5">
-                {{ __('category.form.description') }} <span class="tw-text-red-500">*</span>
+                {{ __('category.description') }} <span class="tw-text-red-500">*</span>
             </label>
-            <textarea name="description" id="description" rows="3" required placeholder="{{ __('category.form.description_placeholder') }}"
+            <textarea name="description" id="description" rows="3" required placeholder="{{ __('category.description_placeholder') }}"
                 class="tw-w-full tw-rounded-md tw-border-gray-300 tw-shadow-sm focus:tw-border-[#0078D4] focus:tw-ring-[#0078D4] tw-text-sm tw-px-3 tw-py-2 tw-transition-colors tw-outline-none">{{ $category->description }}</textarea>
         </div>
 
         <div class="tw-grid tw-grid-cols-1 md:tw-grid-cols-2 tw-gap-4">
             <div>
-                <label for="parent_id" class="tw-block tw-text-sm tw-font-medium tw-text-gray-700 tw-mb-1.5">{{ __('category.form.parent') }}</label>
+                <label for="parent_id" class="tw-block tw-text-sm tw-font-medium tw-text-gray-700 tw-mb-1.5">{{ __('category.parent') }}</label>
                 <select name="parent_id" id="parent_id"
                     class="tw-w-full tw-rounded-md tw-border-gray-300 tw-shadow-sm focus:tw-border-[#0078D4] focus:tw-ring-[#0078D4] tw-text-sm tw-px-3 tw-py-2 tw-transition-colors tw-outline-none">
-                    <option value="">{{ __('category.form.parent_none') }}</option>
+                    <option value="">{{ __('category.parent_none') }}</option>
                     @foreach ($parents as $parent)
                         <option value="{{ $parent->id }}" @selected($category->parent_id == $parent->id)>{{ $parent->name }}</option>
                     @endforeach
@@ -48,7 +48,7 @@
             </div>
 
             <div>
-                <label for="order" class="tw-block tw-text-sm tw-font-medium tw-text-gray-700 tw-mb-1.5">{{ __('category.form.order') }}</label>
+                <label for="order" class="tw-block tw-text-sm tw-font-medium tw-text-gray-700 tw-mb-1.5">{{ __('category.order') }}</label>
                 <input type="number" min="0" name="order" id="order" value="{{ $category->order }}"
                     class="tw-w-full tw-rounded-md tw-border-gray-300 tw-shadow-sm focus:tw-border-[#0078D4] focus:tw-ring-[#0078D4] tw-text-sm tw-px-3 tw-py-2 tw-transition-colors tw-outline-none">
             </div>
@@ -57,8 +57,8 @@
         <div class="tw-flex tw-items-center tw-gap-4">
             <x-switch name="is_active" value="0" :checked="$category->is_active" />
             <div>
-                <label for="is_active" class="tw-text-sm tw-font-medium tw-text-gray-800">{{ __('category.form.active_label') }}</label>
-                <p class="tw-text-xs tw-text-gray-500 tw-mt-0.5">{{ __('category.form.active_hint') }}</p>
+                <label for="is_active" class="tw-text-sm tw-font-medium tw-text-gray-800">{{ __('category.active_label') }}</label>
+                <p class="tw-text-xs tw-text-gray-500 tw-mt-0.5">{{ __('category.active_hint') }}</p>
             </div>
         </div>
     </div>

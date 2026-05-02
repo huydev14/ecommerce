@@ -11,11 +11,11 @@
 
                 <div class="tw-grid tw-grid-cols-1 md:tw-grid-cols-3 tw-gap-x-8 tw-gap-y-4">
                     <div class="tw-flex tw-flex-col tw-gap-1">
-                        <x-label-small for="f_logName">Phân hệ</x-label-small>
+                        <x-label-small for="f_logName">{{ __('audit.module') }}</x-label-small>
                         <x-filter-select id="f_logName" />
                     </div>
                     <div class="tw-flex tw-flex-col tw-gap-1">
-                        <x-label-small for="f_causer">Actor / Causer</x-label-small>
+                        <x-label-small for="f_causer">{{ __('audit.actor') }}</x-label-small>
                         <x-filter-select id="f_causer" />
                     </div>
                 </div>
@@ -26,13 +26,13 @@
             <table id="audit-log-table" class="display table table-hover text-nowrap" style="width: 100%;">
                 <thead>
                     <tr>
-                        <th>Thời gian</th>
-                        <th>Actor / Causer</th>
-                        <th>Description</th>
-                        <th>Target</th>
-                        <th>Phân hệ</th>
-                        <th>IP Address</th>
-                        <th>Details</th>
+                        <th>{{ __('audit.time') }}</th>
+                        <th>{{ __('audit.actor') }}</th>
+                        <th>{{ __('audit.description') }}</th>
+                        <th>{{ __('audit.target') }}</th>
+                        <th>{{ __('audit.module') }}</th>
+                        <th>{{ __('audit.ip_address') }}</th>
+                        <th>{{ __('audit.details') }}</th>
                     </tr>
                 </thead>
             </table>
@@ -93,7 +93,7 @@
                                 return `
                                 <button class="view-log-btn tw-text-blue-600 hover:tw-text-blue-800 tw-font-medium"
                                 data-show-url="${url}">
-                                    Xem chi tiết
+                                    {{ __('audit.view_details') }}
                                 </button>`;
                             }
                         },

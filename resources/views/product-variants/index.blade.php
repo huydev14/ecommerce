@@ -12,12 +12,12 @@
 
                 <div class="tw-grid tw-grid-cols-1 md:tw-grid-cols-3 tw-gap-x-8 tw-gap-y-4">
                     <div class="tw-flex tw-flex-col tw-gap-1">
-                        <x-label-small for="f_product">{{ __('product_variant.filter.product') }}</x-label-small>
-                        <x-filter-select id="f_product" :placeholder="__('product_variant.filter.placeholder')" />
+                        <x-label-small for="f_product">{{ __('product_variant.product') }}</x-label-small>
+                        <x-filter-select id="f_product" :placeholder="__('product_variant.placeholder')" />
                     </div>
                     <div class="tw-flex tw-flex-col tw-gap-1">
-                        <x-label-small for="f_isActive">{{ __('product_variant.filter.status') }}</x-label-small>
-                        <x-filter-select id="f_isActive" :placeholder="__('product_variant.filter.placeholder')" />
+                        <x-label-small for="f_isActive">{{ __('product_variant.status') }}</x-label-small>
+                        <x-filter-select id="f_isActive" :placeholder="__('product_variant.placeholder')" />
                     </div>
                 </div>
             </div>
@@ -27,17 +27,17 @@
             <table id="productVariantTable" class="display table table-hover text-nowrap" style="width: 100%;">
                 <thead>
                     <tr>
-                        <th>{{ __('product_variant.table.product') }}</th>
-                        <th>{{ __('product_variant.table.sku') }}</th>
-                        <th>{{ __('product_variant.table.barcode') }}</th>
-                        <th>{{ __('product_variant.table.price') }}</th>
-                        <th>{{ __('product_variant.table.compare_at_price') }}</th>
-                        <th>{{ __('product_variant.table.cost_price') }}</th>
-                        <th>{{ __('product_variant.table.position') }}</th>
-                        <th>{{ __('product_variant.table.status') }}</th>
-                        <th>{{ __('product_variant.table.updated_at') }}</th>
+                        <th>{{ __('product_variant.product') }}</th>
+                        <th>{{ __('product_variant.sku') }}</th>
+                        <th>{{ __('product_variant.barcode') }}</th>
+                        <th>{{ __('product_variant.price') }}</th>
+                        <th>{{ __('product_variant.compare_at_price') }}</th>
+                        <th>{{ __('product_variant.cost_price') }}</th>
+                        <th>{{ __('product_variant.position') }}</th>
+                        <th>{{ __('product_variant.status') }}</th>
+                        <th>{{ __('product_variant.updated_at') }}</th>
                         <th>
-                            <div class="tw-text-center">{{ __('product_variant.table.action') }}</div>
+                            <div class="tw-text-center">{{ __('product_variant.action') }}</div>
                         </th>
                     </tr>
                 </thead>
@@ -50,41 +50,15 @@
     </x-modal>
 
     @push('scripts')
-        <script src="{{ asset('js/pages/product-variant.js') }}"></script>
+        @vite('resources/js/pages/product-variant.js')
         <script>
-            window.ProductVariantRoutes = {
-                data: "{{ route('product-variants.data') }}",
-                filterData: "{{ route('product-variants.filter_data') }}",
-                create: "{{ route('product-variants.create') }}",
-            };
-
-            window.ProductVariantI18n = {
-                confirmDelete: @json(__('product_variant.js.confirm_delete')),
-                deletingTitle: @json(__('product_variant.js.toast.delete_title')),
-                deletingDescription: @json(__('product_variant.js.toast.delete_description')),
-                undo: @json(__('product_variant.js.undo')),
-                undoSuccessTitle: @json(__('product_variant.js.toast.undo_success_title')),
-                undoSuccessDescription: @json(__('product_variant.js.toast.undo_success_description')),
-                restoreErrorTitle: @json(__('product_variant.js.toast.restore_error_title')),
-                restoreErrorDescription: @json(__('product_variant.js.toast.restore_error_description')),
-                genericErrorTitle: @json(__('product_variant.js.toast.generic_error_title')),
-                genericErrorDescription: @json(__('product_variant.js.toast.generic_error_description')),
-                saveLoading: @json(__('product_variant.js.save_loading')),
-                processFailedTitle: @json(__('product_variant.js.toast.process_failed_title')),
-                processFailedDescription: @json(__('product_variant.js.toast.process_failed_description')),
-                systemErrorTitle: @json(__('product_variant.js.toast.system_error_title')),
-                systemErrorDescription: @json(__('product_variant.js.toast.system_error_description')),
-                codePrefix: @json(__('product_variant.js.code_prefix')),
-                successTitle: @json(__('product_variant.js.toast.success_title')),
-            };
-
             $(function() {
                 @if (session('success'))
                     fluentToast({
                         type: 'success',
-                        title: @json(__('product_variant.js.toast.success_title')),
+                        title: Lang.get('product_variant.success_title'),
                         description: "{{ session('success') }}",
-                        subtitle: @json(__('product_variant.js.code_prefix')) + ' 200',
+                        subtitle: Lang.get('product_variant.code_prefix') + ' 200',
                         actionType: 'close',
                     });
                 @endif

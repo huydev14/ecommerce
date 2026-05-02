@@ -1,31 +1,29 @@
 $(function () {
-    const routes = globalThis.BrandRoutes;
-    const i18n = globalThis.BrandI18n;
 
     function toastSuccess(description, statusCode) {
         fluentToast({
             type: 'success',
-            title: i18n.successTitle,
+            title: Lang.get('product_variant.success_title'),
             description: description,
             subtitle: 'Code: ' + statusCode,
             actionType: 'close',
         });
     }
 
-    function openBrandModal(url) {
+    function openProductVariantModal(url) {
         ModalHelper.open('modal');
-        $('#brand-modal-content').html(loadingHtml);
+        $('#product-variant-modal-content').html(loadingHtml);
 
         $.get(url, function (html) {
-            $('#brand-modal-content').html(html);
+            $('#product-variant-modal-content').html(html);
         }).fail(function (xhr) {
-            $('#brand-modal-content').html(loadingHtml);
-            console.error('Load brand modal error:', xhr.status);
-            console.error('Load brand modal error:', xhr.responseText);
+            $('#product-variant-modal-content').html(loadingHtml);
+            console.error('Load product variant modal error:', xhr.status);
+            console.error('Load product variant modal error:', xhr.responseText);
         });
     }
 
-    function handleBrandFormSubmit(formSelector) {
+    function handleProductVariantFormSubmit(formSelector) {
         $(document).on('submit', formSelector, function (e) {
             e.preventDefault();
             let form = $(this);
@@ -34,7 +32,7 @@ $(function () {
 
             let originalBtnText = submitBtn.html();
             submitBtn
-                .html('<i class="fas fa-spinner fa-spin tw-mr-2"></i> ' + (i18n.saveLoading || 'Saving...'))
+                .html('<i class="fas fa-spinner fa-spin tw-mr-2"></i> ' + (Lang.get('product_variant.save_loading') || 'Saving...'))
                 .prop('disabled', true);
 
             $.ajax({
@@ -46,7 +44,7 @@ $(function () {
                 success: function (res, textStatus, xhr) {
                     if (res.success) {
                         ModalHelper.close('modal');
-                        brandTable.ajax.reload(null, false);
+                        productVariantTable.ajax.reload(null, false);
                         toastSuccess(res.msg, xhr.status);
                     }
                 },
@@ -57,8 +55,8 @@ $(function () {
                         if (!Object.keys(errors).length) {
                             fluentToast({
                                 type: 'error',
-                                title: i18n.processFailedTitle || 'Process failed',
-                                description: i18n.processFailedDescription || 'Invalid data. Please check your inputs.',
+                                title: Lang.get('product_variant.process_failed_title') || 'Process failed',
+                                description: Lang.get('product_variant.process_failed_description') || 'Invalid data. Please check your inputs.',
                                 subtitle: 'Code: ' + ' ' + xhr.status,
                                 actionType: 'close',
                             });
@@ -68,7 +66,7 @@ $(function () {
                         let firstErrorMsg = Object.values(errors)[0][0];
                         fluentToast({
                             type: 'error',
-                            title: i18n.processFailedTitle,
+                            title: Lang.get('product_variant.process_failed_title'),
                             description: firstErrorMsg,
                             subtitle: 'Code: ' + xhr.status,
                             actionType: 'close',
@@ -76,8 +74,8 @@ $(function () {
                     } else {
                         fluentToast({
                             type: 'error',
-                            title: i18n.systemErrorTitle,
-                            description: xhr.responseJSON?.msg || i18n.systemErrorDescription,
+                            title: Lang.get('product_variant.system_error_title'),
+                            description: xhr.responseJSON?.msg || Lang.get('product_variant.system_error_description'),
                             subtitle: 'Code: ' + ' ' + xhr.status,
                             actionType: 'close',
                         });
@@ -90,25 +88,25 @@ $(function () {
         });
     }
 
-    function attemptRestoreBrand(restoreUrl) {
+    function attemptRestoreProductVariant(restoreUrl) {
         $.ajax({
             type: 'POST',
             url: restoreUrl,
             success: function (res) {
-                brandTable.ajax.reload(null, false);
+                productVariantTable.ajax.reload(null, false);
 
                 fluentToast({
                     type: 'success',
-                    title: i18n.undoSuccessTitle,
-                    description: res.msg || i18n.undoSuccessDescription,
+                    title: Lang.get('product_variant.undo_success_title'),
+                    description: res.msg || Lang.get('product_variant.undo_success_description'),
                     actionType: 'close',
                 });
             },
             error: function (xhr) {
                 fluentToast({
                     type: 'error',
-                    title: i18n.restoreErrorTitle,
-                    description: xhr.responseJSON?.msg || i18n.restoreErrorDescription,
+                    title: Lang.get('product_variant.restore_error_title'),
+                    description: xhr.responseJSON?.msg || Lang.get('product_variant.restore_error_description'),
                     subtitle: 'Code: ' + ' ' + xhr.status,
                 });
                 console.error('Load error:', xhr.status);
@@ -117,43 +115,52 @@ $(function () {
         });
     }
 
-    // ---- RENDER TABLE --------------------------
-    globalThis.brandTable = new DataTable('#brandTable', {
+    globalThis.productVariantTable = new DataTable('#productVariantTable', {
         processing: true,
         serverSide: true,
         autoWidth: false,
-        order: [[3, 'desc']],
+        order: [[8, 'desc']],
         ajax: {
-            url: routes.data,
+            url: route('product-variants.data'),
             data: function (d) {
-                d.status = $('#f_brandName').val() || '';
-                d.department_id = $('#f_isActive').val() || '';
+                d.product_id = $('#f_product').val() || '';
+                d.is_active = $('#f_isActive').val() || '';
             },
         },
         columns: [
             {
-                data: 'name',
-                name: 'name',
+                data: 'product_name',
+                name: 'product.name',
+                orderable: false,
+                searchable: false,
             },
             {
-                data: 'slug',
-                name: 'slug',
+                data: 'sku',
+                name: 'sku',
             },
             {
-                data: 'logo',
-                name: 'logo',
+                data: 'barcode',
+                name: 'barcode',
             },
             {
-                data: 'website',
-                name: 'website',
+                data: 'price',
+                name: 'price',
+            },
+            {
+                data: 'compare_at_price',
+                name: 'compare_at_price',
+            },
+            {
+                data: 'cost_price',
+                name: 'cost_price',
+            },
+            {
+                data: 'position',
+                name: 'position',
             },
             {
                 data: 'is_active',
                 name: 'is_active',
-            },
-            {
-                data: 'created_at',
-                name: 'created_at',
             },
             {
                 data: 'updated_at',
@@ -167,18 +174,6 @@ $(function () {
                 className: 'tw-text-center',
             },
         ],
-        createdRow: function (row, data) {
-            let url = '/brands/show/' + data.id;
-
-            $(row)
-                .css('cursor', 'pointer')
-                .on('click', function (e) {
-                    if ($(e.target).closest('button').length > 0) {
-                        return;
-                    }
-                    globalThis.location.href = url;
-                });
-        },
 
         layout: {
             topStart: null,
@@ -187,41 +182,38 @@ $(function () {
             bottomEnd: 'paging',
         },
     });
+
     $('#custom-search-input').on('keyup', function () {
-        brandTable.search(this.value).draw();
+        productVariantTable.search(this.value).draw();
     });
 
-    // ---- FILTER PANEL TOGGLE ---------------------------
     $('#toggle-filter-btn').on('click', function () {
         $('#filter-panel').slideToggle('fast');
 
-        // Reset filter
-        $('#f_brandName, #f_isActive').val('').trigger('change.select2');
-        brandTable.ajax.reload();
+        $('#f_product, #f_isActive').val('').trigger('change.select2');
+        productVariantTable.ajax.reload();
     });
 
     $(document).on('change', '#filter-panel select', function () {
-        brandTable.ajax.reload();
+        productVariantTable.ajax.reload();
     });
 
-    // ---- RENDER OPTIONS FOR SELECT FIELDs ----------------
-    $.getJSON(routes.filterData)
+    $.getJSON(route('product-variants.filter_data'))
         .done(function (res) {
-            renderOptions('#f_brandName', res.brandName);
-            renderOptions('#f_isActive', res.isActive);
+            renderOptions('#f_product', res.products);
+            renderOptions('#f_isActive', res.status);
         })
         .fail(function (xhr) {
             console.error('Load error:', xhr.status);
             console.error('Load error:', xhr.responseText);
         });
 
-    // ---- Delete brand ------------------------
-    $(document).on('click', '#delete-brand-btn', function () {
+    $(document).on('click', '#delete-product-variant-btn', function () {
         let $btn = $(this);
         let deleteUrl = $btn.data('delete-url');
         let restoreUrl = $btn.data('restore-url');
 
-        if (!confirm(i18n.confirmDelete)) {
+        if (!confirm(Lang.get('product_variant.confirm_delete'))) {
             return;
         }
 
@@ -231,18 +223,18 @@ $(function () {
             type: 'DELETE',
             url: deleteUrl,
             success: function (res) {
-                brandTable.ajax.reload(null, false);
+                productVariantTable.ajax.reload(null, false);
                 fluentToast({
                     type: 'info',
-                    title: i18n.deletingTitle,
-                    description: i18n.deletingDescription,
+                    title: Lang.get('product_variant.delete_toast_title'),
+                    description: Lang.get('product_variant.delete_description'),
                     subtitle: res.status,
                     actionType: 'close',
                     bottomActions: [
                         {
-                            text: i18n.undo,
+                            text: Lang.get('product_variant.undo'),
                             onClick: function () {
-                                attemptRestoreBrand(restoreUrl);
+                                attemptRestoreProductVariant(restoreUrl);
                             },
                         },
                     ],
@@ -251,8 +243,8 @@ $(function () {
             error: function (xhr) {
                 fluentToast({
                     type: 'error',
-                    title: i18n.genericErrorTitle,
-                    description: xhr.responseJSON?.msg || i18n.genericErrorDescription,
+                    title: Lang.get('product_variant.generic_error_title'),
+                    description: xhr.responseJSON?.msg || Lang.get('product_variant.generic_error_description'),
                     subtitle: 'Code: ' + xhr.status,
                     actionType: 'close',
                 });
@@ -265,14 +257,14 @@ $(function () {
         });
     });
 
-    $(document).on('click', '#create-brand', function () {
-        openBrandModal(routes.create);
+    $(document).on('click', '#create-product-variant', function () {
+        openProductVariantModal(route('product-variants.create'));
     });
 
-    $(document).on('click', '#edit-brand-btn', function () {
+    $(document).on('click', '#edit-product-variant-btn', function () {
         let editUrl = $(this).data('edit-url');
-        openBrandModal(editUrl);
+        openProductVariantModal(editUrl);
     });
 
-    handleBrandFormSubmit('#form-create-brand, #form-edit-brand');
+    handleProductVariantFormSubmit('#form-create-product-variant, #form-edit-product-variant');
 });

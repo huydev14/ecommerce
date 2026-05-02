@@ -1,31 +1,29 @@
 $(function () {
-    const routes = globalThis.CategoryRoutes;
-    const i18n = globalThis.CategoryI18n;
 
     function toastSuccess(description, statusCode) {
         fluentToast({
             type: 'success',
-            title: i18n.successTitle,
+            title: Lang.get('brand.success_title'),
             description: description,
             subtitle: 'Code: ' + statusCode,
             actionType: 'close',
         });
     }
 
-    function openCategoryModal(url) {
+    function openBrandModal(url) {
         ModalHelper.open('modal');
-        $('#category-modal-content').html(loadingHtml);
+        $('#brand-modal-content').html(loadingHtml);
 
         $.get(url, function (html) {
-            $('#category-modal-content').html(html);
+            $('#brand-modal-content').html(html);
         }).fail(function (xhr) {
-            $('#category-modal-content').html(loadingHtml);
-            console.error('Load category modal error:', xhr.status);
-            console.error('Load category modal error:', xhr.responseText);
+            $('#brand-modal-content').html(loadingHtml);
+            console.error('Load brand modal error:', xhr.status);
+            console.error('Load brand modal error:', xhr.responseText);
         });
     }
 
-    function handleCategoryFormSubmit(formSelector) {
+    function handleBrandFormSubmit(formSelector) {
         $(document).on('submit', formSelector, function (e) {
             e.preventDefault();
             let form = $(this);
@@ -34,7 +32,7 @@ $(function () {
 
             let originalBtnText = submitBtn.html();
             submitBtn
-                .html('<i class="fas fa-spinner fa-spin tw-mr-2"></i> ' + (i18n.saveLoading || 'Saving...'))
+                .html('<i class="fas fa-spinner fa-spin tw-mr-2"></i> ' + (Lang.get('brand.save_loading') || 'Saving...'))
                 .prop('disabled', true);
 
             $.ajax({
@@ -46,7 +44,7 @@ $(function () {
                 success: function (res, textStatus, xhr) {
                     if (res.success) {
                         ModalHelper.close('modal');
-                        categoryTable.ajax.reload(null, false);
+                        brandTable.ajax.reload(null, false);
                         toastSuccess(res.msg, xhr.status);
                     }
                 },
@@ -57,8 +55,8 @@ $(function () {
                         if (!Object.keys(errors).length) {
                             fluentToast({
                                 type: 'error',
-                                title: i18n.processFailedTitle || 'Process failed',
-                                description: i18n.processFailedDescription || 'Invalid data. Please check your inputs.',
+                                title: Lang.get('brand.process_failed_title') || 'Process failed',
+                                description: Lang.get('brand.process_failed_description') || 'Invalid data. Please check your inputs.',
                                 subtitle: 'Code: ' + ' ' + xhr.status,
                                 actionType: 'close',
                             });
@@ -68,7 +66,7 @@ $(function () {
                         let firstErrorMsg = Object.values(errors)[0][0];
                         fluentToast({
                             type: 'error',
-                            title: i18n.processFailedTitle,
+                            title: Lang.get('brand.process_failed_title'),
                             description: firstErrorMsg,
                             subtitle: 'Code: ' + xhr.status,
                             actionType: 'close',
@@ -76,8 +74,8 @@ $(function () {
                     } else {
                         fluentToast({
                             type: 'error',
-                            title: i18n.systemErrorTitle,
-                            description: xhr.responseJSON?.msg || i18n.systemErrorDescription,
+                            title: Lang.get('brand.system_error_title'),
+                            description: xhr.responseJSON?.msg || Lang.get('brand.system_error_description'),
                             subtitle: 'Code: ' + ' ' + xhr.status,
                             actionType: 'close',
                         });
@@ -90,25 +88,25 @@ $(function () {
         });
     }
 
-    function attemptRestoreCategory(restoreUrl) {
+    function attemptRestoreBrand(restoreUrl) {
         $.ajax({
             type: 'POST',
             url: restoreUrl,
             success: function (res) {
-                categoryTable.ajax.reload(null, false);
+                brandTable.ajax.reload(null, false);
 
                 fluentToast({
                     type: 'success',
-                    title: i18n.undoSuccessTitle,
-                    description: res.msg || i18n.undoSuccessDescription,
+                    title: Lang.get('brand.undo_success_title'),
+                    description: res.msg || Lang.get('brand.undo_success_description'),
                     actionType: 'close',
                 });
             },
             error: function (xhr) {
                 fluentToast({
                     type: 'error',
-                    title: i18n.restoreErrorTitle,
-                    description: xhr.responseJSON?.msg || i18n.restoreErrorDescription,
+                    title: Lang.get('brand.restore_error_title'),
+                    description: xhr.responseJSON?.msg || Lang.get('brand.restore_error_description'),
                     subtitle: 'Code: ' + ' ' + xhr.status,
                 });
                 console.error('Load error:', xhr.status);
@@ -117,16 +115,17 @@ $(function () {
         });
     }
 
-    globalThis.categoryTable = new DataTable('#categoryTable', {
+    // ---- RENDER TABLE --------------------------
+    globalThis.brandTable = new DataTable('#brandTable', {
         processing: true,
         serverSide: true,
         autoWidth: false,
-        order: [[0, 'asc']],
+        order: [[3, 'desc']],
         ajax: {
-            url: routes.data,
+            url: route('brands.data'),
             data: function (d) {
-                d.category_id = $('#f_categoryName').val() || '';
-                d.is_active = $('#f_isActive').val() || '';
+                d.status = $('#f_brandName').val() || '';
+                d.department_id = $('#f_isActive').val() || '';
             },
         },
         columns: [
@@ -139,14 +138,12 @@ $(function () {
                 name: 'slug',
             },
             {
-                data: 'parent_name',
-                name: 'parent.name',
-                orderable: false,
-                searchable: false,
+                data: 'logo',
+                name: 'logo',
             },
             {
-                data: 'description',
-                name: 'description',
+                data: 'website',
+                name: 'website',
             },
             {
                 data: 'is_active',
@@ -168,6 +165,18 @@ $(function () {
                 className: 'tw-text-center',
             },
         ],
+        createdRow: function (row, data) {
+            let url = route('brands.show', data.id);
+
+            $(row)
+                .css('cursor', 'pointer')
+                .on('click', function (e) {
+                    if ($(e.target).closest('button').length > 0) {
+                        return;
+                    }
+                    globalThis.location.href = url;
+                });
+        },
 
         layout: {
             topStart: null,
@@ -176,25 +185,27 @@ $(function () {
             bottomEnd: 'paging',
         },
     });
-
     $('#custom-search-input').on('keyup', function () {
-        categoryTable.search(this.value).draw();
+        brandTable.search(this.value).draw();
     });
 
+    // ---- FILTER PANEL TOGGLE ---------------------------
     $('#toggle-filter-btn').on('click', function () {
         $('#filter-panel').slideToggle('fast');
 
-        $('#f_categoryName, #f_isActive').val('').trigger('change.select2');
-        categoryTable.ajax.reload();
+        // Reset filter
+        $('#f_brandName, #f_isActive').val('').trigger('change.select2');
+        brandTable.ajax.reload();
     });
 
     $(document).on('change', '#filter-panel select', function () {
-        categoryTable.ajax.reload();
+        brandTable.ajax.reload();
     });
 
-    $.getJSON(routes.filterData)
+    // ---- RENDER OPTIONS FOR SELECT FIELDs ----------------
+    $.getJSON(route('brands.filter_data'))
         .done(function (res) {
-            renderOptions('#f_categoryName', res.categoryName);
+            renderOptions('#f_brandName', res.brandName);
             renderOptions('#f_isActive', res.isActive);
         })
         .fail(function (xhr) {
@@ -202,12 +213,13 @@ $(function () {
             console.error('Load error:', xhr.responseText);
         });
 
-    $(document).on('click', '#delete-category-btn', function () {
+    // ---- Delete brand ------------------------
+    $(document).on('click', '#delete-brand-btn', function () {
         let $btn = $(this);
         let deleteUrl = $btn.data('delete-url');
         let restoreUrl = $btn.data('restore-url');
 
-        if (!confirm(i18n.confirmDelete)) {
+        if (!confirm(Lang.get('brand.confirm_delete'))) {
             return;
         }
 
@@ -217,18 +229,18 @@ $(function () {
             type: 'DELETE',
             url: deleteUrl,
             success: function (res) {
-                categoryTable.ajax.reload(null, false);
+                brandTable.ajax.reload(null, false);
                 fluentToast({
                     type: 'info',
-                    title: i18n.deletingTitle,
-                    description: i18n.deletingDescription,
+                    title: Lang.get('brand.delete_toast_title'),
+                    description: Lang.get('brand.delete_description'),
                     subtitle: res.status,
                     actionType: 'close',
                     bottomActions: [
                         {
-                            text: i18n.undo,
+                            text: Lang.get('brand.undo'),
                             onClick: function () {
-                                attemptRestoreCategory(restoreUrl);
+                                attemptRestoreBrand(restoreUrl);
                             },
                         },
                     ],
@@ -237,8 +249,8 @@ $(function () {
             error: function (xhr) {
                 fluentToast({
                     type: 'error',
-                    title: i18n.genericErrorTitle,
-                    description: xhr.responseJSON?.msg || i18n.genericErrorDescription,
+                    title: Lang.get('brand.generic_error_title'),
+                    description: xhr.responseJSON?.msg || Lang.get('brand.generic_error_description'),
                     subtitle: 'Code: ' + xhr.status,
                     actionType: 'close',
                 });
@@ -251,14 +263,14 @@ $(function () {
         });
     });
 
-    $(document).on('click', '#create-category', function () {
-        openCategoryModal(routes.create);
+    $(document).on('click', '#create-brand', function () {
+        openBrandModal(route('brands.create'));
     });
 
-    $(document).on('click', '#edit-category-btn', function () {
+    $(document).on('click', '#edit-brand-btn', function () {
         let editUrl = $(this).data('edit-url');
-        openCategoryModal(editUrl);
+        openBrandModal(editUrl);
     });
 
-    handleCategoryFormSubmit('#form-create-category, #form-edit-category');
+    handleBrandFormSubmit('#form-create-brand, #form-edit-brand');
 });
