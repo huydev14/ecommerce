@@ -16,6 +16,7 @@
         "laravel/tinker": "^2.10.1",
         "mariuzzo/laravel-js-localization": "^2.1",
         "predis/predis": "^3.4",
+        "socialiteproviders/microsoft": "^4.9",
         "spatie/laravel-activitylog": "^4.12",
         "spatie/laravel-permission": "^6.25",
         "tightenco/ziggy": "^2.6",

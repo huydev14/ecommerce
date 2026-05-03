@@ -37,7 +37,7 @@
                 <div class="tw-flex tw-flex-col tw-gap-1">
                     <x-label for="client_secret">Client Secret</x-label>
                     <x-input id="client_secret" name="client_secret" type="password" placeholder="••••••••"
-                        :value="old('client_secret')" />
+                        :value="old('client_secret')" helper="Chỉ nhập khi bạn muốn thay đổi Secret mới." />
                 </div>
 
             </div>

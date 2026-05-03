@@ -30,13 +30,19 @@ class SettingController extends Controller
 
     public function updateOAuth(Request $request, $provider)
     {
-        try {
-            $validated = $request->validate([
+         $rules = [
                 'client_id' => 'required|string',
                 'client_secret' => 'nullable|string',
                 'redirect_uri' => 'required|url',
-            ]);
+            ];
 
+            if($provider === 'microsoft'){
+                $rules['tenant'] = 'required|string';
+            }
+
+            $validated = $request->validate($rules);
+
+        try {
             if ($request->filled('client_secret')) {
                 $validated['client_secret'] = encrypt($request->client_secret);
             } else {
@@ -56,8 +62,13 @@ class SettingController extends Controller
             return redirect()
                 ->to(route('settings.index') . '?tab=' . $provider)
                 ->with('success', "Đã lưu cấu hình " . ucfirst($provider) . " OAuth.");
+
         } catch (\Exception $e) {
-            Log::error("OAuth Update Error: " . $e->getMessage());
+            Log::error("OAuth Update Error [{$provider}]", [
+                'message' => $e->getMessage(),
+                'file' => $e->getFile(),
+                'line' => $e->getLine(),
+            ]);
             return redirect()
                 ->back()
                 ->withInput()

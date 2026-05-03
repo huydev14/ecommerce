@@ -2,12 +2,14 @@
 
 namespace App\Providers;
 
-use App\Models\Setting;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Config;
+use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\ServiceProvider;
 
-class MailConfigServiceProvider extends ServiceProvider
+use App\Models\Setting;
+
+class MailServiceProvider extends ServiceProvider
 {
     /**
      * Register services.
@@ -15,6 +17,9 @@ class MailConfigServiceProvider extends ServiceProvider
     public function register(): void
     {
         $this->app->resolving('mail.manager', function(){
+            if (app()->runningInConsole() && !Schema::hasTable('settings')) {
+                return;
+            }
             $mail = Cache::rememberForever('config.mail.smtp', function () {
                 return Setting::where('key', 'smtp')
                     ->where('group', 'mail')
@@ -25,16 +30,16 @@ class MailConfigServiceProvider extends ServiceProvider
                 Config::set('mail.default', 'smtp');
                 Config::set('mail.mailers.smtp', [
                     'transport' => 'smtp',
-                    'host' => $mail['host'] ?? env('MAIL_HOST'),
-                    'port' => $mail['port'] ?? env('MAIL_PORT'),
-                    'encryption' => $mail['encryption'] ?? env('MAIL_ENCRYPTION'),
-                    'username' => $mail['username'] ?? env('MAIL_USERNAME'),
-                    'password' => isset($mail['password']) ? decrypt($mail['password']) : decrypt(env('MAIL_PASSWORD')),
+                    'host' => $mail['host'],
+                    'port' => $mail['port'],
+                    'encryption' => $mail['encryption'],
+                    'username' => $mail['username'],
+                    'password' => isset($mail['password']) ? decrypt($mail['password']) : null,
                 ]);
 
                 Config::set('mail.from', [
-                    'address' => $mail['from_address'] ?? env('MAIL_FROM_ADDRESS', 'noreply@example.com'),
-                    'name' => $mail['from_name'] ?? env('MAIL_FROM_NAME', 'System'),
+                    'address' => $mail['from_address'],
+                    'name' => $mail['from_name'],
                 ]);
             }
         });

@@ -13,6 +13,12 @@
         </div>
     @endif
 
+    @if (session('error'))
+        <div class="tw-flex tw-items-center tw-p-4 tw-mb-6 tw-text-[#d83b01] tw-bg-[#fde7e9] tw-rounded-sm tw-shadow-sm">
+            <i class="fas fa-exclamation-circle tw-mr-2"></i> {{ session('error') }}
+        </div>
+    @endif
+
     <div class="tw-grid tw-grid-cols-1 lg:tw-grid-cols-12 tw-gap-3">
         {{-- Navigation Left --}}
         <div class="lg:tw-col-span-3">
@@ -36,11 +42,11 @@
                     <i class="fab fa-google tw-text-lg tw-w-5"></i>
                     <span class="tw-font-medium tw-text-sm">Google OAuth</span>
                 </a>
-                {{-- <a class="nav-link fluent-tab-item tw-mb-1 tw-flex tw-items-center tw-gap-3" id="v-pills-microsoft-tab"
+                <a class="nav-link fluent-tab-item tw-mb-1 tw-flex tw-items-center tw-gap-3" id="v-pills-microsoft-tab"
                     data-bs-toggle="pill" href="#v-pills-microsoft" data-tab="microsoft" role="tab">
                     <i class="fab fa-microsoft tw-text-lg tw-w-5"></i>
                     <span class="tw-font-medium tw-text-sm">Microsoft OAuth</span>
-                </a> --}}
+                </a>
             </div>
         </div>
 
@@ -56,9 +62,9 @@
                     @include('settings.partials._google_oauth')
                 </div>
 
-                {{-- <div class="tab-pane fade" id="v-pills-microsoft" role="tabpanel">
+                <div class="tab-pane fade" id="v-pills-microsoft" role="tabpanel">
                     @include('settings.partials._microsoft_oauth')
-                </div> --}}
+                </div>
             </div>
         </div>
     </div>

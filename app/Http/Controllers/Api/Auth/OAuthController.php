@@ -5,47 +5,48 @@ namespace App\Http\Controllers\Api\Auth;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Facades\Cache;
-use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\DB;
 
 use Laravel\Socialite\Facades\Socialite;
+
 use App\Models\User;
 use App\Models\Customer;
-
 use App\Models\OAuthAccount;
-use App\Models\Setting;
-
 
 class OAuthController extends Controller
 {
-
     public function redirect(Request $request, $provider)
     {
-        if (!$this->loadOauthConfig($provider)) {
-            return view('auth.callback', ['error' => "Dịch vụ " . ucfirst($provider) . " chưa được hỗ trợ."]);
-        }
-        $type = $request->query('type', 'user');
+        try {
+            $type = $request->query('type', 'user');
 
-        return Socialite::driver($provider)
-            ->with(['state' => 'type=' . $type])
-            ->stateless()
-            ->redirect();
+            return Socialite::driver($provider)
+                ->with(['state' => 'type=' . $type])
+                ->stateless()
+                ->redirect();
+
+        } catch (\Exception $e) {
+            Log::error("OAuth Redirect Error: " . $e->getMessage());
+            return view('auth.callback', ['error' => "Dịch vụ " . ucfirst($provider) . " hiện chưa được hỗ trợ."]);
+        }
     }
 
     public function callback($provider)
     {
-        if (!$this->loadOauthConfig($provider)) {
-            return view('auth.callback', ['error' => 'Cấu hình không hợp lệ.']);
-        }
         try {
             [$user, $type] = $this->handleProviderCallback($provider);
 
-            //Login user and generate token
-            $guard = ($type === 'customer') ? 'api_customer' : 'api';
-            $token = auth($guard)->login($user);
+            // If user type is admin
+            if ($type === 'admin') {
+                auth('web')->login($user);
+                request()->session()->regenerate();
 
-            //Set refresh token in cookie
+                return redirect()->intended(route('dashboard', absolute: false));
+            }
+
+            // If user type is customer
+            $token = auth('api_customer')->login($user);
+
             $cookie = cookie('refresh_token', $token, config('jwt.refresh_ttl'));
 
             return response()
@@ -53,9 +54,9 @@ class OAuthController extends Controller
                 ->withCookie($cookie);
 
         } catch (\Exception $e) {
-            \Log::error('Social login error: ', ['provider' => $provider, 'error' => $e->getMessage()]);
+            Log::error('Social login error: ', ['provider' => $provider, 'error' => $e->getMessage()]);
             return view('auth.callback', [
-                'error' => 'Đăng nhập thất bại: ' . $e->getMessage()
+                'error' => 'Đăng nhập thất bại: Vui lòng thử lại sau.'
             ]);
         }
     }
@@ -95,7 +96,7 @@ class OAuthController extends Controller
                     ]
                 );
             }
-            //Create social account link
+            // Create social account link
             OAuthAccount::updateOrCreate(
                 [
                     'provider' => $provider,
@@ -106,42 +107,7 @@ class OAuthController extends Controller
                     'customer_id' => ($type === 'customer') ? $user->id : null,
                 ]
             );
-
             return [$user, $type];
         });
-
-    }
-
-    public function loadOauthConfig($provider)
-    {
-        try {
-            $config = Cache::rememberForever("config.oauth.{$provider}", function () use ($provider) {
-                return Setting::where('key', $provider)
-                    ->where('group', 'oauth')
-                    ->first();
-            });
-
-            if (!$config || empty($config->value)) {
-                return false;
-            }
-
-            $settings = $config->value;
-
-            if (!($settings['is_active'])) {
-                return false;
-            }
-
-            Config::set("services.{$provider}", [
-                'client_id' => $settings['client_id'] ?? null,
-                'client_secret' => decrypt($settings['client_secret']) ?? null,
-                'redirect' => $settings['redirect_uri'] ?? null,
-            ]);
-
-            return true;
-
-        } catch (\Exception $e) {
-            Log::error("Failed to load OAuth config for {$provider}: " . $e->getMessage());
-            return false;
-        }
     }
 }

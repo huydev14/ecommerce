@@ -19,6 +19,7 @@
     @endif
 
     <input id="{{ $id }}" placeholder="{{ $placeholder }}"
+        @if($required) required @endif
         {{ $attributes->merge(['class' => 'tw-w-full tw-py-1.5 tw-px-2.5 tw-text-sm tw-text-gray-900 tw-bg-transparent tw-border-none tw-outline-none focus:tw-ring-0 placeholder:tw-text-gray-400']) }} />
 </div>
 
