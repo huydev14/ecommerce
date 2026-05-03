@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Authenticating...</title>  <
+    <title>Authenticating...</title>
 </head>
 <body>
     <script>
@@ -13,6 +13,8 @@
         if (window.opener) {
             window.opener.postMessage(payload, "*");
             window.close();
+        } else {
+            window.location.href = "/";
         }
     </script>
 </body>

@@ -11,8 +11,15 @@ use App\Http\Controllers\CategoryController;
 use App\Http\Controllers\ProductController;
 use App\Http\Controllers\ProductVariantController;
 use App\Http\Controllers\SettingController;
+use App\Http\Controllers\Api\Auth\OAuthController;
 
 require __DIR__ . '/auth.php';
+
+// ---- OAuth Routes ----
+Route::prefix('auth')->group(function () {
+    Route::get('{provider}/redirect', [OAuthController::class, 'redirect'])->name('oauth.redirect');
+    Route::get('{provider}/callback', [OAuthController::class, 'callback']);
+});
 
 // ----  Lang switch -----------------------------------
 Route::get('lang/{locale}', function ($locale) {
@@ -22,7 +29,7 @@ Route::get('lang/{locale}', function ($locale) {
     return redirect()->back();
 })->name('lang.switch');
 
-Route::prefix('admin')->middleware('jwt.cookie')->group(function () {
+Route::prefix('admin')->middleware('auth')->group(function () {
     // ---- Dashboard -----------------------------------
     Route::get('/', function () {
         return view('dashboard.index');
@@ -49,7 +56,7 @@ Route::prefix('admin')->middleware('jwt.cookie')->group(function () {
     Route::resource('/roles', RoleController::class)->except(['show']);
 
     // ---- Audit logs ---------------------------------------
-    Route::prefix('audit-logs')->name('audit-logs.')->group(function(){
+    Route::prefix('audit-logs')->name('audit-logs.')->group(function () {
         Route::get('/', [AuditLogController::class, 'index'])->name('index');
         Route::get('/{id}', [AuditLogController::class, 'show'])->whereNumber('id')->name('show');
 
@@ -59,7 +66,7 @@ Route::prefix('admin')->middleware('jwt.cookie')->group(function () {
     });
 
     // --- Brands -----------------------------------
-    Route::prefix('brands')->name('brands.')->group(function(){
+    Route::prefix('brands')->name('brands.')->group(function () {
         Route::get('/data', [BrandController::class, 'data'])->name('data');
         Route::get('/filter-data', [BrandController::class, 'getFilterData'])->name('filter_data');
         Route::post('/{id}/restore', [BrandController::class, 'restore'])->name('restore');
@@ -99,6 +106,6 @@ Route::prefix('admin')->middleware('jwt.cookie')->group(function () {
 });
 
 // VueJS mount
-Route::get('/{any?}', function() {
+Route::get('/{any?}', function () {
     return view('client.index');
 })->where('any', '.*');

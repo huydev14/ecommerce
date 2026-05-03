@@ -21,6 +21,8 @@ Route::prefix('v1')->group(function () {
         Route::post('/logout', [AuthController::class, 'logout']);
     });
 
-    Route::get('/auth/{provider}/redirect', [OAuthController::class, 'redirect']);
-    Route::get('/auth/{provider}/callback', [OAuthController::class, 'callback']);
+    Route::prefix('auth')->group(function () {
+        Route::get('{provider}/redirect', [OAuthController::class, 'redirect'])->name('oauth.redirect');
+        Route::get('{provider}/callback', [OAuthController::class, 'callback']);
+    });
 });

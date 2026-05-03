@@ -10,18 +10,18 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Spatie\Permission\Traits\HasRoles;
-use Tymon\JWTAuth\Contracts\JWTSubject;
 use Spatie\Activitylog\LogOptions;
 use Spatie\Activitylog\Models\Activity;
 
 #[ObservedBy(UserObserver::class)]
-class User extends Authenticatable implements JWTSubject
+class User extends Authenticatable
 {
     use HasFactory, Notifiable, HasRoles, SoftDeletes;
 
     protected $fillable = [
         'name',
         'email',
+        'email_verified_at',
         'password',
         'department_id',
         'position_id',
@@ -77,19 +77,6 @@ class User extends Authenticatable implements JWTSubject
     public function team()
     {
         return $this->belongsTo(Team::class, 'team_id');
-    }
-
-    // --- JWT Authentication ---------------
-    public function getJWTIdentifier()
-    {
-        return $this->getKey();
-    }
-
-    public function getJWTCustomClaims()
-    {
-        return [
-            'email' => $this->email,
-        ];
     }
 
     // --- Spatie activity log ---------------
