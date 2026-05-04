@@ -4,8 +4,14 @@ import { useAuthStore } from '../stores/auth';
 const routes = [
     {
         path: '/',
-        name: 'Home',
-        component: () => import('@/pages/Home.vue'),
+        component: () => import('@/layouts/DefaultLayout.vue'),
+        children: [
+            {
+                path: '',
+                name: 'home',
+                component: () => import('@/pages/Home.vue'),
+            },
+        ],
     },
     {
         path: '/login',

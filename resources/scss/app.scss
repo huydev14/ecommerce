@@ -1,6 +1,7 @@
 // Base
 @use 'base/variables';
 @use 'base/global';
+@use 'client/layouts/client-layout.scss';
 
 // Layouts
 @use 'layouts/header';
