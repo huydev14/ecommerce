@@ -1,5 +1,5 @@
 <template>
-    <AuthLayout title="Xác minh địa chỉ email" :errorMessage="errorMessage" actionText="xác minh">
+    <AuthLayout title="Xác minh địa chỉ email" :errorMessage="errorMessage" :retryAfter="retryAfter" actionText="xác minh">
         <form @submit.prevent="handleVerify" class="login-form verify-otp-page">
             <div class="verify-instruction">
                 <p>Để xác minh email của bạn, chúng tôi đã gửi Mã pin một lần (OTP) đến</p>
@@ -62,6 +62,7 @@ const isLoading = ref(false);
 const isResending = ref(false);
 const errorMessage = ref('');
 const resendSuccessMessage = ref('');
+const retryAfter = ref(0);
 
 onMounted(() => {
     if (route.query.email) {
@@ -102,6 +103,7 @@ const handleResend = async () => {
     isResending.value = true;
     errorMessage.value = '';
     resendSuccessMessage.value = '';
+    retryAfter.value = 0;
 
     try {
         const response = await api.post('/resend-otp', { email: email.value });
@@ -112,6 +114,10 @@ const handleResend = async () => {
     } catch (error) {
         if (error.response && error.response.data) {
             errorMessage.value = error.response.data.message || 'Không thể gửi lại mã lúc này. Vui lòng thử lại sau.';
+            // Handle rate limit - extract retry_after
+            if (error.response.status === 429 && error.response.data.retry_after) {
+                retryAfter.value = error.response.data.retry_after;
+            }
         } else {
             errorMessage.value = 'Lỗi kết nối mạng. Vui lòng thử lại sau.';
         }

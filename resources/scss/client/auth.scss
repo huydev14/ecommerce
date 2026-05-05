@@ -75,6 +75,10 @@ $color-input-focus: #e77600;
     .alert-text {
         font-size: 13px;
         color: $color-error;
+
+        .countdown-timer {
+            font-weight: 600;
+        }
     }
 }
 

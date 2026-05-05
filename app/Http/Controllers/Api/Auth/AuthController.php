@@ -12,6 +12,8 @@ use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Facades\RateLimiter;
+use Illuminate\Support\Str;
 use Tymon\JWTAuth\Exceptions\JWTException;
 use Tymon\JWTAuth\Exceptions\TokenBlacklistedException;
 use Tymon\JWTAuth\Exceptions\TokenExpiredException;
@@ -25,9 +27,10 @@ class AuthController extends Controller
 
     public function checkEmail(Request $request)
     {
-        $request->validate([
+        $validated = $request->validate([
             'email' => 'required|email',
         ]);
+
         $exists = Customer::where('email', $request->email)->exists();
 
         return response()->json([
@@ -45,9 +48,22 @@ class AuthController extends Controller
             'password' => 'required'
         ]);
 
+        $key = 'login-attempts:' . Str::lower($credentials['email'])  . '|' . $request->ip();
+
         $token = $this->guard()->attempt($credentials);
 
         if (!$token) {
+            RateLimiter::hit($key, 60);
+            
+            if (RateLimiter::tooManyAttempts($key, 8)) {
+                $seconds = RateLimiter::availableIn($key);
+                return response()->json([
+                    'success' => false,
+                    'message' => "Bạn đã đăng nhập sai quá nhiều lần. Vui lòng thử lại sau.",
+                    'retry_after' => $seconds
+                ], 429);
+            }
+            
             return response()->json([
                 'success' => false,
                 'message' => 'Email hoặc mật khẩu không chính xác'
@@ -55,6 +71,9 @@ class AuthController extends Controller
         }
 
         $customer = $this->guard()->user();
+
+        RateLimiter::clear($key);
+
         if (!$customer->email_verified_at) {
             return response()->json([
                 'success' => false,
@@ -102,8 +121,19 @@ class AuthController extends Controller
         ]);
 
         $email = $request->email;
-        $userOtp = $request->otp;
 
+        $key = 'verify-otp:' . $email;
+
+        if (RateLimiter::tooManyAttempts($key, 5)) {
+            $seconds = RateLimiter::availableIn($key);
+            return response()->json([
+                'success' => false,
+                'message' => "Bạn đã nhập sai quá nhiều lần. Vui lòng thử lại sau.",
+                'retry_after' => $seconds
+            ], 429);
+        }
+
+        $userOtp = $request->otp;
         $cachedOtp = Cache::get('otp_' . $email);
 
         if (!$cachedOtp) {
@@ -114,9 +144,11 @@ class AuthController extends Controller
         }
 
         if ($userOtp != $cachedOtp) {
+            RateLimiter::hit($key, 300);
+
             return response()->json([
                 'success' => false,
-                'message' => 'Mã OTP không chính xác.'
+                'message' => 'Mã OTP không chính xác. Bạn còn ' . RateLimiter::remaining($key, 5) . ' lần thử.'
             ], 400);
         }
 
@@ -129,12 +161,12 @@ class AuthController extends Controller
             ], 404);
         }
 
-        //Update customer verified status
-        $customer->update([
-            'email_verified_at' => now()
-        ]);
+        // Update customer verified status
+        $customer->update(['email_verified_at' => now()]);
 
+        // Clear OTP cache and rate limit keys
         Cache::forget('otp_' . $email);
+        RateLimiter::clear($key);
 
         return response()->json([
             'success' => true,
@@ -144,14 +176,34 @@ class AuthController extends Controller
 
     public function resendOTP(Request $request)
     {
-        $request->validate(['email' => 'required|email']);
-        $customer = Customer::where('email', $request->email)->first();
+        $request->validate([
+            'email' => 'required|email'
+        ]);
+
+        $email = $request->email;
+        $key = "resend-otp:" . $email;
+
+        if (RateLimiter::tooManyAttempts($key, 3)) {
+            $seconds = RateLimiter::availableIn($key);
+            return response()->json([
+                'success' => false,
+                'message' => "Bạn đã gửi OTP quá nhiều lần. Vui lòng thử lại sau.",
+                'retry_after' => $seconds
+            ], 429);
+        }
+
+        $customer = Customer::where('email', $email)->first();
         if (!$customer) {
             return response()->json(['success' => false, 'message' => 'Email không tồn tại.'], 404);
         }
+
         $otp = rand(100000, 999999);
         Cache::put('otp_' . $customer->email, $otp, now()->addMinutes(10));
+
         Mail::to($customer->email)->send(new CustomerOTPMail($otp, $customer->fullname));
+
+        RateLimiter::hit($key, 300);
+
         return response()->json([
             'success' => true,
             'message' => 'Mã OTP mới đã được gửi vào email của bạn.'

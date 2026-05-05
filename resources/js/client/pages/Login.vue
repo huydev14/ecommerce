@@ -1,5 +1,5 @@
 <template>
-    <AuthLayout :title="currentTitle" :errorMessage="errorMessage" :actionText="actionText">
+    <AuthLayout :title="currentTitle" :errorMessage="errorMessage" :retryAfter="retryAfter" :actionText="actionText">
         <form v-if="step === 'email'" @submit.prevent="handleCheckEmail" class="login-form" novalidate>
             <div class="a-input-text-group">
                 <label for="email" class="a-form-label">Nhập số điện thoại di động hoặc email</label>
@@ -93,6 +93,7 @@ const form = reactive({
 
 const isLoading = ref(false);
 const errorMessage = ref('');
+const retryAfter = ref(0);
 
 const currentTitle = computed(() => {
     if (step.value === 'email') return 'Đăng nhập';
@@ -128,6 +129,7 @@ const handleCheckEmail = async () => {
 const handleLogin = async () => {
     isLoading.value = true;
     errorMessage.value = '';
+    retryAfter.value = 0;
 
     try {
         const response = await authStore.login({
@@ -141,6 +143,10 @@ const handleLogin = async () => {
     } catch (error) {
         if (error.response && error.response.data) {
             errorMessage.value = error.response.data.message || 'Đã có lỗi xảy ra, vui lòng thử lại!';
+            // Handle rate limit
+            if (error.response.status === 429 && error.response.data.retry_after) {
+                retryAfter.value = error.response.data.retry_after;
+            }
         } else {
             errorMessage.value = 'Không thể kết nối đến máy chủ.';
         }
