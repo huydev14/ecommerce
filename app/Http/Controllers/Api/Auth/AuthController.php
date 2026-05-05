@@ -48,25 +48,28 @@ class AuthController extends Controller
             'password' => 'required'
         ]);
 
-        $key = 'login-attempts:' . Str::lower($credentials['email'])  . '|' . $request->ip();
+        $maxAttempts = 5;
+        $key = 'login-attempts:' . Str::lower($credentials['email']) . '|' . $request->ip();
+
+        if (RateLimiter::tooManyAttempts($key, $maxAttempts)) {
+            $seconds = RateLimiter::availableIn($key);
+            return response()->json([
+                'success' => false,
+                'message' => "Bạn đã đăng nhập sai quá nhiều lần. Vui lòng thử lại sau.",
+                'retry_after' => $seconds
+            ], 429);
+        }
 
         $token = $this->guard()->attempt($credentials);
 
         if (!$token) {
             RateLimiter::hit($key, 60);
-            
-            if (RateLimiter::tooManyAttempts($key, 8)) {
-                $seconds = RateLimiter::availableIn($key);
-                return response()->json([
-                    'success' => false,
-                    'message' => "Bạn đã đăng nhập sai quá nhiều lần. Vui lòng thử lại sau.",
-                    'retry_after' => $seconds
-                ], 429);
-            }
-            
+
+            $remaining = RateLimiter::remaining($key, $maxAttempts);
+
             return response()->json([
                 'success' => false,
-                'message' => 'Email hoặc mật khẩu không chính xác'
+                'message' => "Email hoặc mật khẩu không chính xác. Bạn còn $remaining lần thử."
             ], 401);
         }
 
