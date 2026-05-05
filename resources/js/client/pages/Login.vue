@@ -95,7 +95,7 @@ const isLoading = ref(false);
 const errorMessage = ref('');
 
 const currentTitle = computed(() => {
-    if (step.value === 'email') return 'Đăng nhập hoặc tạo tài khoản';
+    if (step.value === 'email') return 'Đăng nhập';
     if (step.value === 'password') return 'Đăng nhập';
     return `Có vẻ như bạn mới biết đến ${APP_CONFIG.appName}?`;
 });

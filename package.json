@@ -5,7 +5,7 @@
     "scripts": {
         "dev": "npm run lang:js && vite",
         "build": "npm run lang:js && vite build",
-        "lang:js": "php artisan lang:js --no-lib && sed -i '' 's/module.exports =/export default/' resources/js/messages.js"
+        "lang:js": "php artisan lang:js --no-lib && node -e \"const fs=require('fs'); const file='resources/js/messages.js'; fs.writeFileSync(file, fs.readFileSync(file, 'utf8').replace('module.exports =', 'export default'));\""
     },
     "devDependencies": {
         "@tailwindcss/forms": "^0.5.2",

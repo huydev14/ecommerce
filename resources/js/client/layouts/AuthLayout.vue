@@ -19,7 +19,7 @@
             <div class="a-divider-inner">
                 <p class="terms-text">
                     Bằng cách {{ actionText }}, bạn đồng ý với <a href="#" class="a-link-normal">Điều kiện sử dụng</a> và
-                    <a href="#" class="a-link-normal">Thông báo bảo mật</a> của {{ APP_CONFIG.appName }}.
+                    <a href="#" class="a-link-normal">Thông báo bảo mật</a>.
                 </p>
             </div>
 

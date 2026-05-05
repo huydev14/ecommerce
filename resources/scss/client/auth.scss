@@ -113,7 +113,7 @@ $color-input-focus: #e77600;
     padding: 3px 7px;
     border: 1px solid $color-input-border;
     border-top-color: #949494;
-    border-radius: 3px;
+    border-radius: 8px;
     box-shadow: 0 1px 0 rgba(255, 255, 255, 0.5), 0 1px 0 rgba(0, 0, 0, 0.07) inset;
     outline: 0;
     height: 31px;
@@ -160,7 +160,7 @@ $color-input-focus: #e77600;
 .a-button-secondary {
     @extend %button-base;
     width: 100%;
-    background: $color-btn-secondary;
+    border-radius: 15px;
     border-color: #adb1b8 #a2a6ac #8d9096;
     padding: 0;
     box-shadow: 0 1px 0 rgba(255, 255, 255, 0.6) inset;
