@@ -20,6 +20,8 @@ use Tymon\JWTAuth\Exceptions\TokenExpiredException;
 
 class AuthController extends Controller
 {
+    const MAX_ATTEMPTS = 5;
+
     protected function guard()
     {
         return Auth::guard('api_customer');
@@ -31,7 +33,7 @@ class AuthController extends Controller
             'email' => 'required|email',
         ]);
 
-        $exists = Customer::where('email', $request->email)->exists();
+        $exists = Customer::where('email', $validated['email'])->exists();
 
         return response()->json([
             'success' => true,
@@ -48,10 +50,9 @@ class AuthController extends Controller
             'password' => 'required'
         ]);
 
-        $maxAttempts = 5;
         $key = 'login-attempts:' . Str::lower($credentials['email']) . '|' . $request->ip();
 
-        if (RateLimiter::tooManyAttempts($key, $maxAttempts)) {
+        if (RateLimiter::tooManyAttempts($key, self::MAX_ATTEMPTS)) {
             $seconds = RateLimiter::availableIn($key);
             return response()->json([
                 'success' => false,
@@ -65,7 +66,7 @@ class AuthController extends Controller
         if (!$token) {
             RateLimiter::hit($key, 60);
 
-            $remaining = RateLimiter::remaining($key, $maxAttempts);
+            $remaining = RateLimiter::remaining($key, self::MAX_ATTEMPTS);
 
             return response()->json([
                 'success' => false,
@@ -97,6 +98,16 @@ class AuthController extends Controller
             'email.unique' => 'Địa chỉ email này đã được sử dụng.',
         ]);
 
+        $key = 'register-attempts: ' . Str::lower($validated['email']) . '|' . $request->ip();
+        if(RateLimiter::tooManyAttempts($key, self::MAX_ATTEMPTS)) {
+            $seconds = RateLimiter::availableIn($key);
+            return response()->json([
+                'success' => false,
+                'message' => "Bạn đã thử quá nhiều lần!",
+                'retry_after' => $seconds
+            ], 429);
+        }
+
         $customer = Customer::create([
             'fullname' => $validated['fullname'],
             'email' => $validated['email'],
@@ -109,6 +120,8 @@ class AuthController extends Controller
         Cache::put('otp_' . $customer->email, $otp, now()->addMinutes(10));
 
         Mail::to($customer->email)->send(new CustomerOTPMail($otp, $customer->fullname));
+
+        RateLimiter::hit($key, 3600);
 
         return response()->json([
             'success' => true,
@@ -164,7 +177,6 @@ class AuthController extends Controller
             ], 404);
         }
 
-        // Update customer verified status
         $customer->update(['email_verified_at' => now()]);
 
         // Clear OTP cache and rate limit keys
