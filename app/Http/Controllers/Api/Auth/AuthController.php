@@ -13,6 +13,7 @@ use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\RateLimiter;
+use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Str;
 use Tymon\JWTAuth\Exceptions\JWTException;
 use Tymon\JWTAuth\Exceptions\TokenBlacklistedException;
@@ -90,16 +91,9 @@ class AuthController extends Controller
 
     public function register(Request $request)
     {
-        $validated = $request->validate([
-            'fullname' => 'required|string|max:255',
-            'email' => 'required|string|email|max:255|unique:customers,email',
-            'password' => 'required|min:6|confirmed',
-        ], [
-            'email.unique' => 'Địa chỉ email này đã được sử dụng.',
-        ]);
-
-        $key = 'register-attempts: ' . Str::lower($validated['email']) . '|' . $request->ip();
-        if(RateLimiter::tooManyAttempts($key, self::MAX_ATTEMPTS)) {
+        $key = 'register-attempts:' . $request->ip();
+        
+        if (RateLimiter::tooManyAttempts($key, self::MAX_ATTEMPTS)) {
             $seconds = RateLimiter::availableIn($key);
             return response()->json([
                 'success' => false,
@@ -107,6 +101,25 @@ class AuthController extends Controller
                 'retry_after' => $seconds
             ], 429);
         }
+
+        $validator = Validator::make($request->all(), [
+            'fullname' => 'required|string|max:255',
+            'email' => 'required|string|email|max:255|unique:customers,email',
+            'password' => 'required|min:6|confirmed',
+        ], [
+            'email.unique' => 'Địa chỉ email này đã được sử dụng.',
+        ]);
+
+        if ($validator->fails()) {
+            RateLimiter::hit($key, 60);
+
+            return response()->json([
+                'success' => false,
+                'errors' => $validator->errors()
+            ], 422);
+        }
+
+        $validated = $validator->validated();
 
         $customer = Customer::create([
             'fullname' => $validated['fullname'],
@@ -120,8 +133,6 @@ class AuthController extends Controller
         Cache::put('otp_' . $customer->email, $otp, now()->addMinutes(10));
 
         Mail::to($customer->email)->send(new CustomerOTPMail($otp, $customer->fullname));
-
-        RateLimiter::hit($key, 3600);
 
         return response()->json([
             'success' => true,

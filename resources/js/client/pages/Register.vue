@@ -1,6 +1,6 @@
 <template>
     <AuthLayout title="Tạo tài khoản" :errorMessage="errorMessage" actionText="tạo tài khoản">
-        <form @submit.prevent="handleRegister" class="login-form">
+        <form @submit.prevent="handleRegister" class="login-form" novalidate>
             <div class="a-input-text-group">
                 <label for="fullname" class="a-form-label">Họ và tên của bạn</label>
                 <input id="fullname" type="text" v-model="form.fullname" required placeholder="Họ và tên" class="a-input-text" />

@@ -64,9 +64,7 @@
                 <div class="a-divider a-divider-break"></div>
                 <div class="already-have-account" style="margin-top: 14px">
                     <span style="font-weight: bold; display: block; margin-bottom: 4px">Đã là khách hàng?</span>
-                    <a href="#" @click.prevent="step = 'email'" class="a-link-normal"
-                        >Đăng nhập bằng email hoặc số điện thoại di động khác</a
-                    >
+                    <a href="#" @click.prevent="step = 'email'" class="a-link-normal"> Đăng nhập bằng email hoặc số điện thoại di động </a>
                 </div>
             </div>
         </template>
@@ -120,7 +118,7 @@ const handleCheckEmail = async () => {
             step.value = 'new_user';
         }
     } catch (error) {
-        errorMessage.value = 'Không thể kiểm tra thông tin lúc này. Vui lòng thử lại.';
+        errorMessage.value = error.response.data.message || 'Đã có lỗi xảy ra, vui lòng thử lại!';
     } finally {
         isLoading.value = false;
     }

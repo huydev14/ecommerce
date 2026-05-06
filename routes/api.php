@@ -4,7 +4,7 @@ use App\Http\Controllers\Api\Auth\AuthController;
 use App\Http\Controllers\Api\Auth\OAuthController;
 use Illuminate\Support\Facades\Route;
 
-Route::prefix('v1')->group(function () {
+Route::prefix('v1')->middleware('throttle:5,1')->group(function () {
     Route::get('/test', function () {
         return response()->json(['message' => 'Gọi API thành công']);
     });
