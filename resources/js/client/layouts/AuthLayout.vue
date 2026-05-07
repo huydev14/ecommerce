@@ -33,7 +33,7 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted, onUnmounted, watch } from 'vue';
+import { ref, computed, onMounted, onUnmounted, watch, provide } from 'vue';
 import AuthFooter from '@/components/AuthFooter.vue';
 import '@scss/client/auth.scss';
 import { APP_CONFIG } from '@/config';
@@ -62,6 +62,10 @@ const remainingSeconds = ref(0);
 let intervalId = null;
 
 const isCountingDown = computed(() => remainingSeconds.value > 0);
+
+// Rate limit status
+const isRateLimited = computed(() => props.retryAfter > 0);
+provide('isRateLimited', isRateLimited);
 
 const formattedTime = computed(() => {
     const minutes = Math.floor(remainingSeconds.value / 60);
@@ -99,7 +103,7 @@ watch(
     (newValue) => {
         initCountdown(newValue);
     },
-    { immediate: false },
+    { immediate: true },
 );
 
 onMounted(() => {
