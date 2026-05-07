@@ -34,7 +34,6 @@ class UserFactory extends Factory
             'email_verified_at' => now(),
             'password'       => static::$password ??= Hash::make('123'),
             'remember_token' => null,
-            'refresh_token'  => null,
 
             'department_id'   => Department::inRandomOrder()->first()?->id ?? 1,
             'position_id'     => Position::inRandomOrder()->first()?->id ?? 1,
