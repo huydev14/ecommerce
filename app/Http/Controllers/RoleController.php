@@ -48,7 +48,7 @@ class RoleController extends Controller
             $role = Role::create([
                 'name' => $request->name,
                 'description' => $request->description,
-                'guard_name' => 'api'
+                'guard_name' => 'web'
             ]);
 
             if ($request->has('permissions')) {

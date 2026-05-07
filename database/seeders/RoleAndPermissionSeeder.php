@@ -34,7 +34,7 @@ class RoleAndPermissionSeeder extends Seeder
         foreach ($permissions as $permission) {
             Permission::firstOrCreate([
                 'name' => $permission,
-                'guard_name' => 'api',
+                'guard_name' => 'web',
             ]);
         }
 
@@ -43,7 +43,7 @@ class RoleAndPermissionSeeder extends Seeder
             Role::firstOrCreate(
                 [
                     'name' => 'Super Admin',
-                    'guard_name' => 'api'
+                    'guard_name' => 'web'
                 ],
                 [
                     'description' => 'Toàn quyền quản trị hệ thống. Kiểm soát cấu hình lõi, phân quyền và dữ liệu tổ chức.',
@@ -61,7 +61,7 @@ class RoleAndPermissionSeeder extends Seeder
             Role::firstOrCreate(
                 [
                     'name' => $role_name,
-                    'guard_name' => 'api'
+                    'guard_name' => 'web'
                 ],
                 [
                     'description' => $role_description,
