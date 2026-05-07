@@ -16,7 +16,14 @@
             aria-label="Search">
     </div>
 
+
     <ul class="navbar-nav topbar-actions">
+        <li class="nav-item">
+            <a href="{{ url('horizon') }}" class="nav-link icon-btn tw-flex tw-items-center tw-gap-1 tw-leading-none" target="_blank" title="Horizon Monitoring">
+                <div><i class="fas fa-chart-line"></i></div>
+                <span>Queue Monitoring</span>
+            </a>
+        </li>
         <li class="nav-item">
             <a href="/" class="nav-link icon-btn">
                 <i class="fas fa-store"></i>
@@ -38,7 +45,6 @@
                         <i class="fi fi-gb"></i>
                     @endif
                 </div>
-
             </a>
             <div class="dropdown-menu dropdown-menu-right">
                 <a href="{{ route('lang.switch', 'vi') }}"
