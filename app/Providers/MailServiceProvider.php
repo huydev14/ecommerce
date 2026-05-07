@@ -17,9 +17,6 @@ class MailServiceProvider extends ServiceProvider
     public function register(): void
     {
         $this->app->resolving('mail.manager', function(){
-            if (app()->runningInConsole() && !Schema::hasTable('settings')) {
-                return;
-            }
             $mail = Cache::rememberForever('config.mail.smtp', function () {
                 return Setting::where('key', 'smtp')
                     ->where('group', 'mail')

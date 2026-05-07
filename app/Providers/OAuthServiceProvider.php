@@ -19,9 +19,6 @@ class OAuthServiceProvider extends ServiceProvider
     public function register(): void
     {
         $this->app->resolving(Factory::class, function () {
-            if (app()->runningInConsole() && !Schema::hasTable('settings')) {
-                return;
-            }
             try {
                 $this->loadGoogleConfig();
                 $this->loadMicrosoftConfig();
