@@ -22,7 +22,7 @@ Route::prefix('v1')->middleware('throttle:5,1')->group(function () {
     });
 
     Route::prefix('auth')->group(function () {
-        Route::get('{provider}/redirect', [OAuthController::class, 'redirect'])->name('oauth.redirect');
-        Route::get('{provider}/callback', [OAuthController::class, 'callback']);
+        Route::get('google/redirect', [OAuthController::class, 'googleRedirect'])->name('oauth.google.redirect');
+        Route::get('google/callback', [OAuthController::class, 'googleCallback'])->name('oauth.google.callback');
     });
 });

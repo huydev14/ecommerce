@@ -86,7 +86,7 @@
         </div>
 
         <div class="tw-mt-3">
-            <a href="{{ route('oauth.redirect', ['provider' => 'microsoft', 'type' => 'admin']) }}"
+            <a href="{{ route('oauth.microsoft.redirect') }}"
                 class="tw-w-full tw-flex tw-items-center tw-justify-center tw-px-4 tw-py-2 tw-bg-white tw-border tw-border-gray-300 tw-rounded-md tw-shadow-sm hover:tw-bg-gray-50 hover:tw-border-gray-400 focus:tw-outline-none focus:tw-ring-2 focus:tw-ring-offset-2 focus:tw-ring-blue-500 tw-transition-all tw-duration-200">
                 <img src="https://upload.wikimedia.org/wikipedia/commons/4/44/Microsoft_logo.svg" alt="Microsoft Logo"
                     class="tw-w-5 tw-h-5 tw-mr-3" />

@@ -15,58 +15,81 @@ use App\Models\OAuthAccount;
 
 class OAuthController extends Controller
 {
-    public function redirect(Request $request, $provider)
+    public function googleRedirect()
     {
         try {
-            $type = $request->query('type', 'user');
-
-            return Socialite::driver($provider)
-                ->with(['state' => 'type=' . $type])
-                ->stateless()
-                ->redirect();
+            return Socialite::driver('google')->stateless()->redirect();
 
         } catch (\Exception $e) {
-            Log::error("OAuth Redirect Error: " . $e->getMessage());
-            return view('auth.callback', ['error' => "Dịch vụ " . ucfirst($provider) . " hiện chưa được hỗ trợ."]);
+            Log::error("Google OAuth Redirect Error: " . $e->getMessage());
+            return view('auth.callback', ['error' => "Dịch vụ Google hiện chưa được hỗ trợ."]);
         }
     }
 
-    public function callback($provider)
+    public function googleCallback()
     {
         try {
-            [$user, $type] = $this->handleProviderCallback($provider);
-
-            // If user type is admin
-            if ($type === 'admin') {
-                auth('web')->login($user);
-                request()->session()->regenerate();
-
-                return redirect()->intended(route('dashboard', absolute: false));
-            }
-
-            // If user type is customer
-            $token = auth('api_customer')->login($user);
-
-            $cookie = cookie('refresh_token', $token, config('jwt.refresh_ttl'));
-
-            return response()
-                ->view('auth.callback', compact('token', 'user'))
-                ->withCookie($cookie);
+            [$user, $type] = $this->handleProviderCallback('google', 'customer');
+            return $this->loginUser($user, $type);
 
         } catch (\Exception $e) {
-            Log::error('Social login error: ', ['provider' => $provider, 'error' => $e->getMessage()]);
+            Log::error('Google login error: ', ['error' => $e->getMessage()]);
             return view('auth.callback', [
-                'error' => 'Đăng nhập thất bại: Vui lòng thử lại sau.'
+                'error' => 'Đăng nhập Google thất bại: Vui lòng thử lại sau.'
             ]);
         }
     }
 
-    public function handleProviderCallback($provider)
+    public function microsoftRedirect()
     {
-        $oauth = Socialite::driver($provider)->stateless()->user();
+        try {
+            return Socialite::driver('microsoft')->redirect();
 
-        parse_str(request()->input('state'), $stateParams);
-        $type = $stateParams['type'] ?? 'user';
+        } catch (\Exception $e) {
+            Log::error("Microsoft OAuth Redirect Error: " . $e->getMessage());
+            return view('auth.callback', ['error' => "Dịch vụ Microsoft hiện chưa được hỗ trợ."]);
+        }
+    }
+
+    public function microsoftCallback()
+    {
+        try {
+            [$user, $type] = $this->handleProviderCallback('microsoft', 'admin');
+            return $this->loginUser($user, $type);
+
+        } catch (\Exception $e) {
+            Log::error('Microsoft login error: ', ['error' => $e->getMessage()]);
+            return view('auth.callback', [
+                'error' => 'Đăng nhập Microsoft thất bại: Vui lòng thử lại sau.'
+            ]);
+        }
+    }
+
+    private function loginUser($user, $type)
+    {
+        if ($type === 'admin') {
+            auth('web')->login($user);
+            request()->session()->regenerate();
+            return redirect()->intended(route('dashboard', absolute: false));
+        }
+
+        if ($type === 'customer') {
+            $token = auth('api_customer')->login($user);
+            $cookie = cookie('refresh_token', $token, config('jwt.refresh_ttl'));
+            return response()
+                ->view('auth.callback', compact('token', 'user'))
+                ->withCookie($cookie);
+        }
+        throw new \Exception('Invalid user type: ' . $type);
+    }
+
+    private function handleProviderCallback($provider, $type)
+    {
+        if ($type === 'customer'){
+            $oauth = Socialite::driver($provider)->stateless()->user();
+        } else {
+            $oauth = Socialite::driver($provider)->user();
+        }
 
         return DB::transaction(function () use ($provider, $oauth, $type) {
             $oauthAccount = OAuthAccount::where('provider', $provider)

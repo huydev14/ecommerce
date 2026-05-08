@@ -17,8 +17,8 @@ require __DIR__ . '/auth.php';
 
 // ---- OAuth Routes ----
 Route::prefix('auth')->group(function () {
-    Route::get('{provider}/redirect', [OAuthController::class, 'redirect'])->name('oauth.redirect');
-    Route::get('{provider}/callback', [OAuthController::class, 'callback']);
+    Route::get('microsoft/redirect', [OAuthController::class, 'microsoftRedirect'])->name('oauth.microsoft.redirect');
+    Route::get('microsoft/callback', [OAuthController::class, 'microsoftCallback'])->name('oauth.microsoft.callback');
 });
 
 // ----  Lang switch -----------------------------------

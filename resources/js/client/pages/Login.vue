@@ -165,7 +165,7 @@ const loginWithSocial = (provider) => {
     const left = window.innerWidth / 2 - width / 2;
     const top = window.innerHeight / 2 - height / 2;
 
-    const url = `${APP_CONFIG.apiUrl}/auth/${provider}/redirect?type=customer`;
+    const url = `${APP_CONFIG.apiUrl}/auth/${provider}/redirect`;
 
     window.open(url, 'SocialLogin', `width=${width},height=${height},top=${top},left=${left}`);
 
