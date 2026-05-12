@@ -5,6 +5,14 @@ html, body {
     overflow: hidden;
 }
 
+html.client-page-root,
+html.client-page-root body {
+    height: auto;
+    min-height: 100%;
+    overflow-x: hidden;
+    overflow-y: auto;
+}
+
 .wrapper {
     display: grid;
     height: 100vh;

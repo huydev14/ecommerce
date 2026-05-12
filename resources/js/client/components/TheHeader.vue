@@ -1,3 +1,9 @@
+<script setup>
+import { useAuthStore } from '../stores/auth';
+
+const authStore = useAuthStore();
+</script>
+
 <template>
     <div class="tw-bg-[#131921] tw-text-white">
         <div class="tw-flex tw-items-center tw-gap-1 tw-px-2 tw-py-2 md:tw-gap-4 md:tw-px-4">
@@ -15,7 +21,7 @@
             <div
                 class="tw-hidden tw-flex-none tw-cursor-pointer tw-flex-col tw-rounded-sm tw-border tw-border-transparent tw-px-2 tw-py-1 hover:tw-border-white lg:tw-flex"
             >
-                <span class="tw-pl-4 tw-text-[12px] tw-leading-3 tw-text-[#cccccc]">Giao đến Huy</span>
+                <span class="tw-pl-4 tw-text-[12px] tw-leading-3 tw-text-[#cccccc]">Giao đến {{ authStore.isLoggedIn && authStore.user ? authStore.user.name : 'Huy' }}</span>
                 <div class="tw-flex tw-items-center">
                     <svg
                         xmlns="http://www.w3.org/2000/svg"
@@ -75,27 +81,67 @@
                 </button>
             </div>
 
-            <router-link
-                :to="{ name: 'Login' }"
-                class="tw-hidden tw-h-[50px] tw-cursor-pointer tw-flex-col tw-justify-center tw-rounded-sm tw-border tw-border-transparent tw-px-2 tw-py-1 hover:tw-border-white md:tw-flex"
-            >
-                <span class="tw-text-[12px] tw-leading-3 tw-text-white">Xin chào, Đăng nhập</span>
-                <span class="tw-flex tw-items-center tw-text-[14px] tw-font-bold tw-leading-4 tw-text-white">
-                    Tài khoản & Danh sách
-                    <svg
-                        xmlns="http://www.w3.org/2000/svg"
-                        class="tw-ml-1 tw-h-3 tw-w-3 tw-text-gray-400"
-                        viewBox="0 0 20 20"
-                        fill="currentColor"
-                    >
-                        <path
-                            fill-rule="evenodd"
-                            d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z"
-                            clip-rule="evenodd"
-                        />
-                    </svg>
-                </span>
-            </router-link>
+            <div class="tw-group tw-relative tw-hidden tw-h-[50px] md:tw-flex">
+                <router-link
+                    :to="{ name: 'Login' }"
+                    class="tw-flex tw-h-full tw-cursor-pointer tw-flex-col tw-justify-center tw-rounded-sm tw-border tw-border-transparent tw-px-2 tw-py-1 hover:tw-border-white"
+                >
+                    <span class="tw-text-[12px] tw-leading-3 tw-text-white">Xin chào, {{ authStore.isLoggedIn && authStore.user ? authStore.user.name : 'Đăng nhập' }}</span>
+                    <span class="tw-flex tw-items-center tw-text-[14px] tw-font-bold tw-leading-4 tw-text-white">
+                        Tài khoản & Danh sách
+                        <svg
+                            xmlns="http://www.w3.org/2000/svg"
+                            class="tw-ml-1 tw-h-3 tw-w-3 tw-text-gray-400"
+                            viewBox="0 0 20 20"
+                            fill="currentColor"
+                        >
+                            <path
+                                fill-rule="evenodd"
+                                d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z"
+                                clip-rule="evenodd"
+                            />
+                        </svg>
+                    </span>
+                </router-link>
+
+                <!-- Dropdown menu -->
+                <div
+                    class="tw-invisible tw-absolute tw-right-0 tw-top-[48px] tw-z-50 tw-w-[400px] tw-rounded-sm tw-bg-white tw-p-4 tw-text-black tw-opacity-0 tw-shadow-xl tw-transition-all tw-duration-200 group-hover:tw-visible group-hover:tw-opacity-100"
+                >
+                    <!-- Triangle pointing up -->
+                    <div class="tw-absolute -tw-top-2 tw-right-6 tw-h-4 tw-w-4 tw-rotate-45 tw-bg-white tw-shadow-[-2px_-2px_2px_rgba(0,0,0,0.05)]"></div>
+
+                    <div v-if="!authStore.isLoggedIn" class="tw-mb-4 tw-flex tw-flex-col tw-items-center tw-border-b tw-border-gray-200 tw-pb-4">
+                        <router-link :to="{ name: 'Login' }" class="tw-mb-2 tw-w-48 tw-rounded-md  tw-py-1.5 tw-text-center a-button-primary">
+                            Đăng nhập
+                        </router-link>
+                        <div class="tw-text-[11px] tw-text-gray-600">Khách hàng mới? <a href="#" class="tw-text-blue-600 hover:tw-text-[#c45500] hover:tw-underline">Bắt đầu tại đây.</a></div>
+                    </div>
+
+                    <div class="tw-flex tw-justify-between tw-text-[13px]">
+                        <div class="tw-w-1/2 tw-pr-4">
+                            <h3 class="tw-mb-2 tw-text-[16px] tw-font-bold">Danh sách của bạn</h3>
+                            <ul class="tw-space-y-1 tw-text-gray-600">
+                                <li><a href="#" class="hover:tw-text-[#c45500] hover:tw-underline">Tạo danh sách</a></li>
+                                <li><a href="#" class="hover:tw-text-[#c45500] hover:tw-underline">Tìm danh sách</a></li>
+                                <li><a href="#" class="hover:tw-text-[#c45500] hover:tw-underline">Danh sách mong muốn</a></li>
+                            </ul>
+                        </div>
+                        <div class="tw-w-1/2 tw-border-l tw-border-gray-200 tw-pl-4">
+                            <h3 class="tw-mb-2 tw-text-[16px] tw-font-bold">Tài khoản của bạn</h3>
+                            <ul class="tw-space-y-1 tw-text-gray-600">
+                                <li><a href="#" class="hover:tw-text-[#c45500] hover:tw-underline">Tài khoản</a></li>
+                                <li><a href="#" class="hover:tw-text-[#c45500] hover:tw-underline">Đơn hàng</a></li>
+                                <li><a href="#" class="hover:tw-text-[#c45500] hover:tw-underline">Đề xuất của bạn</a></li>
+                                <li><a href="#" class="hover:tw-text-[#c45500] hover:tw-underline">Lịch sử duyệt web</a></li>
+                                <li v-if="authStore.isLoggedIn" class="tw-mt-2 tw-border-t tw-border-gray-100 tw-pt-2">
+                                    <button @click="authStore.logout()" class="hover:tw-text-[#c45500] hover:tw-underline">Đăng xuất</button>
+                                </li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
 
             <router-link
                 :to="{ name: 'Login' }"

@@ -9,11 +9,7 @@
         </nav>
 
         <main class="client-main">
-            <router-view v-slot="{ Component }">
-                <transition name="fade-page" mode="out-in">
-                    <component :is="Component" />
-                </transition>
-            </router-view>
+            <Home />
         </main>
 
         <footer class="client-footer">
@@ -26,4 +22,5 @@
 import TheHeader from '../components/TheHeader.vue';
 import TheSubNav from '../components/TheSubNav.vue';
 import TheFooter from '../components/TheFooter.vue';
+import Home from '../pages/Home.vue';
 </script>
