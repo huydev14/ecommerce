@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\Api\Auth\AuthController;
 use App\Http\Controllers\Api\Auth\OAuthController;
+use App\Http\Controllers\Api\CategoryController;
 use Illuminate\Support\Facades\Route;
 
 Route::prefix('v1')->middleware('throttle:5,1')->group(function () {
@@ -25,4 +26,6 @@ Route::prefix('v1')->middleware('throttle:5,1')->group(function () {
         Route::get('google/redirect', [OAuthController::class, 'googleRedirect'])->name('oauth.google.redirect');
         Route::get('google/callback', [OAuthController::class, 'googleCallback'])->name('oauth.google.callback');
     });
+
+    Route::get('/categories', [CategoryController::class, 'index']);
 });

@@ -17,13 +17,15 @@ class Category extends Model
         'slug',
         'description',
         'parent_id',
-        'order',
+        'icon',
+        'image',
+        'sort_order',
         'is_active',
     ];
 
     protected $casts = [
         'is_active' => 'boolean',
-        'order' => 'integer',
+        'sort_order' => 'integer',
     ];
 
     public function products()
@@ -38,6 +40,6 @@ class Category extends Model
 
     public function children()
     {
-        return $this->hasMany(Category::class, 'parent_id')->orderBy('order', 'asc');
+        return $this->hasMany(Category::class, 'parent_id')->orderBy('sort_order');
     }
 }

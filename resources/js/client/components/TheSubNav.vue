@@ -1,26 +1,24 @@
 <script setup>
-import { onBeforeUnmount, ref, watch } from 'vue';
+import { onBeforeUnmount, onMounted, ref, watch } from 'vue';
+import axios from 'axios';
 
 const isMenuOpen = ref(false);
+const categories = ref([]);
 
-const primarySections = [
-    {
-        title: 'Digital Content & Devices',
-        items: ['Prime Video', 'Amazon Music', 'Kindle E-readers & Books', 'Amazon Appstore'],
-    },
-    {
-        title: 'Shop by Department',
-        items: ['Electronics', 'Computers', 'Smart Home', 'Arts & Crafts', 'See all'],
-    },
-    {
-        title: 'Programs & Features',
-        items: ['Gift Cards', 'Shop By Interest', 'Amazon Live', 'International Shopping', 'See all'],
-    },
-    {
-        title: 'Help & Settings',
-        items: ['Your Account', 'English', 'United States'],
-    },
-];
+const fetchCategories = async () => {
+    try {
+        const response = await axios.get('/api/v1/categories');
+        if (response.data && response.data.success) {
+            categories.value = response.data.data;
+        }
+    } catch (error) {
+        console.error('Lỗi khi lấy danh mục:', error);
+    }
+};
+
+onMounted(() => {
+    fetchCategories();
+});
 
 const openMenu = () => {
     isMenuOpen.value = true;
@@ -129,19 +127,18 @@ onBeforeUnmount(() => {
                 </div>
 
                 <div class="tw-divide-y tw-divide-gray-200 tw-bg-white">
-                    <section v-for="section in primarySections" :key="section.title" class="tw-px-0 tw-py-2">
-                        <h3 class="tw-px-5 tw-py-3 tw-text-[17px] tw-font-bold tw-text-[#111827]">{{ section.title }}</h3>
+                    <section v-for="category in categories" :key="category.id" class="tw-px-0 tw-py-2">
+                        <h3 class="tw-px-5 tw-py-3 tw-text-[17px] tw-font-bold tw-text-[#111827]">{{ category.name }}</h3>
 
                         <div class="tw-space-y-1 tw-pb-2">
                             <a
-                                v-for="item in section.items"
-                                :key="item"
+                                v-for="child in category.children"
+                                :key="child.id"
                                 href="#"
                                 class="tw-flex tw-items-center tw-justify-between tw-px-5 tw-py-2 tw-text-[14px] tw-text-[#111827] hover:tw-bg-gray-50"
                             >
-                                <span>{{ item }}</span>
+                                <span>{{ child.name }}</span>
                                 <svg
-                                    v-if="item !== 'See all' && item !== 'Your Account' && item !== 'English' && item !== 'United States'"
                                     xmlns="http://www.w3.org/2000/svg"
                                     class="tw-h-4 tw-w-4 tw-text-gray-400"
                                     viewBox="0 0 20 20"

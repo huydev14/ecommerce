@@ -81,7 +81,7 @@ class CategoryController extends Controller
             'name' => 'required|string|min:2|max:255|unique:categories,name',
             'description' => 'required|string|max:1000',
             'parent_id' => 'nullable|exists:categories,id',
-            'order' => 'nullable|integer|min:0',
+            'sort_order' => 'nullable|integer|min:0',
         ], [
             'name.required' => __('category.name_required'),
             'name.unique' => __('category.name_unique'),
@@ -94,7 +94,7 @@ class CategoryController extends Controller
                 'slug' => Str::slug($request->name),
                 'description' => $request->description,
                 'parent_id' => $request->parent_id,
-                'order' => $request->filled('order') ? $request->order : 0,
+                'sort_order' => $request->filled('sort_order') ? $request->sort_order : 0,
                 'is_active' => $request->has('is_active'),
             ]);
 
@@ -133,7 +133,7 @@ class CategoryController extends Controller
             'name' => 'required|string|min:2|max:255|unique:categories,name,' . $category->id,
             'description' => 'required|string|max:1000',
             'parent_id' => 'nullable|exists:categories,id|not_in:' . $category->id,
-            'order' => 'nullable|integer|min:0',
+            'sort_order' => 'nullable|integer|min:0',
         ], [
             'name.required' => __('category.name_required'),
             'name.unique' => __('category.name_unique'),
@@ -147,7 +147,7 @@ class CategoryController extends Controller
                 'slug' => Str::slug($request->name),
                 'description' => $request->description,
                 'parent_id' => $request->parent_id,
-                'order' => $request->filled('order') ? $request->order : 0,
+                'sort_order' => $request->filled('sort_order') ? $request->sort_order : 0,
                 'is_active' => $request->has('is_active'),
             ]);
 
