@@ -9,7 +9,7 @@
         </nav>
 
         <main class="client-main">
-            <Home />
+            <router-view />
         </main>
 
         <footer class="client-footer">
@@ -22,5 +22,4 @@
 import TheHeader from '../components/TheHeader.vue';
 import TheSubNav from '../components/TheSubNav.vue';
 import TheFooter from '../components/TheFooter.vue';
-import Home from '../pages/Home.vue';
 </script>

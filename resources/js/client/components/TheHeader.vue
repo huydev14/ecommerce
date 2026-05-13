@@ -1,7 +1,16 @@
 <script setup>
+import { ref } from 'vue';
+import { useRouter } from 'vue-router';
 import { useAuthStore } from '../stores/auth';
 
 const authStore = useAuthStore();
+const router = useRouter();
+const searchTerm = ref('fitness clothing');
+
+const submitSearch = () => {
+    const query = searchTerm.value.trim() || 'fitness clothing';
+    router.push({ name: 'ProductList', query: { q: query } });
+};
 </script>
 
 <template>
@@ -42,7 +51,8 @@ const authStore = useAuthStore();
                 </div>
             </div>
 
-            <div
+            <form
+                @submit.prevent="submitSearch"
                 class="tw-flex tw-h-[40px] tw-flex-grow tw-overflow-hidden tw-rounded-md tw-bg-white focus-within:tw-ring-2 focus-within:tw-ring-[#f3a847]"
             >
                 <select
@@ -55,13 +65,14 @@ const authStore = useAuthStore();
                 </select>
 
                 <input
+                    v-model="searchTerm"
                     type="text"
                     placeholder="Tìm kiếm sản phẩm..."
                     class="tw-flex-grow tw-px-3 tw-text-[15px] tw-text-black focus:tw-outline-none"
                 />
 
                 <button
-                    type="button"
+                    type="submit"
                     class="tw-flex tw-w-[45px] tw-flex-none tw-cursor-pointer tw-items-center tw-justify-center tw-bg-[#febd69] tw-transition-colors hover:tw-bg-[#f3a847]"
                 >
                     <svg
@@ -79,7 +90,7 @@ const authStore = useAuthStore();
                         />
                     </svg>
                 </button>
-            </div>
+            </form>
 
             <div class="tw-group tw-relative tw-hidden tw-h-[50px] md:tw-flex">
                 <router-link
@@ -181,11 +192,12 @@ const authStore = useAuthStore();
         </div>
 
         <div class="tw-bg-[#131921] tw-px-2 tw-pb-2 md:tw-hidden">
-            <div
+            <form
+                @submit.prevent="submitSearch"
                 class="tw-flex tw-h-[40px] tw-overflow-hidden tw-rounded-md tw-bg-white focus-within:tw-ring-2 focus-within:tw-ring-[#f3a847]"
             >
-                <input type="text" placeholder="Tìm kiếm sản phẩm..." class="tw-flex-grow tw-px-3 tw-text-black focus:tw-outline-none" />
-                <button type="button" class="tw-flex tw-w-[45px] tw-items-center tw-justify-center tw-bg-[#febd69]">
+                <input v-model="searchTerm" type="text" placeholder="Tìm kiếm sản phẩm..." class="tw-flex-grow tw-px-3 tw-text-black focus:tw-outline-none" />
+                <button type="submit" class="tw-flex tw-w-[45px] tw-items-center tw-justify-center tw-bg-[#febd69]">
                     <svg
                         xmlns="http://www.w3.org/2000/svg"
                         class="tw-h-5 tw-w-5 tw-text-[#333333]"
@@ -201,7 +213,7 @@ const authStore = useAuthStore();
                         />
                     </svg>
                 </button>
-            </div>
+            </form>
         </div>
     </div>
 </template>
