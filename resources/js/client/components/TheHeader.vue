@@ -15,7 +15,7 @@ const submitSearch = () => {
 
 <template>
     <div class="tw-bg-[#131921] tw-text-white">
-        <div class="tw-flex tw-items-center tw-gap-1 tw-px-2 tw-py-2 md:tw-gap-4 md:tw-px-4">
+        <div class="tw-flex tw-min-w-0 tw-items-center tw-gap-1 tw-px-2 tw-py-2 md:tw-gap-2 md:tw-px-4 xl:tw-gap-4">
             <router-link
                 :to="{ name: 'Home' }"
                 class="tw-flex-none tw-cursor-pointer tw-rounded-sm tw-border tw-border-transparent tw-px-2 tw-py-1 hover:tw-border-white"
@@ -53,7 +53,7 @@ const submitSearch = () => {
 
             <form
                 @submit.prevent="submitSearch"
-                class="tw-flex tw-h-[40px] tw-flex-grow tw-overflow-hidden tw-rounded-md tw-bg-white focus-within:tw-ring-2 focus-within:tw-ring-[#f3a847]"
+                class="tw-hidden tw-h-[40px] tw-min-w-0 tw-flex-grow tw-overflow-hidden tw-rounded-md tw-bg-white focus-within:tw-ring-2 focus-within:tw-ring-[#f3a847] md:tw-flex"
             >
                 <select
                     class="tw-hidden tw-cursor-pointer tw-border-r tw-border-gray-300 tw-bg-[#f3f3f3] tw-px-3 tw-text-xs tw-text-gray-700 hover:tw-bg-[#dadada] focus:tw-outline-none md:tw-block"
@@ -68,7 +68,7 @@ const submitSearch = () => {
                     v-model="searchTerm"
                     type="text"
                     placeholder="Tìm kiếm sản phẩm..."
-                    class="tw-flex-grow tw-px-3 tw-text-[15px] tw-text-black focus:tw-outline-none"
+                    class="tw-min-w-0 tw-flex-grow tw-px-3 tw-text-[15px] tw-text-black focus:tw-outline-none"
                 />
 
                 <button
@@ -92,7 +92,7 @@ const submitSearch = () => {
                 </button>
             </form>
 
-            <div class="tw-group tw-relative tw-hidden tw-h-[50px] md:tw-flex">
+            <div class="tw-group tw-relative tw-hidden tw-h-[50px] lg:tw-flex">
                 <router-link
                     :to="{ name: 'Login' }"
                     class="tw-flex tw-h-full tw-cursor-pointer tw-flex-col tw-justify-center tw-rounded-sm tw-border tw-border-transparent tw-px-2 tw-py-1 hover:tw-border-white"

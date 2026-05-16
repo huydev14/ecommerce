@@ -1,18 +1,18 @@
 <template>
-    <div class="client-wrapper tw-font-sans tw-antialiased">
-        <header class="client-header">
+    <div class="client-wrapper tw-min-w-0 tw-overflow-x-hidden tw-font-sans tw-antialiased">
+        <header class="client-header tw-min-w-0">
             <TheHeader />
         </header>
 
-        <nav class="client-subnav">
+        <nav class="client-subnav tw-min-w-0">
             <TheSubNav />
         </nav>
 
-        <main class="client-main">
+        <main class="client-main tw-min-w-0">
             <router-view />
         </main>
 
-        <footer class="client-footer">
+        <footer class="client-footer tw-min-w-0">
             <TheFooter />
         </footer>
     </div>
