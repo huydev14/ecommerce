@@ -1,9 +1,15 @@
 <script setup>
-import { onBeforeUnmount, onMounted, ref, watch } from 'vue';
+import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue';
 import axios from 'axios';
+import { useAuthStore } from '../stores/auth';
 
+const authStore = useAuthStore();
 const isMenuOpen = ref(false);
 const categories = ref([]);
+
+const userName = computed(() => authStore.user?.name || authStore.user?.fullname || 'Tài khoản');
+const userAvatar = computed(() => authStore.user?.avatar || authStore.user?.photo_url || authStore.user?.image || '');
+const userInitial = computed(() => userName.value.trim().charAt(0).toUpperCase() || 'U');
 
 const fetchCategories = async () => {
     try {
@@ -103,7 +109,7 @@ onBeforeUnmount(() => {
                 class="tw-fixed tw-left-0 tw-top-0 tw-z-[80] tw-h-full tw-w-[330px] tw-max-w-[88vw] tw-overflow-y-auto tw-bg-[#f3f3f3] tw-text-[#111827] tw-shadow-2xl"
             >
                 <div class="tw-flex tw-items-center tw-justify-between tw-bg-[#232f3e] tw-px-5 tw-py-4 tw-text-white">
-                    <div class="tw-flex tw-items-center tw-gap-3">
+                    <div v-if="!authStore.isLoggedIn" class="tw-flex tw-items-center tw-gap-3">
                         <div class="tw-grid tw-h-8 tw-w-8 tw-place-items-center tw-rounded-full tw-bg-white/15">
                             <svg xmlns="http://www.w3.org/2000/svg" class="tw-h-5 tw-w-5" viewBox="0 0 20 20" fill="currentColor">
                                 <path
@@ -115,7 +121,21 @@ onBeforeUnmount(() => {
                         </div>
                         <div>
                             <div class="tw-text-base tw-font-bold">Hello, sign in</div>
-                            <div class="tw-text-[12px] tw-text-white/75">Browse Amazon-style categories</div>
+                        </div>
+                    </div>
+
+                    <div v-else class="tw-flex tw-min-w-0 tw-items-center tw-gap-3">
+                        <img
+                            v-if="userAvatar"
+                            :src="userAvatar"
+                            :alt="userName"
+                            class="tw-h-9 tw-w-9 tw-flex-none tw-rounded-full tw-bg-white/15 tw-object-cover"
+                        />
+                        <div v-else class="tw-grid tw-h-9 tw-w-9 tw-flex-none tw-place-items-center tw-rounded-full tw-bg-white/15 tw-text-sm tw-font-bold">
+                            {{ userInitial }}
+                        </div>
+                        <div class="tw-min-w-0">
+                            <div class="tw-truncate tw-text-base tw-font-bold">{{ userName }}</div>
                         </div>
                     </div>
 
