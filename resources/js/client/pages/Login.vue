@@ -118,7 +118,7 @@ const handleCheckEmail = async () => {
             step.value = 'new_user';
         }
     } catch (error) {
-        errorMessage.value = error.response.data.message || 'Đã có lỗi xảy ra, vui lòng thử lại!';
+        errorMessage.value = error.response?.data?.message || 'Không thể kết nối đến máy chủ.';
     } finally {
         isLoading.value = false;
     }

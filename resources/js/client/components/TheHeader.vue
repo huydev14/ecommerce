@@ -94,7 +94,7 @@ const submitSearch = () => {
 
             <div class="tw-group tw-relative tw-hidden tw-h-[50px] lg:tw-flex">
                 <router-link
-                    :to="{ name: 'Login' }"
+                    :to="{ name: 'MyAccount' }"
                     class="tw-flex tw-h-full tw-cursor-pointer tw-flex-col tw-justify-center tw-rounded-sm tw-border tw-border-transparent tw-px-2 tw-py-1 hover:tw-border-white"
                 >
                     <span class="tw-text-[12px] tw-leading-3 tw-text-white">Xin chào, {{ authStore.isLoggedIn && authStore.user ? authStore.user.name : 'Đăng nhập' }}</span>
@@ -141,7 +141,9 @@ const submitSearch = () => {
                         <div class="tw-w-1/2 tw-border-l tw-border-gray-200 tw-pl-4">
                             <h3 class="tw-mb-2 tw-text-[16px] tw-font-bold">Tài khoản của bạn</h3>
                             <ul class="tw-space-y-1 tw-text-gray-600">
-                                <li><a href="#" class="hover:tw-text-[#c45500] hover:tw-underline">Tài khoản</a></li>
+                                <li>
+                                    <router-link :to="{ name: 'MyAccount' }" class="hover:tw-text-[#c45500] hover:tw-underline">Tài khoản</router-link>
+                                </li>
                                 <li><a href="#" class="hover:tw-text-[#c45500] hover:tw-underline">Đơn hàng</a></li>
                                 <li><a href="#" class="hover:tw-text-[#c45500] hover:tw-underline">Đề xuất của bạn</a></li>
                                 <li><a href="#" class="hover:tw-text-[#c45500] hover:tw-underline">Lịch sử duyệt web</a></li>

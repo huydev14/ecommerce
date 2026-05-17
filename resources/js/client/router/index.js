@@ -16,6 +16,11 @@ const routes = [
                 name: 'ProductList',
                 component: () => import('@/pages/ProductList.vue'),
             },
+            {
+                path: 'my-account',
+                name: 'MyAccount',
+                component: () => import('@/pages/MyAccount.vue'),
+            },
         ],
     },
     {
