@@ -144,7 +144,9 @@ const submitSearch = () => {
                                 <li>
                                     <router-link :to="{ name: 'MyAccount' }" class="hover:tw-text-[#c45500] hover:tw-underline">Tài khoản</router-link>
                                 </li>
-                                <li><a href="#" class="hover:tw-text-[#c45500] hover:tw-underline">Đơn hàng</a></li>
+                                <li>
+                                    <router-link :to="{ name: 'MyAccountOrders' }" class="hover:tw-text-[#c45500] hover:tw-underline">Đơn hàng</router-link>
+                                </li>
                                 <li><a href="#" class="hover:tw-text-[#c45500] hover:tw-underline">Đề xuất của bạn</a></li>
                                 <li><a href="#" class="hover:tw-text-[#c45500] hover:tw-underline">Lịch sử duyệt web</a></li>
                                 <li v-if="authStore.isLoggedIn" class="tw-mt-2 tw-border-t tw-border-gray-100 tw-pt-2">
@@ -157,7 +159,7 @@ const submitSearch = () => {
             </div>
 
             <router-link
-                :to="{ name: 'Login' }"
+                :to="{ name: 'MyAccountOrders' }"
                 class="tw-hidden tw-h-[50px] tw-cursor-pointer tw-flex-col tw-justify-center tw-rounded-sm tw-border tw-border-transparent tw-px-2 tw-py-1 hover:tw-border-white lg:tw-flex"
             >
                 <span class="tw-text-[12px] tw-leading-3 tw-text-white">Trả hàng</span>

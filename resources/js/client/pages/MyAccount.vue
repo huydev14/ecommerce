@@ -5,6 +5,7 @@ const accountCards = [
         description: 'Track, return, cancel an order, download invoice or buy again',
         icon: 'fa-solid fa-box-open',
         accent: 'orders',
+        routeName: 'MyAccountOrders',
     },
     {
         title: 'Login & security',
@@ -33,7 +34,12 @@ const accountCards = [
             <h1 id="account-title">Your Account</h1>
 
             <div class="account-grid" aria-label="Account shortcuts">
-                <a v-for="card in accountCards" :key="card.title" href="#" class="account-card">
+                <router-link
+                    v-for="card in accountCards"
+                    :key="card.title"
+                    :to="card.routeName ? { name: card.routeName } : '#'"
+                    class="account-card"
+                >
                     <span class="account-card__icon" :class="`is-${card.accent}`" aria-hidden="true">
                         <i :class="card.icon"></i>
                     </span>
@@ -42,7 +48,7 @@ const accountCards = [
                         <span class="account-card__title">{{ card.title }}</span>
                         <span class="account-card__description">{{ card.description }}</span>
                     </span>
-                </a>
+                </router-link>
             </div>
         </div>
     </section>
@@ -152,7 +158,6 @@ const accountCards = [
 .account-card__description {
     color: #565959;
     font-size: 17px;
-    font-weight: 600;
     line-height: 24px;
 }
 

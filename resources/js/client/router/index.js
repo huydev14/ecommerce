@@ -20,6 +20,13 @@ const routes = [
                 path: 'my-account',
                 name: 'MyAccount',
                 component: () => import('@/pages/MyAccount.vue'),
+                meta: { requiresAuth: true },
+            },
+            {
+                path: 'my-account/orders',
+                name: 'MyAccountOrders',
+                component: () => import('@/pages/MyAccountOrders.vue'),
+                meta: { requiresAuth: true },
             },
         ],
     },
