@@ -117,7 +117,7 @@ const submitSearch = () => {
 
                 <!-- Dropdown menu -->
                 <div
-                    class="tw-invisible tw-absolute tw-right-0 tw-top-[48px] tw-z-50 tw-w-[400px] tw-rounded-sm tw-bg-white tw-p-4 tw-text-black tw-opacity-0 tw-shadow-xl tw-transition-all tw-duration-200 group-hover:tw-visible group-hover:tw-opacity-100"
+                    class="tw-invisible tw-absolute tw-right-0 tw-top-[48px] tw-z-[90] tw-w-[400px] tw-rounded-sm tw-bg-white tw-p-4 tw-text-black tw-opacity-0 tw-shadow-xl tw-transition-all tw-duration-200 group-hover:tw-visible group-hover:tw-opacity-100"
                 >
                     <!-- Triangle pointing up -->
                     <div class="tw-absolute -tw-top-2 tw-right-6 tw-h-4 tw-w-4 tw-rotate-45 tw-bg-white tw-shadow-[-2px_-2px_2px_rgba(0,0,0,0.05)]"></div>

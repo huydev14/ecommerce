@@ -15,13 +15,12 @@
 
 .client-header {
     grid-area: header;
-    z-index: 50;
+    z-index: 60;
     position: relative;
 }
 
 .client-subnav {
     grid-area: subnav;
-    z-index: 40;
     position: relative;
 }
 
