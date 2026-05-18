@@ -37,6 +37,12 @@
                         <p>{{ __('product.variant_management_title') }}</p>
                     </a>
                 </li>
+
+                <li class="nav-item">
+                    <a href="{{ route('product-variants.index') }}" class="nav-link {{ request()->routeIs('product-variants.index') ? 'active' : '' }}">
+                        <p>Thêm hàng loạt</p>
+                    </a>
+                </li>
                 {{-- ---<li class="nav-item">
                     <a href="pages/UI/icons.html" class="nav-link">
                         <p>Tồn kho</p>
