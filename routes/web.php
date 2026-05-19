@@ -1,17 +1,18 @@
 <?php
 
-use Illuminate\Support\Facades\Route;
-use Illuminate\Support\Facades\Session;
-use App\Http\Controllers\ProfileController;
-use App\Http\Controllers\RoleController;
-use App\Http\Controllers\UserController;
+use App\Http\Controllers\Api\Auth\OAuthController;
 use App\Http\Controllers\AuditLogController;
 use App\Http\Controllers\BrandController;
 use App\Http\Controllers\CategoryController;
 use App\Http\Controllers\ProductController;
+use App\Http\Controllers\ProductImportController;
 use App\Http\Controllers\ProductVariantController;
+use App\Http\Controllers\ProfileController;
+use App\Http\Controllers\RoleController;
 use App\Http\Controllers\SettingController;
-use App\Http\Controllers\Api\Auth\OAuthController;
+use App\Http\Controllers\UserController;
+use Illuminate\Support\Facades\Route;
+use Illuminate\Support\Facades\Session;
 
 require __DIR__ . '/auth.php';
 
@@ -26,6 +27,7 @@ Route::get('lang/{locale}', function ($locale) {
     if (in_array($locale, ['en', 'vi'])) {
         Session::put('locale', $locale);
     }
+
     return redirect()->back();
 })->name('lang.switch');
 
@@ -96,6 +98,14 @@ Route::prefix('admin')->middleware('auth')->group(function () {
         Route::post('/{id}/restore', [ProductVariantController::class, 'restore'])->name('restore');
     });
     Route::resource('product-variants', ProductVariantController::class);
+
+    // --- Product imports --------------------------
+    Route::prefix('product-imports')->name('product-imports.')->group(function () {
+        Route::get('/', [ProductImportController::class, 'index'])->name('index');
+        Route::post('/preview', [ProductImportController::class, 'uploadAndPreview'])->name('upload');
+        Route::get('/{batchId}/preview', [ProductImportController::class, 'showPreview'])->name('preview');
+        Route::post('/{batchId}/confirm', [ProductImportController::class, 'confirmImport'])->name('confirm');
+    });
 
     // --- Admin Settings -------------------------------
     Route::prefix('settings')->name('settings.')->group(function () {

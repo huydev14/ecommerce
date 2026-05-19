@@ -9,7 +9,7 @@
         </li>
 
         {{-- Bán hàng --}}
-        <li class="nav-item menu-open {{ request()->routeIs('brands.*') || request()->routeIs('categories.*') || request()->routeIs('products.*') || request()->routeIs('product-variants.*') ? 'menu-is-opening ' : '' }}">
+        <li class="nav-item menu-open {{ request()->routeIs('brands.*') || request()->routeIs('categories.*') || request()->routeIs('products.*') || request()->routeIs('product-variants.*') || request()->routeIs('product-imports.*') ? 'menu-is-opening ' : '' }}">
             <a href="#" class="nav-link">
                 <x-icon-shopping class="nav-icon" />
                 <p> {{ __('header.sales') }}
@@ -39,8 +39,8 @@
                 </li>
 
                 <li class="nav-item">
-                    <a href="{{ route('product-variants.index') }}" class="nav-link {{ request()->routeIs('product-variants.index') ? 'active' : '' }}">
-                        <p>Thêm hàng loạt</p>
+                    <a href="{{ route('product-imports.index') }}" class="nav-link {{ request()->routeIs('product-imports.*') ? 'active' : '' }}">
+                        <p>Import sản phẩm</p>
                     </a>
                 </li>
                 {{-- ---<li class="nav-item">
