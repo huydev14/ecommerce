@@ -24,14 +24,10 @@ Homestead.yaml
 Thumbs.db
 
 .claude/
-.continue/
 .gitnexus/
-.cursor/
-.cursorrules
-.windsurfrules
-.roo/
 .cline/
-.codeium/
 AGENTS.md
 CLAUDE.md
 .claudit
+.agents
+.github
