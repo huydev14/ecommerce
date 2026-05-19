@@ -14,7 +14,7 @@ class TempProductsImport implements ToCollection, WithChunkReading, WithHeadingR
     protected $batchId;
     protected $categoriesMap = [];
 
-    public function __construct()
+    public function __construct($batchId)
     {
         $this->batchId = $batchId;
     }
@@ -46,7 +46,7 @@ class TempProductsImport implements ToCollection, WithChunkReading, WithHeadingR
             $rowsToInsert[] = [
                 'import_batch_id' => $this->batchId,
                 'row_number' => $index + 2,
-                'status' => $isvalid ? 'valid' : 'error',
+                'status' => $isValid ? 'valid' : 'error',
                 'error_message' => $isValid ? null : implode(' ', $errors),
                 'data' => json_encode([
                     'name' => $name,

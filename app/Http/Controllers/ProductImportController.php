@@ -7,7 +7,7 @@ use App\Jobs\ProcessImportBatchJob;
 use App\Models\ImportBatch;
 use App\Models\ImportProductRow;
 use Illuminate\Http\Request;
-use Maatwebsite\Excel\Excel;
+use Maatwebsite\Excel\Facades\Excel;
 
 class ProductImportController extends Controller
 {
@@ -22,7 +22,7 @@ class ProductImportController extends Controller
             'status' => 'processing',
         ]);
 
-        Excel::import(new TempProductsImport($batch->id), $request->file('excel_fiel'));
+        Excel::import(new TempProductsImport($batch->id), $request->file('excel_file'));
 
         $totalRows = ImportProductRow::where('import_batch_id', $batch->id)->count();
         $batch->update([
