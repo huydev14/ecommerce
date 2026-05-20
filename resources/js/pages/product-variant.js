@@ -119,7 +119,7 @@ $(function () {
         processing: true,
         serverSide: true,
         autoWidth: false,
-        order: [[8, 'desc']],
+        order: [[6, 'desc']],
         ajax: {
             url: route('product-variants.data'),
             data: function (d) {
@@ -139,10 +139,6 @@ $(function () {
                 name: 'sku',
             },
             {
-                data: 'barcode',
-                name: 'barcode',
-            },
-            {
                 data: 'price',
                 name: 'price',
             },
@@ -153,10 +149,6 @@ $(function () {
             {
                 data: 'cost_price',
                 name: 'cost_price',
-            },
-            {
-                data: 'position',
-                name: 'position',
             },
             {
                 data: 'is_active',

@@ -40,6 +40,8 @@ return [
         'product' => 'Product',
         'sku' => 'SKU',
         'variant_price' => 'Variant price',
+        'unit' => 'Unit',
+        'tax' => 'Tax',
         'status' => 'Status',
         'note' => 'Note',
     ],
@@ -82,14 +84,19 @@ return [
             'guide' => 'Provide a brand ID or the name of an existing brand. It can be empty.',
         ],
         [
-            'name' => 'barcode',
-            'requirement' => 'optional',
-            'guide' => 'Variant barcode, unique in the system and import file.',
-        ],
-        [
             'name' => 'compare_at_price / cost_price',
             'requirement' => 'optional',
             'guide' => 'Compare-at price and cost price, numeric and not negative when provided.',
+        ],
+        [
+            'name' => 'unit_id / unit_name',
+            'requirement' => 'optional',
+            'guide' => 'Provide a unit ID or an existing unit name. It can be empty.',
+        ],
+        [
+            'name' => 'tax',
+            'requirement' => 'optional',
+            'guide' => 'Enter the tax rate as a number. It will be matched with an existing tax rate in the system.',
         ],
         [
             'name' => 'metadata / attributes',
@@ -97,9 +104,9 @@ return [
             'guide' => 'Extended product or variant data. If provided, the content must be valid JSON.',
         ],
         [
-            'name' => 'position / is_active',
+            'name' => 'is_active',
             'requirement' => 'optional',
-            'guide' => 'position is a non-negative integer. is_active supports 1, true, yes, y, active, or on.',
+            'guide' => 'is_active supports 1, true, yes, y, active, or on.',
         ],
     ],
 ];

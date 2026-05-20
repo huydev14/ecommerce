@@ -15,12 +15,12 @@ class ProductVariant extends Model
     protected $fillable = [
         'product_id',
         'sku',
-        'barcode',
         'price',
         'compare_at_price',
         'cost_price',
+        'unit_id',
+        'tax_id',
         'attributes',
-        'position',
         'is_active',
     ];
 
@@ -29,13 +29,24 @@ class ProductVariant extends Model
         'price' => 'decimal:2',
         'compare_at_price' => 'decimal:2',
         'cost_price' => 'decimal:2',
+        'unit_id' => 'integer',
+        'tax_id' => 'integer',
         'is_active' => 'boolean',
-        'position' => 'integer',
     ];
 
     public function product()
     {
         return $this->belongsTo(Product::class);
+    }
+
+    public function unit()
+    {
+        return $this->belongsTo(Unit::class);
+    }
+
+    public function tax()
+    {
+        return $this->belongsTo(Tax::class);
     }
 
     public function inventory()

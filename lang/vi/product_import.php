@@ -40,6 +40,8 @@ return [
         'product' => 'Sản phẩm',
         'sku' => 'SKU',
         'variant_price' => 'Giá variant',
+        'unit' => 'Đơn vị tính',
+        'tax' => 'Thuế',
         'status' => 'Trạng thái',
         'note' => 'Ghi chú',
     ],
@@ -82,14 +84,19 @@ return [
             'guide' => 'Cung cấp ID thương hiệu hoặc tên thương hiệu đã tồn tại. Có thể để trống.',
         ],
         [
-            'name' => 'barcode',
-            'requirement' => 'optional',
-            'guide' => 'Mã vạch của biến thể, không trùng trong hệ thống hoặc trong file import.',
-        ],
-        [
             'name' => 'compare_at_price / cost_price',
             'requirement' => 'optional',
             'guide' => 'Giá so sánh và giá vốn, nhập dạng số không âm nếu có.',
+        ],
+        [
+            'name' => 'unit_id / unit_name',
+            'requirement' => 'optional',
+            'guide' => 'Cung cấp ID đơn vị tính hoặc tên đơn vị tính đã tồn tại. Có thể để trống.',
+        ],
+        [
+            'name' => 'tax',
+            'requirement' => 'optional',
+            'guide' => 'Nhập thuế suất dạng số. Hệ thống sẽ khớp với thuế suất đã tồn tại.',
         ],
         [
             'name' => 'metadata / attributes',
@@ -97,9 +104,9 @@ return [
             'guide' => 'Dữ liệu mở rộng cho sản phẩm hoặc biến thể. Nếu nhập, nội dung phải là JSON hợp lệ.',
         ],
         [
-            'name' => 'position / is_active',
+            'name' => 'is_active',
             'requirement' => 'optional',
-            'guide' => 'position là số nguyên không âm. is_active hỗ trợ 1, true, yes, y, active hoặc on.',
+            'guide' => 'is_active hỗ trợ 1, true, yes, y, active hoặc on.',
         ],
     ],
 ];

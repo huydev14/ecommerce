@@ -29,11 +29,9 @@
                     <tr>
                         <th>{{ __('product_variant.product') }}</th>
                         <th>{{ __('product_variant.sku') }}</th>
-                        <th>{{ __('product_variant.barcode') }}</th>
                         <th>{{ __('product_variant.price') }}</th>
                         <th>{{ __('product_variant.compare_at_price') }}</th>
                         <th>{{ __('product_variant.cost_price') }}</th>
-                        <th>{{ __('product_variant.position') }}</th>
                         <th>{{ __('product_variant.status') }}</th>
                         <th>{{ __('product_variant.updated_at') }}</th>
                         <th>

@@ -31,22 +31,13 @@
             </select>
         </div>
 
-        <div class="tw-grid tw-grid-cols-1 md:tw-grid-cols-2 tw-gap-4">
-            <div>
-                <label for="sku" class="tw-block tw-text-sm tw-font-medium tw-text-gray-700 tw-mb-1.5">
-                    {{ __('product_variant.sku') }} <span class="tw-text-red-500">*</span>
-                </label>
-                <input type="text" name="sku" id="sku" required value="{{ $variant->sku }}"
-                    placeholder="{{ __('product_variant.sku_placeholder') }}"
-                    class="tw-w-full tw-rounded-md tw-border-gray-300 tw-shadow-sm focus:tw-border-[#0078D4] focus:tw-ring-[#0078D4] tw-text-sm tw-px-3 tw-py-2 tw-transition-colors tw-outline-none">
-            </div>
-
-            <div>
-                <label for="barcode" class="tw-block tw-text-sm tw-font-medium tw-text-gray-700 tw-mb-1.5">{{ __('product_variant.barcode') }}</label>
-                <input type="text" name="barcode" id="barcode" value="{{ $variant->barcode }}"
-                    placeholder="{{ __('product_variant.barcode_placeholder') }}"
-                    class="tw-w-full tw-rounded-md tw-border-gray-300 tw-shadow-sm focus:tw-border-[#0078D4] focus:tw-ring-[#0078D4] tw-text-sm tw-px-3 tw-py-2 tw-transition-colors tw-outline-none">
-            </div>
+        <div>
+            <label for="sku" class="tw-block tw-text-sm tw-font-medium tw-text-gray-700 tw-mb-1.5">
+                {{ __('product_variant.sku') }} <span class="tw-text-red-500">*</span>
+            </label>
+            <input type="text" name="sku" id="sku" required value="{{ $variant->sku }}"
+                placeholder="{{ __('product_variant.sku_placeholder') }}"
+                class="tw-w-full tw-rounded-md tw-border-gray-300 tw-shadow-sm focus:tw-border-[#0078D4] focus:tw-ring-[#0078D4] tw-text-sm tw-px-3 tw-py-2 tw-transition-colors tw-outline-none">
         </div>
 
         <div class="tw-grid tw-grid-cols-1 md:tw-grid-cols-3 tw-gap-4">
@@ -71,18 +62,10 @@
             </div>
         </div>
 
-        <div class="tw-grid tw-grid-cols-1 md:tw-grid-cols-2 tw-gap-4">
-            <div>
-                <label for="position" class="tw-block tw-text-sm tw-font-medium tw-text-gray-700 tw-mb-1.5">{{ __('product_variant.position') }}</label>
-                <input type="number" min="0" name="position" id="position" value="{{ $variant->position }}"
-                    class="tw-w-full tw-rounded-md tw-border-gray-300 tw-shadow-sm focus:tw-border-[#0078D4] focus:tw-ring-[#0078D4] tw-text-sm tw-px-3 tw-py-2 tw-transition-colors tw-outline-none">
-            </div>
-
-            <div>
-                <label for="attributes" class="tw-block tw-text-sm tw-font-medium tw-text-gray-700 tw-mb-1.5">{{ __('product_variant.attributes') }}</label>
-                <textarea name="attributes" id="attributes" rows="1" placeholder="{{ __('product_variant.attributes_placeholder') }}"
-                    class="tw-w-full tw-rounded-md tw-border-gray-300 tw-shadow-sm focus:tw-border-[#0078D4] focus:tw-ring-[#0078D4] tw-text-sm tw-px-3 tw-py-2 tw-transition-colors tw-outline-none">{{ $variant->attributes ? json_encode($variant->attributes) : '' }}</textarea>
-            </div>
+        <div>
+            <label for="attributes" class="tw-block tw-text-sm tw-font-medium tw-text-gray-700 tw-mb-1.5">{{ __('product_variant.attributes') }}</label>
+            <textarea name="attributes" id="attributes" rows="1" placeholder="{{ __('product_variant.attributes_placeholder') }}"
+                class="tw-w-full tw-rounded-md tw-border-gray-300 tw-shadow-sm focus:tw-border-[#0078D4] focus:tw-ring-[#0078D4] tw-text-sm tw-px-3 tw-py-2 tw-transition-colors tw-outline-none">{{ $variant->attributes ? json_encode($variant->attributes) : '' }}</textarea>
         </div>
 
         <div class="tw-flex tw-items-center tw-gap-4">
@@ -94,4 +77,3 @@
         </div>
     </div>
 </form>
-

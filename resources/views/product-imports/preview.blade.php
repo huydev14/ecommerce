@@ -79,6 +79,8 @@
                             <th class="tw-whitespace-nowrap tw-px-5 tw-py-3 tw-text-left tw-text-xs tw-font-semibold tw-uppercase tw-text-gray-500">{{ __('product_import.preview_columns.product') }}</th>
                             <th class="tw-whitespace-nowrap tw-px-5 tw-py-3 tw-text-left tw-text-xs tw-font-semibold tw-uppercase tw-text-gray-500">{{ __('product_import.preview_columns.sku') }}</th>
                             <th class="tw-whitespace-nowrap tw-px-5 tw-py-3 tw-text-left tw-text-xs tw-font-semibold tw-uppercase tw-text-gray-500">{{ __('product_import.preview_columns.variant_price') }}</th>
+                            <th class="tw-whitespace-nowrap tw-px-5 tw-py-3 tw-text-left tw-text-xs tw-font-semibold tw-uppercase tw-text-gray-500">{{ __('product_import.preview_columns.unit') }}</th>
+                            <th class="tw-whitespace-nowrap tw-px-5 tw-py-3 tw-text-left tw-text-xs tw-font-semibold tw-uppercase tw-text-gray-500">{{ __('product_import.preview_columns.tax') }}</th>
                             <th class="tw-whitespace-nowrap tw-px-5 tw-py-3 tw-text-left tw-text-xs tw-font-semibold tw-uppercase tw-text-gray-500">{{ __('product_import.preview_columns.status') }}</th>
                             <th class="tw-min-w-[260px] tw-px-5 tw-py-3 tw-text-left tw-text-xs tw-font-semibold tw-uppercase tw-text-gray-500">{{ __('product_import.preview_columns.note') }}</th>
                         </tr>
@@ -91,6 +93,8 @@
                                 <td class="tw-whitespace-nowrap tw-px-5 tw-py-3 tw-text-sm tw-text-gray-700">{{ $row->data['product']['name'] ?? '-' }}</td>
                                 <td class="tw-whitespace-nowrap tw-px-5 tw-py-3 tw-text-sm tw-text-gray-700">{{ $row->data['variant']['sku'] ?? '-' }}</td>
                                 <td class="tw-whitespace-nowrap tw-px-5 tw-py-3 tw-text-sm tw-text-gray-700">{{ isset($row->data['variant']['price']) ? number_format((float) $row->data['variant']['price']) : '-' }}</td>
+                                <td class="tw-whitespace-nowrap tw-px-5 tw-py-3 tw-text-sm tw-text-gray-700">{{ $row->data['variant']['unit_name'] ?? $row->data['variant']['unit_id'] ?? '-' }}</td>
+                                <td class="tw-whitespace-nowrap tw-px-5 tw-py-3 tw-text-sm tw-text-gray-700">{{ $row->data['variant']['tax'] ?? '-' }}</td>
                                 <td class="tw-whitespace-nowrap tw-px-5 tw-py-3">
                                     @if ($row->status === 'valid')
                                         <span class="tw-inline-flex tw-items-center tw-gap-1.5 tw-rounded tw-bg-emerald-50 tw-px-2 tw-py-1 tw-text-xs tw-font-semibold tw-text-emerald-700">
@@ -110,7 +114,7 @@
                             </tr>
                         @empty
                             <tr>
-                                <td colspan="7" class="tw-px-5 tw-py-10 tw-text-center tw-text-sm tw-text-gray-500">
+                                <td colspan="9" class="tw-px-5 tw-py-10 tw-text-center tw-text-sm tw-text-gray-500">
                                     {{ __('product_import.empty_preview') }}
                                 </td>
                             </tr>

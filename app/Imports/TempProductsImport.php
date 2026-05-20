@@ -7,6 +7,8 @@ use App\Models\Category;
 use App\Models\ImportProductRow;
 use App\Models\Product;
 use App\Models\ProductVariant;
+use App\Models\Tax;
+use App\Models\Unit;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Validator;
 use Maatwebsite\Excel\Concerns\ToCollection;
@@ -18,7 +20,6 @@ class TempProductsImport implements ToCollection, WithChunkReading, WithHeadingR
     protected $batchId;
     protected static array $seenProductNames = [];
     protected static array $seenSkus = [];
-    protected static array $seenBarcodes = [];
 
     public function __construct($batchId)
     {
@@ -32,6 +33,8 @@ class TempProductsImport implements ToCollection, WithChunkReading, WithHeadingR
 
         $categoriesMap = $this->nameMap(Category::class, $rows->pluck('category_name'));
         $brandsMap = $this->nameMap(Brand::class, $rows->pluck('brand_name'));
+        $unitsMap = $this->nameMap(Unit::class, $rows->pluck('unit_name'));
+        $taxesMap = $this->rateMap($rows->pluck('tax'));
 
         $dbProducts = Product::whereIn('name', $rows->pluck('product_name')
             ->filter()
@@ -40,6 +43,7 @@ class TempProductsImport implements ToCollection, WithChunkReading, WithHeadingR
             ->map(fn($v) => mb_strtolower(trim($v)))
             ->flip()
             ->toArray();
+
         $dbSkus = ProductVariant::whereIn('sku', $rows->pluck('sku')
             ->filter()
             ->toArray())
@@ -47,20 +51,13 @@ class TempProductsImport implements ToCollection, WithChunkReading, WithHeadingR
             ->map(fn($v) => mb_strtolower(trim($v)))
             ->flip()
             ->toArray();
-        $dbBarcodes = ProductVariant::whereIn('barcode', $rows->pluck('barcode')
-            ->filter()
-            ->toArray())
-            ->pluck('barcode')
-            ->map(fn($v) => mb_strtolower(trim($v)))
-            ->flip()
-            ->toArray();
 
         $rowsToInsert = [];
 
         foreach ($rows as $index => $row) {
-            $payload = $this->normalizePayload($row, $categoriesMap, $brandsMap);
+            $payload = $this->normalizePayload($row, $categoriesMap, $brandsMap, $unitsMap, $taxesMap);
             $errors = $this->validatePayload($payload);
-            $this->checkDuplicatesAndDatabase($payload, $dbProducts, $dbSkus, $dbBarcodes, $errors);
+            $this->checkDuplicatesAndDatabase($payload, $dbProducts, $dbSkus, $errors);
 
             $rowsToInsert[] = [
                 'import_batch_id' => $this->batchId,
@@ -72,13 +69,17 @@ class TempProductsImport implements ToCollection, WithChunkReading, WithHeadingR
                 'updated_at' => now(),
             ];
         }
+
         ImportProductRow::insert($rowsToInsert);
     }
 
-    private function normalizePayload($row, array $categoriesMap, array $brandsMap): array
+    private function normalizePayload($row, array $categoriesMap, array $brandsMap, array $unitsMap, array $taxesMap): array
     {
         $cName = mb_strtolower(trim($row['category_name'] ?? ''));
         $bName = mb_strtolower(trim($row['brand_name'] ?? ''));
+        $uName = mb_strtolower(trim($row['unit_name'] ?? ''));
+        $taxRate = $this->valueOrNull($row['tax'] ?? null);
+        $taxRateKey = $this->rateKey($taxRate);
 
         $isActive = $row['is_active'] ?? true;
         if (is_string($isActive)) {
@@ -98,12 +99,14 @@ class TempProductsImport implements ToCollection, WithChunkReading, WithHeadingR
             ],
             'variant' => [
                 'sku' => trim($row['sku'] ?? ''),
-                'barcode' => trim($row['barcode'] ?? '') ?: null,
                 'price' => $row['price'] ?? 0,
                 'compare_at_price' => $row['compare_at_price'] ?? null,
                 'cost_price' => $row['cost_price'] ?? null,
+                'unit_id' => $this->valueOrNull($row['unit_id'] ?? null) ?? $unitsMap[$uName] ?? null,
+                'unit_name' => $row['unit_name'] ?? null,
+                'tax_id' => $taxesMap[$taxRateKey] ?? null,
+                'tax' => $taxRate,
                 'attributes' => $row['attributes'] ?? null,
-                'position' => $row['position'] ?? 0,
                 'is_active' => (bool) $isActive,
             ],
         ];
@@ -114,27 +117,38 @@ class TempProductsImport implements ToCollection, WithChunkReading, WithHeadingR
         $validator = Validator::make(
             array_merge($payload['product'], $payload['variant']),
             [
-                'name'        => ['required', 'string', 'min:2', 'max:255'],
+                'name' => ['required', 'string', 'min:2', 'max:255'],
                 'category_id' => ['required', 'integer'],
-                'status'      => ['required', 'in:draft,published,archived'],
-                'sku'         => ['required', 'string', 'max:100'],
-                'price'       => ['required', 'numeric', 'min:0'],
+                'status' => ['required', 'in:draft,published,archived'],
+                'sku' => ['required', 'string', 'max:100'],
+                'price' => ['required', 'numeric', 'min:0'],
                 'compare_at_price' => ['nullable', 'numeric', 'min:0'],
-                'cost_price'  => ['nullable', 'numeric', 'min:0'],
-                'metadata'    => ['nullable', 'json'],
-                'attributes'  => ['nullable', 'json'],
-                'position'    => ['nullable', 'integer', 'min:0'],
+                'cost_price' => ['nullable', 'numeric', 'min:0'],
+                'unit_id' => ['nullable', 'integer', 'exists:units,id'],
+                'tax_id' => ['nullable', 'integer', 'exists:taxes,id'],
+                'tax' => ['nullable', 'numeric', 'min:0'],
+                'metadata' => ['nullable', 'json'],
+                'attributes' => ['nullable', 'json'],
             ]
         );
 
-        return $validator->errors()->all();
+        $errors = $validator->errors()->all();
+
+        if ($this->hasUnresolvedName($payload['variant']['unit_name'] ?? null, $payload['variant']['unit_id'] ?? null)) {
+            $errors[] = 'Đơn vị tính không tồn tại trên hệ thống.';
+        }
+
+        if ($this->hasUnresolvedName($payload['variant']['tax'] ?? null, $payload['variant']['tax_id'] ?? null)) {
+            $errors[] = 'Thuế suất không tồn tại trên hệ thống.';
+        }
+
+        return $errors;
     }
 
-    private function checkDuplicatesAndDatabase(array $payload, array $dbProducts, array $dbSkus, array $dbBarcodes, array &$errors): void
+    private function checkDuplicatesAndDatabase(array $payload, array $dbProducts, array $dbSkus, array &$errors): void
     {
         $pNameKey = mb_strtolower(trim($payload['product']['name']));
-        $skuKey   = mb_strtolower(trim($payload['variant']['sku']));
-        $barcodeKey = $payload['variant']['barcode'] ? mb_strtolower(trim($payload['variant']['barcode'])) : '';
+        $skuKey = mb_strtolower(trim($payload['variant']['sku']));
 
         if ($pNameKey !== '') {
             if (isset(self::$seenProductNames[$pNameKey]))
@@ -151,14 +165,6 @@ class TempProductsImport implements ToCollection, WithChunkReading, WithHeadingR
                 $errors[] = 'Mã SKU đã tồn tại trên hệ thống.';
             self::$seenSkus[$skuKey] = true;
         }
-
-        if ($barcodeKey !== '') {
-            if (isset(self::$seenBarcodes[$barcodeKey]))
-                $errors[] = 'Mã Barcode bị trùng lặp trong file.';
-            if (isset($dbBarcodes[$barcodeKey]))
-                $errors[] = 'Mã Barcode đã tồn tại trên hệ thống.';
-            self::$seenBarcodes[$barcodeKey] = true;
-        }
     }
 
     private function nameMap(string $modelClass, Collection $names): array
@@ -171,6 +177,51 @@ class TempProductsImport implements ToCollection, WithChunkReading, WithHeadingR
             ->pluck('id', 'name')
             ->mapWithKeys(fn($id, $name) => [mb_strtolower(trim($name)) => $id])
             ->toArray();
+    }
+
+    private function rateMap(Collection $rates): array
+    {
+        $cleanRates = $rates
+            ->map(fn($rate) => $this->rateKey($rate))
+            ->filter()
+            ->unique()
+            ->toArray();
+
+        if (empty($cleanRates)) {
+            return [];
+        }
+
+        return Tax::whereIn('rate', $cleanRates)
+            ->pluck('id', 'rate')
+            ->mapWithKeys(fn($id, $rate) => [$this->rateKey($rate) => $id])
+            ->toArray();
+    }
+
+    private function valueOrNull($value)
+    {
+        if ($value === null) {
+            return null;
+        }
+
+        $value = is_string($value) ? trim($value) : $value;
+
+        return $value === '' ? null : $value;
+    }
+
+    private function hasUnresolvedName($name, $id): bool
+    {
+        return $this->valueOrNull($name) !== null && $this->valueOrNull($id) === null;
+    }
+
+    private function rateKey($rate): ?string
+    {
+        $rate = $this->valueOrNull($rate);
+
+        if ($rate === null || !is_numeric($rate)) {
+            return null;
+        }
+
+        return number_format((float) $rate, 2, '.', '');
     }
 
     public function chunkSize(): int

@@ -114,17 +114,14 @@ class ProductVariantController extends Controller
         $request->validate([
             'product_id' => 'required|exists:products,id',
             'sku' => 'required|string|max:100|unique:product_variants,sku',
-            'barcode' => 'nullable|string|max:255|unique:product_variants,barcode',
             'price' => 'required|numeric|min:0',
             'compare_at_price' => 'nullable|numeric|min:0',
             'cost_price' => 'nullable|numeric|min:0',
             'attributes' => 'nullable|json',
-            'position' => 'nullable|integer|min:0',
         ], [
             'product_id.required' => __('product_variant.product_required'),
             'sku.required' => __('product_variant.sku_required'),
             'sku.unique' => __('product_variant.sku_unique'),
-            'barcode.unique' => __('product_variant.barcode_unique'),
             'price.required' => __('product_variant.price_required'),
             'attributes.json' => __('product_variant.attributes_json'),
         ]);
@@ -133,12 +130,10 @@ class ProductVariantController extends Controller
             ProductVariant::create([
                 'product_id' => $request->product_id,
                 'sku' => $request->sku,
-                'barcode' => $request->barcode,
                 'price' => $request->price,
                 'compare_at_price' => $request->compare_at_price,
                 'cost_price' => $request->cost_price,
                 'attributes' => $attributesJson ? json_decode($attributesJson, true) : null,
-                'position' => $request->filled('position') ? $request->position : 0,
                 'is_active' => $request->has('is_active'),
             ]);
 
@@ -181,17 +176,14 @@ class ProductVariantController extends Controller
         $request->validate([
             'product_id' => 'required|exists:products,id',
             'sku' => 'required|string|max:100|unique:product_variants,sku,' . $product_variant->id,
-            'barcode' => 'nullable|string|max:255|unique:product_variants,barcode,' . $product_variant->id,
             'price' => 'required|numeric|min:0',
             'compare_at_price' => 'nullable|numeric|min:0',
             'cost_price' => 'nullable|numeric|min:0',
             'attributes' => 'nullable|json',
-            'position' => 'nullable|integer|min:0',
         ], [
             'product_id.required' => __('product_variant.product_required'),
             'sku.required' => __('product_variant.sku_required'),
             'sku.unique' => __('product_variant.sku_unique'),
-            'barcode.unique' => __('product_variant.barcode_unique'),
             'price.required' => __('product_variant.price_required'),
             'attributes.json' => __('product_variant.attributes_json'),
         ]);
@@ -200,12 +192,10 @@ class ProductVariantController extends Controller
             $product_variant->update([
                 'product_id' => $request->product_id,
                 'sku' => $request->sku,
-                'barcode' => $request->barcode,
                 'price' => $request->price,
                 'compare_at_price' => $request->compare_at_price,
                 'cost_price' => $request->cost_price,
                 'attributes' => $attributesJson ? json_decode($attributesJson, true) : null,
-                'position' => $request->filled('position') ? $request->position : 0,
                 'is_active' => $request->has('is_active'),
             ]);
 
@@ -269,4 +259,3 @@ class ProductVariantController extends Controller
         }
     }
 }
-
