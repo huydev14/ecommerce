@@ -16,7 +16,6 @@ return new class extends Migration
             $table->foreignId('product_id')->constrained('products')->cascadeOnDelete();
 
             $table->string('sku', 100)->unique()->index();
-            $table->string('barcode')->nullable()->unique();
 
             $table->decimal('price', 15, 2);
             $table->decimal('compare_at_price', 15, 2)->nullable()->comment('To compare with sale price');
@@ -24,7 +23,6 @@ return new class extends Migration
 
             $table->json('attributes')->nullable();
 
-            $table->integer('position')->default(0);
             $table->boolean('is_active')->default(true);
             $table->timestamps();
         });
