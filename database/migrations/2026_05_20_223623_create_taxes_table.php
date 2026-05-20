@@ -16,6 +16,7 @@ return new class extends Migration
             $table->string('name')->unique();
             $table->decimal('rate', 5, 2)->default(0);
             $table->timestamps();
+            $table->softDeletes();
         });
     }
 

@@ -10,6 +10,8 @@ use App\Http\Controllers\ProductVariantController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\RoleController;
 use App\Http\Controllers\SettingController;
+use App\Http\Controllers\TaxController;
+use App\Http\Controllers\UnitController;
 use App\Http\Controllers\UserController;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Session;
@@ -98,6 +100,22 @@ Route::prefix('admin')->middleware('auth')->group(function () {
         Route::post('/{id}/restore', [ProductVariantController::class, 'restore'])->name('restore');
     });
     Route::resource('product-variants', ProductVariantController::class);
+
+    // --- Units ------------------------------------
+    Route::prefix('units')->name('units.')->group(function () {
+        Route::get('/data', [UnitController::class, 'data'])->name('data');
+        Route::get('/filter-data', [UnitController::class, 'getFilterData'])->name('filter_data');
+        Route::post('/{id}/restore', [UnitController::class, 'restore'])->name('restore');
+    });
+    Route::resource('units', UnitController::class);
+
+    // --- Taxes ------------------------------------
+    Route::prefix('taxes')->name('taxes.')->group(function () {
+        Route::get('/data', [TaxController::class, 'data'])->name('data');
+        Route::get('/filter-data', [TaxController::class, 'getFilterData'])->name('filter_data');
+        Route::post('/{id}/restore', [TaxController::class, 'restore'])->name('restore');
+    });
+    Route::resource('taxes', TaxController::class);
 
     // --- Product imports --------------------------
     Route::prefix('product-imports')->name('product-imports.')->group(function () {
