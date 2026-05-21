@@ -21,7 +21,6 @@ class TempProductsImport implements ToCollection, WithChunkReading, WithHeadingR
     protected static array $seenProductNames = [];
     protected static array $seenSkus = [];
 
-
     const EXCEL_COL_NAME = 'ten_san_pham';
     const EXCEL_COL_VARIANT = 'ten_bien_the';
     const EXCEL_COL_BRAND = 'nhan_hieu';
@@ -44,27 +43,35 @@ class TempProductsImport implements ToCollection, WithChunkReading, WithHeadingR
 
     public function collection(Collection $rows)
     {
-        if ($rows->isEmpty())
+        if ($rows->isEmpty()) {
             return;
+        }
 
         $categoryData = $this->buildCategoryHierachyMap();
-
         $brandsMap = $this->nameMap(Brand::class, $rows->pluck(self::EXCEL_COL_BRAND));
         $unitsMap = $this->nameMap(Unit::class, $rows->pluck(self::EXCEL_COL_UNIT));
         $taxesMap = $this->rateMap($rows->pluck(self::EXCEL_COL_TAX));
 
         $dbProducts = Product::whereIn('name', $rows->pluck(self::EXCEL_COL_NAME)->filter()->toArray())
-            ->pluck('name')->map(fn($v) => mb_strtolower(trim($v)))->flip()->toArray();
+            ->pluck('name')
+            ->map(fn($value) => mb_strtolower(trim($value)))
+            ->flip()
+            ->toArray();
 
         $dbSkus = ProductVariant::whereIn('sku', $rows->pluck(self::EXCEL_COL_SKU)->filter()->toArray())
-            ->pluck('sku')->map(fn($v) => mb_strtolower(trim($v)))->flip()->toArray();
+            ->pluck('sku')
+            ->map(fn($value) => mb_strtolower(trim($value)))
+            ->flip()
+            ->toArray();
 
         $rowsToInsert = [];
 
         foreach ($rows as $index => $row) {
             $payload = $this->normalizePayload($row, $categoryData, $brandsMap, $unitsMap, $taxesMap);
-            $errors = $this->validatePayload($payload);
-            $this->checkDuplicatesAndDatabase($payload, $dbProducts, $dbSkus, $errors);
+            [$errors, $errorCodes] = self::validatePayload($payload);
+            $this->checkDuplicatesAndDatabase($payload, $dbProducts, $dbSkus, $errors, $errorCodes);
+
+            $payload['error_codes'] = array_values(array_unique($errorCodes));
 
             $rowsToInsert[] = [
                 'import_batch_id' => $this->batchId,
@@ -82,60 +89,54 @@ class TempProductsImport implements ToCollection, WithChunkReading, WithHeadingR
 
     private function normalizePayload($row, array $categoryData, array $brandsMap, array $unitsMap, array $taxesMap): array
     {
-        $cName = mb_strtolower(trim($row[self::EXCEL_COL_CATEGORY] ?? ''));
-        $subCName = mb_strtolower(trim($row[self::EXCEL_COL_SUB_CATEGORY] ?? ''));
-        $bName  = mb_strtolower(trim($row[self::EXCEL_COL_BRAND] ?? ''));
-        $uName  = mb_strtolower(trim($row[self::EXCEL_COL_UNIT] ?? ''));
+        $categoryName = trim($row[self::EXCEL_COL_CATEGORY] ?? '');
+        $subCategoryName = trim($row[self::EXCEL_COL_SUB_CATEGORY] ?? '');
+        $categoryKey = mb_strtolower($categoryName);
+        $subCategoryKey = mb_strtolower($subCategoryName);
+        $brandKey = mb_strtolower(trim($row[self::EXCEL_COL_BRAND] ?? ''));
+        $unitKey = mb_strtolower(trim($row[self::EXCEL_COL_UNIT] ?? ''));
         $taxRaw = isset($row[self::EXCEL_COL_TAX]) ? trim($row[self::EXCEL_COL_TAX]) : null;
         $taxRateKey = $this->rateKey($taxRaw);
 
         $resolvedCategoryId = null;
 
-        if ($cName !== '' && $subCName !== '') {
-            $compositeKey = $cName . '|' . $subCName;
-            $resolvedCategoryId = $categoryData['children'][$compositeKey] ?? null;
-        } elseif ($cName !== '') {
-            $resolvedCategoryId = $categoryData['parents'][$cName] ?? null;
+        if ($categoryKey !== '' && $subCategoryKey !== '') {
+            $resolvedCategoryId = $categoryData['children'][$categoryKey . '|' . $subCategoryKey] ?? null;
+        } elseif ($categoryKey !== '') {
+            $resolvedCategoryId = $categoryData['parents'][$categoryKey] ?? null;
         }
 
-        $resolvedCategoryName = trim($row[self::EXCEL_COL_SUB_CATEGORY] ?? '') ?: trim($row[self::EXCEL_COL_CATEGORY] ?? '');
-
-        // Mapping excel column to DB
         return [
             'product' => [
-
                 'name' => trim($row[self::EXCEL_COL_NAME] ?? ''),
                 'category_id' => $resolvedCategoryId,
-                'category_name' => $resolvedCategoryName ?: null,
-                'brand_id' => $brandsMap[$bName] ?? null,
+                'category_name' => ($subCategoryName ?: $categoryName) ?: null,
+                'parent_category_name' => $categoryName ?: null,
+                'sub_category_name' => $subCategoryName ?: null,
+                'brand_id' => $brandsMap[$brandKey] ?? null,
                 'brand_name' => trim($row[self::EXCEL_COL_BRAND] ?? '') ?: null,
                 'status' => 'published',
             ],
             'variant' => [
                 'sku' => trim($row[self::EXCEL_COL_SKU] ?? ''),
                 'price' => $row[self::EXCEL_COL_PRICE] ?? 0,
-
                 'cost_price' => $row[self::EXCEL_COL_COST_PRICE] ?? null,
-
-                'unit_id' => $unitsMap[$uName] ?? null,
-                'unit_name' => $uName ?: null,
-
+                'unit_id' => $unitsMap[$unitKey] ?? null,
+                'unit_name' => $unitKey ?: null,
                 'tax_id' => $taxesMap[$taxRateKey] ?? null,
                 'tax' => $taxRateKey,
-
                 'attributes' => !empty($row[self::EXCEL_COL_VARIANT])
                     ? json_encode(['variant_name' => trim($row[self::EXCEL_COL_VARIANT])])
                     : null,
-
                 'is_active' => true,
             ],
             'stock' => [
-                'quantity' => $row[self::EXCEL_COL_STOCK] ?? 0
-            ]
+                'quantity' => $row[self::EXCEL_COL_STOCK] ?? 0,
+            ],
         ];
     }
 
-    private function validatePayload(array $payload): array
+    public static function validatePayload(array $payload): array
     {
         $validator = Validator::make(
             array_merge($payload['product'], $payload['variant'], ['stock_quantity' => $payload['stock']['quantity']]),
@@ -146,42 +147,81 @@ class TempProductsImport implements ToCollection, WithChunkReading, WithHeadingR
                 'price' => ['required', 'numeric', 'min:0'],
                 'stock_quantity' => ['required', 'integer', 'min:0', 'max:999999'],
                 'cost_price' => ['nullable', 'numeric', 'min:0'],
-                'unit_id' => ['nullable', 'integer'],
-                'tax_id' => ['nullable', 'integer'],
+                'unit_id' => ['nullable', 'integer', 'required_with:unit_name'],
+                'tax_id' => ['nullable', 'integer', 'required_with:tax'],
                 'tax' => ['nullable', 'numeric', 'min:0', 'max:100'],
+            ],
+            [
+                'unit_id.required_with' => 'Đơn vị tính không tồn tại trên hệ thống.',
+                'tax_id.required_with' => 'Thuế suất không tồn tại trên hệ thống.',
             ]
         );
 
-        return $validator->errors()->all();
+        return [$validator->errors()->all(), self::missingMasterDataCodes($payload)];
     }
 
-    private function checkDuplicatesAndDatabase(array $payload, array $dbProducts, array $dbSkus, array &$errors): void
+    public static function missingMasterDataCodes(array $payload): array
     {
-        $pNameKey = mb_strtolower(trim($payload['product']['name']));
+        $codes = [];
+        $product = $payload['product'] ?? [];
+        $variant = $payload['variant'] ?? [];
+
+        if (empty($product['category_id']) && !empty($product['category_name'])) {
+            $codes[] = 'missing_category';
+        }
+
+        if (empty($variant['unit_id']) && !empty($variant['unit_name'])) {
+            $codes[] = 'missing_unit';
+        }
+
+        if (empty($variant['tax_id']) && isset($variant['tax']) && $variant['tax'] !== '') {
+            $codes[] = 'missing_tax';
+        }
+
+        return $codes;
+    }
+
+    private function checkDuplicatesAndDatabase(array $payload, array $dbProducts, array $dbSkus, array &$errors, array &$errorCodes): void
+    {
+        $productNameKey = mb_strtolower(trim($payload['product']['name']));
         $skuKey = mb_strtolower(trim($payload['variant']['sku']));
 
-        if ($pNameKey !== '') {
-            if (isset(self::$seenProductNames[$pNameKey]))
+        if ($productNameKey !== '') {
+            if (isset(self::$seenProductNames[$productNameKey])) {
                 $errors[] = 'Tên sản phẩm bị trùng lặp trong file.';
-            if (isset($dbProducts[$pNameKey]))
+                $errorCodes[] = 'duplicate_product_in_file';
+            }
+
+            if (isset($dbProducts[$productNameKey])) {
                 $errors[] = 'Tên sản phẩm đã tồn tại trên hệ thống.';
-            self::$seenProductNames[$pNameKey] = true;
+                $errorCodes[] = 'duplicate_product_in_database';
+            }
+
+            self::$seenProductNames[$productNameKey] = true;
         }
 
         if ($skuKey !== '') {
-            if (isset(self::$seenSkus[$skuKey]))
+            if (isset(self::$seenSkus[$skuKey])) {
                 $errors[] = 'Mã SKU bị trùng lặp trong file.';
-            if (isset($dbSkus[$skuKey]))
+                $errorCodes[] = 'duplicate_sku_in_file';
+            }
+
+            if (isset($dbSkus[$skuKey])) {
                 $errors[] = 'Mã SKU đã tồn tại trên hệ thống.';
+                $errorCodes[] = 'duplicate_sku_in_database';
+            }
+
             self::$seenSkus[$skuKey] = true;
         }
     }
 
     private function nameMap(string $modelClass, Collection $names): array
     {
-        $cleanNames = $names->map(fn($n) => trim($n))->filter()->unique()->toArray();
-        if (empty($cleanNames))
+        $cleanNames = $names->map(fn($name) => trim($name))->filter()->unique()->toArray();
+
+        if (empty($cleanNames)) {
             return [];
+        }
 
         return $modelClass::whereIn('name', $cleanNames)
             ->pluck('id', 'name')
@@ -191,9 +231,11 @@ class TempProductsImport implements ToCollection, WithChunkReading, WithHeadingR
 
     private function rateMap(Collection $rates): array
     {
-        $cleanRates = $rates->map(fn($r) => $this->rateKey($r))->filter()->unique()->toArray();
-        if (empty($cleanRates))
+        $cleanRates = $rates->map(fn($rate) => $this->rateKey($rate))->filter()->unique()->toArray();
+
+        if (empty($cleanRates)) {
             return [];
+        }
 
         return Tax::whereIn('rate', $cleanRates)
             ->pluck('id', 'rate')
@@ -203,33 +245,33 @@ class TempProductsImport implements ToCollection, WithChunkReading, WithHeadingR
 
     private function rateKey($rate): ?string
     {
-        if ($rate === null || $rate === '')
+        if ($rate === null || $rate === '') {
             return null;
+        }
+
         return is_numeric($rate) ? number_format((float) $rate, 2, '.', '') : null;
     }
 
-    private function buildCategoryHierachyMap()
+    private function buildCategoryHierachyMap(): array
     {
         $categories = Category::all();
-
         $parentsMap = [];
         $childrenMap = [];
 
-        foreach ($categories as $cat) {
-            $nameKey = mb_strtolower(trim($cat->name));
+        foreach ($categories as $category) {
+            $nameKey = mb_strtolower(trim($category->name));
 
-            if (empty($cat->parent_id)) {
-                $parentsMap[$nameKey] = $cat->id;
-            } else {
-                $parent = $categories->firstWhere('id', $cat->parent_id);
-                if ($parent) {
-                    $parentNameKey = mb_strtolower(trim($parent->name));
+            if (empty($category->parent_id)) {
+                $parentsMap[$nameKey] = $category->id;
+                continue;
+            }
 
-                    $compositeKey = $parentNameKey . '|' . $nameKey;
-                    $childrenMap[$compositeKey] = $cat->id;
-                }
+            $parent = $categories->firstWhere('id', $category->parent_id);
+            if ($parent) {
+                $childrenMap[mb_strtolower(trim($parent->name)) . '|' . $nameKey] = $category->id;
             }
         }
+
         return [
             'parents' => $parentsMap,
             'children' => $childrenMap,

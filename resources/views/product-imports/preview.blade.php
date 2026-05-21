@@ -21,6 +21,11 @@
                 {{ session('error') }}
             </div>
         @endif
+        @if (session('success'))
+            <div class="tw-mb-4 tw-rounded tw-border tw-border-emerald-200 tw-bg-emerald-50 tw-px-4 tw-py-3 tw-text-sm tw-text-emerald-700">
+                {{ session('success') }}
+            </div>
+        @endif
 
         <section class="tw-bg-white tw-border tw-border-gray-200 tw-rounded tw-shadow-sm">
             <div class="tw-flex tw-flex-col lg:tw-flex-row lg:tw-items-center lg:tw-justify-between tw-gap-4 tw-px-6 tw-py-5 tw-border-b tw-border-gray-100">
@@ -69,6 +74,31 @@
                     <p class="tw-mt-2 tw-text-2xl tw-font-semibold tw-text-red-700">{{ number_format($errorRows) }}</p>
                 </div>
             </div>
+
+            @if (($missingMasterData['total'] ?? 0) > 0)
+                <div class="tw-border-b tw-border-amber-100 tw-bg-amber-50 tw-px-6 tw-py-4">
+                    <div class="tw-flex tw-flex-col lg:tw-flex-row lg:tw-items-center lg:tw-justify-between tw-gap-4">
+                        <div>
+                            <h4 class="tw-text-sm tw-font-semibold tw-text-amber-900">{{ __('product_import.resolve_title') }}</h4>
+                            <p class="tw-mt-1 tw-text-sm tw-text-amber-800">
+                                {{ __('product_import.resolve_description', [
+                                    'categories' => number_format($missingMasterData['categories']),
+                                    'units' => number_format($missingMasterData['units']),
+                                    'taxes' => number_format($missingMasterData['taxes']),
+                                ]) }}
+                            </p>
+                        </div>
+                        <form action="{{ route('product-imports.resolve-master-data', $batch->id) }}" method="POST">
+                            @csrf
+                            <button type="submit"
+                                class="tw-inline-flex tw-items-center tw-justify-center tw-gap-2 tw-rounded tw-bg-amber-600 tw-px-4 tw-py-2 tw-text-sm tw-font-semibold tw-text-white tw-shadow-sm hover:tw-bg-amber-700 focus:tw-outline-none focus:tw-ring-2 focus:tw-ring-amber-500 focus:tw-ring-offset-2">
+                                <i class="fas fa-wand-magic-sparkles"></i>
+                                {{ __('product_import.resolve_action') }}
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            @endif
 
             <div class="tw-overflow-x-auto">
                 <table class="tw-min-w-full tw-divide-y tw-divide-gray-200">

@@ -34,6 +34,11 @@ return [
     'row_status_error' => 'Error',
     'ready_to_import' => 'Ready to import',
     'empty_preview' => 'No data to display.',
+    'resolve_title' => 'New master data detected',
+    'resolve_description' => 'Missing categories: :categories, units: :units, tax rates: :taxes. Create them and re-validate the temporary rows.',
+    'resolve_action' => 'Create missing master data',
+    'resolve_success' => 'Resolved :rows rows. Created :categories categories, :units units, and :taxes tax rates.',
+    'resolve_invalid_status' => 'This import batch cannot be resolved in its current status.',
     'preview_columns' => [
         'row' => 'Row',
         'category' => 'Category',
@@ -61,7 +66,7 @@ return [
         [
             'name' => 'category_id / category_name',
             'requirement' => 'required',
-            'guide' => 'Provide a category ID or the name of an existing category.',
+            'guide' => 'Provide category and sub-category names. Missing categories can be created from the preview screen.',
         ],
         [
             'name' => 'status',
@@ -91,12 +96,12 @@ return [
         [
             'name' => 'unit_id / unit_name',
             'requirement' => 'optional',
-            'guide' => 'Provide a unit ID or an existing unit name. It can be empty.',
+            'guide' => 'Provide an existing unit name. Missing units can be created from the preview screen.',
         ],
         [
             'name' => 'tax',
             'requirement' => 'optional',
-            'guide' => 'Enter the tax rate as a number. The system will match an existing rate or create a new tax rate.',
+            'guide' => 'Enter the tax rate as a number. Missing tax rates can be created from the preview screen.',
         ],
         [
             'name' => 'attributes',

@@ -149,6 +149,7 @@ Route::prefix('admin')->middleware('auth')->group(function () {
         Route::get('/', [ProductImportController::class, 'index'])->name('index');
         Route::post('/preview', [ProductImportController::class, 'uploadAndPreview'])->name('upload');
         Route::get('/{batchId}/preview', [ProductImportController::class, 'showPreview'])->name('preview');
+        Route::post('/{batchId}/resolve-master-data', [ProductImportController::class, 'resolveMissingMasterData'])->name('resolve-master-data');
         Route::post('/{batchId}/confirm', [ProductImportController::class, 'confirmImport'])->name('confirm');
     });
 

@@ -34,6 +34,11 @@ return [
     'row_status_error' => 'Lỗi',
     'ready_to_import' => 'Sẵn sàng import',
     'empty_preview' => 'Không có dữ liệu để hiển thị.',
+    'resolve_title' => 'Phát hiện dữ liệu nền mới',
+    'resolve_description' => 'Thiếu danh mục: :categories, đơn vị tính: :units, thuế suất: :taxes. Có thể khởi tạo nhanh và kiểm tra lại các dòng tạm.',
+    'resolve_action' => 'Khởi tạo dữ liệu nền còn thiếu',
+    'resolve_success' => 'Đã xử lý :rows dòng. Tạo mới :categories danh mục, :units đơn vị tính và :taxes thuế suất.',
+    'resolve_invalid_status' => 'Batch import này không thể khởi tạo dữ liệu nền ở trạng thái hiện tại.',
     'preview_columns' => [
         'row' => 'Dòng',
         'category' => 'Danh mục',
