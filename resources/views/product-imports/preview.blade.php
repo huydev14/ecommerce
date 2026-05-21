@@ -75,7 +75,7 @@
                 </div>
             </div>
 
-            @if (($missingMasterData['total'] ?? 0) > 0)
+            @if (($missingMasterData['total'] ?? 0) > 0 && $canResolveMasterData)
                 <div class="tw-border-b tw-border-amber-100 tw-bg-amber-50 tw-px-6 tw-py-4">
                     <div class="tw-flex tw-flex-col lg:tw-flex-row lg:tw-items-center lg:tw-justify-between tw-gap-4">
                         <div>

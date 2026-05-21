@@ -41,13 +41,7 @@ class ProductImportController extends Controller
             'warehouse_id' => $request->warehouse_id,
         ]);
 
-        Excel::import(new TempProductsImport($batch->id), $request->file('excel_file'));
-
-        $totalRows = ImportProductRow::where('import_batch_id', $batch->id)->count();
-        $batch->update([
-            'status' => 'ready',
-            'total_rows' => $totalRows,
-        ]);
+        Excel::queueImport(new TempProductsImport($batch->id), $request->file('excel_file'));
 
         return redirect()->route('product-imports.preview', $batch->id);
     }
@@ -55,19 +49,32 @@ class ProductImportController extends Controller
     public function showPreview($batchId)
     {
         $batch = ImportBatch::findOrFail($batchId);
-        $rows = ImportProductRow::where('import_batch_id', $batchId)->paginate(20);
+        $totalRows = ImportProductRow::where('import_batch_id', $batchId)->count();
+
+        if ($batch->status === 'preview_ready') {
+            $batch->update([
+                'status' => 'ready',
+                'total_rows' => $totalRows,
+            ]);
+            $batch->refresh();
+        }
+
+        $rows = ImportProductRow::where('import_batch_id', $batchId)
+            ->orderByRaw("CASE WHEN status = 'error' THEN 0 ELSE 1 END")
+            ->paginate(20);
         $validRows = ImportProductRow::where('import_batch_id', $batchId)->where('status', 'valid')->count();
         $errorRows = ImportProductRow::where('import_batch_id', $batchId)->where('status', 'error')->count();
         $missingMasterData = $this->missingMasterDataSummary((int) $batchId);
+        $canResolveMasterData = in_array($batch->status, ['ready', 'completed_with_errors'], true);
 
-        return view('product-imports.preview', compact('batch', 'rows', 'validRows', 'errorRows', 'missingMasterData'));
+        return view('product-imports.preview', compact('batch', 'rows', 'validRows', 'errorRows', 'missingMasterData', 'canResolveMasterData'));
     }
 
     public function confirmImport($batchId)
     {
         $batch = ImportBatch::findOrFail($batchId);
 
-        if ($batch->status !== 'ready') {
+        if (!in_array($batch->status, ['ready', 'preview_ready'], true)) {
             return redirect()->back()->with('error', 'Trạng thái file không hợp lệ để import.');
         }
 
@@ -81,7 +88,7 @@ class ProductImportController extends Controller
     {
         $batch = ImportBatch::findOrFail($batchId);
 
-        if (!in_array($batch->status, ['ready', 'completed_with_errors'], true)) {
+        if (!in_array($batch->status, ['ready', 'preview_ready', 'completed_with_errors'], true)) {
             return redirect()->back()->with('error', __('product_import.resolve_invalid_status'));
         }
 

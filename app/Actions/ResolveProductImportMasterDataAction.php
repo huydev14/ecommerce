@@ -46,6 +46,8 @@ class ResolveProductImportMasterDataAction
                     'missing_category',
                     'missing_unit',
                     'missing_tax',
+                    'duplicate_product_in_file',
+                    'duplicate_product_in_database',
                 ]));
 
                 $this->patchPayload($payload, $unitMap, $taxMap, $categoryMap);
@@ -105,13 +107,11 @@ class ResolveProductImportMasterDataAction
             return 0;
         }
 
-        Unit::insert($missing->map(fn($name) => [
+        return Unit::query()->insertOrIgnore($missing->map(fn($name) => [
             'name' => $name,
             'created_at' => now(),
             'updated_at' => now(),
         ])->all());
-
-        return $missing->count();
     }
 
     private function resolveTaxes(array $payloads): int
@@ -143,14 +143,12 @@ class ResolveProductImportMasterDataAction
             return 0;
         }
 
-        Tax::insert($missing->map(fn($rate) => [
+        return Tax::query()->insertOrIgnore($missing->map(fn($rate) => [
             'name' => 'Thuế VAT ' . $rate . '%',
             'rate' => $rate,
             'created_at' => now(),
             'updated_at' => now(),
         ])->all());
-
-        return $missing->count();
     }
 
     private function resolveCategories(array $payloads): int
@@ -218,7 +216,7 @@ class ResolveProductImportMasterDataAction
             return $created;
         }
 
-        Category::insert($missingChildren->map(fn($item) => [
+        $createdChildren = Category::query()->insertOrIgnore($missingChildren->map(fn($item) => [
             'name' => $item['name'],
             'slug' => $this->uniqueCategorySlug($item['name'], $item['parent_name']),
             'description' => null,
@@ -231,7 +229,7 @@ class ResolveProductImportMasterDataAction
             'updated_at' => now(),
         ])->all());
 
-        return $created + $missingChildren->count();
+        return $created + $createdChildren;
     }
 
     private function ensureParentCategories($parentNames): int
@@ -254,7 +252,7 @@ class ResolveProductImportMasterDataAction
             return 0;
         }
 
-        Category::insert($missing->map(fn($name) => [
+        return Category::query()->insertOrIgnore($missing->map(fn($name) => [
             'name' => $name,
             'slug' => $this->uniqueCategorySlug($name),
             'description' => null,
@@ -266,8 +264,6 @@ class ResolveProductImportMasterDataAction
             'created_at' => now(),
             'updated_at' => now(),
         ])->all());
-
-        return $missing->count();
     }
 
     private function patchPayload(array &$payload, array $unitMap, array $taxMap, array $categoryMap): void
@@ -300,10 +296,17 @@ class ResolveProductImportMasterDataAction
             ->unique()
             ->all();
 
-        return empty($names) ? [] : Unit::whereIn('name', $names)
-            ->pluck('id', 'name')
-            ->mapWithKeys(fn($id, $name) => [$this->normalizeName($name) => $id])
-            ->toArray();
+        $map = [];
+
+        foreach ($names as $name) {
+            $id = Unit::where('name', $name)->value('id');
+
+            if ($id) {
+                $map[$name] = $id;
+            }
+        }
+
+        return $map;
     }
 
     private function taxMap(array $payloads): array

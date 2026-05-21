@@ -4,21 +4,26 @@ namespace App\Imports;
 
 use App\Models\Brand;
 use App\Models\Category;
+use App\Models\ImportBatch;
 use App\Models\ImportProductRow;
-use App\Models\Product;
 use App\Models\ProductVariant;
 use App\Models\Tax;
 use App\Models\Unit;
+
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Validator;
 use Maatwebsite\Excel\Concerns\ToCollection;
 use Maatwebsite\Excel\Concerns\WithChunkReading;
 use Maatwebsite\Excel\Concerns\WithHeadingRow;
 
-class TempProductsImport implements ToCollection, WithChunkReading, WithHeadingRow
+use Illuminate\Contracts\Queue\ShouldQueue;
+use Maatwebsite\Excel\Concerns\WithEvents;
+use Maatwebsite\Excel\Events\AfterImport;
+use Override;
+
+class TempProductsImport implements ToCollection, WithChunkReading, WithHeadingRow, ShouldQueue, WithEvents
 {
     protected $batchId;
-    protected static array $seenProductNames = [];
     protected static array $seenSkus = [];
 
     const EXCEL_COL_NAME = 'ten_san_pham';
@@ -27,7 +32,7 @@ class TempProductsImport implements ToCollection, WithChunkReading, WithHeadingR
     const EXCEL_COL_UNIT = 'don_vi_tinh';
     const EXCEL_COL_CATEGORY = 'danh_muc';
     const EXCEL_COL_SUB_CATEGORY = 'danh_muc_con';
-    const EXCEL_COL_SKU = 'ma_hang_sku';
+    const EXCEL_COL_SKU = 'sku';
     const EXCEL_COL_COST_PRICE = 'gia_mua';
     const EXCEL_COL_PRICE = 'gia_ban_khong_bao_gom_thue';
     const EXCEL_COL_TAX = 'thue_ap_dung';
@@ -37,7 +42,6 @@ class TempProductsImport implements ToCollection, WithChunkReading, WithHeadingR
     public function __construct($batchId)
     {
         $this->batchId = $batchId;
-        self::$seenProductNames = [];
         self::$seenSkus = [];
     }
 
@@ -52,12 +56,6 @@ class TempProductsImport implements ToCollection, WithChunkReading, WithHeadingR
         $unitsMap = $this->nameMap(Unit::class, $rows->pluck(self::EXCEL_COL_UNIT));
         $taxesMap = $this->rateMap($rows->pluck(self::EXCEL_COL_TAX));
 
-        $dbProducts = Product::whereIn('name', $rows->pluck(self::EXCEL_COL_NAME)->filter()->toArray())
-            ->pluck('name')
-            ->map(fn($value) => mb_strtolower(trim($value)))
-            ->flip()
-            ->toArray();
-
         $dbSkus = ProductVariant::whereIn('sku', $rows->pluck(self::EXCEL_COL_SKU)->filter()->toArray())
             ->pluck('sku')
             ->map(fn($value) => mb_strtolower(trim($value)))
@@ -69,7 +67,7 @@ class TempProductsImport implements ToCollection, WithChunkReading, WithHeadingR
         foreach ($rows as $index => $row) {
             $payload = $this->normalizePayload($row, $categoryData, $brandsMap, $unitsMap, $taxesMap);
             [$errors, $errorCodes] = self::validatePayload($payload);
-            $this->checkDuplicatesAndDatabase($payload, $dbProducts, $dbSkus, $errors, $errorCodes);
+            $this->checkDuplicatesAndDatabase($payload, $dbSkus, $errors, $errorCodes);
 
             $payload['error_codes'] = array_values(array_unique($errorCodes));
 
@@ -142,7 +140,7 @@ class TempProductsImport implements ToCollection, WithChunkReading, WithHeadingR
             array_merge($payload['product'], $payload['variant'], ['stock_quantity' => $payload['stock']['quantity']]),
             [
                 'name' => ['required', 'string', 'min:2', 'max:255'],
-                'category_id' => ['required', 'integer'],
+                'category_id' => ['nullable', 'integer'],
                 'sku' => ['required', 'string', 'max:100'],
                 'price' => ['required', 'numeric', 'min:0'],
                 'stock_quantity' => ['required', 'integer', 'min:0', 'max:999999'],
@@ -157,7 +155,16 @@ class TempProductsImport implements ToCollection, WithChunkReading, WithHeadingR
             ]
         );
 
-        return [$validator->errors()->all(), self::missingMasterDataCodes($payload)];
+        $errors = $validator->errors()->all();
+        $masterDataCodes = self::missingMasterDataCodes($payload);
+
+        if (in_array('missing_category', $masterDataCodes, true)) {
+            $errors[] = 'Danh mục không tồn tại trên hệ thống.';
+        } elseif (empty($payload['product']['category_id']) && empty($payload['product']['category_name'])) {
+            $errors[] = 'Vui lòng nhập danh mục.';
+        }
+
+        return [$errors, $masterDataCodes];
     }
 
     public static function missingMasterDataCodes(array $payload): array
@@ -181,25 +188,9 @@ class TempProductsImport implements ToCollection, WithChunkReading, WithHeadingR
         return $codes;
     }
 
-    private function checkDuplicatesAndDatabase(array $payload, array $dbProducts, array $dbSkus, array &$errors, array &$errorCodes): void
+    private function checkDuplicatesAndDatabase(array $payload, array $dbSkus, array &$errors, array &$errorCodes): void
     {
-        $productNameKey = mb_strtolower(trim($payload['product']['name']));
         $skuKey = mb_strtolower(trim($payload['variant']['sku']));
-
-        if ($productNameKey !== '') {
-            if (isset(self::$seenProductNames[$productNameKey])) {
-                $errors[] = 'Tên sản phẩm bị trùng lặp trong file.';
-                $errorCodes[] = 'duplicate_product_in_file';
-            }
-
-            if (isset($dbProducts[$productNameKey])) {
-                $errors[] = 'Tên sản phẩm đã tồn tại trên hệ thống.';
-                $errorCodes[] = 'duplicate_product_in_database';
-            }
-
-            self::$seenProductNames[$productNameKey] = true;
-        }
-
         if ($skuKey !== '') {
             if (isset(self::$seenSkus[$skuKey])) {
                 $errors[] = 'Mã SKU bị trùng lặp trong file.';
@@ -281,5 +272,19 @@ class TempProductsImport implements ToCollection, WithChunkReading, WithHeadingR
     public function chunkSize(): int
     {
         return 1000;
+    }
+
+    public function registerEvents(): array
+    {
+        return [
+            AfterImport::class => function (AfterImport $event) {
+                $totalRows = ImportProductRow::where('import_batch_id', $this->batchId)->count();
+
+                ImportBatch::where('id', $this->batchId)->update([
+                    'status' => 'ready',
+                    'total_rows' => $totalRows,
+                ]);
+            },
+        ];
     }
 }
