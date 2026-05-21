@@ -10,9 +10,12 @@ use App\Http\Controllers\ProductVariantController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\RoleController;
 use App\Http\Controllers\SettingController;
+use App\Http\Controllers\StockController;
+use App\Http\Controllers\StockMovementController;
 use App\Http\Controllers\TaxController;
 use App\Http\Controllers\UnitController;
 use App\Http\Controllers\UserController;
+use App\Http\Controllers\WarehouseController;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Session;
 
@@ -116,6 +119,30 @@ Route::prefix('admin')->middleware('auth')->group(function () {
         Route::post('/{id}/restore', [TaxController::class, 'restore'])->name('restore');
     });
     Route::resource('taxes', TaxController::class);
+
+    // --- Warehouses -------------------------------
+    Route::prefix('warehouses')->name('warehouses.')->group(function () {
+        Route::get('/data', [WarehouseController::class, 'data'])->name('data');
+        Route::get('/filter-data', [WarehouseController::class, 'getFilterData'])->name('filter_data');
+        Route::post('/{id}/restore', [WarehouseController::class, 'restore'])->name('restore');
+    });
+    Route::resource('warehouses', WarehouseController::class)->except(['show']);
+
+    // --- Stocks -----------------------------------
+    Route::prefix('stocks')->name('stocks.')->group(function () {
+        Route::get('/data', [StockController::class, 'data'])->name('data');
+        Route::get('/filter-data', [StockController::class, 'getFilterData'])->name('filter_data');
+        Route::post('/{id}/restore', [StockController::class, 'restore'])->name('restore');
+    });
+    Route::resource('stocks', StockController::class)->except(['show']);
+
+    // --- Stock movements --------------------------
+    Route::prefix('stock-movements')->name('stock-movements.')->group(function () {
+        Route::get('/data', [StockMovementController::class, 'data'])->name('data');
+        Route::get('/filter-data', [StockMovementController::class, 'getFilterData'])->name('filter_data');
+        Route::post('/{id}/restore', [StockMovementController::class, 'restore'])->name('restore');
+    });
+    Route::resource('stock-movements', StockMovementController::class)->only(['index', 'create', 'store', 'destroy']);
 
     // --- Product imports --------------------------
     Route::prefix('product-imports')->name('product-imports.')->group(function () {

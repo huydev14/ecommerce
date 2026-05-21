@@ -9,7 +9,7 @@
         </li>
 
         {{-- Bán hàng --}}
-        <li class="nav-item menu-open {{ request()->routeIs('brands.*') || request()->routeIs('categories.*') || request()->routeIs('products.*') || request()->routeIs('product-variants.*') || request()->routeIs('units.*') || request()->routeIs('taxes.*') || request()->routeIs('product-imports.*') ? 'menu-is-opening ' : '' }}">
+        <li class="nav-item menu-open {{ request()->routeIs('brands.*') || request()->routeIs('categories.*') || request()->routeIs('products.*') || request()->routeIs('product-variants.*') || request()->routeIs('units.*') || request()->routeIs('taxes.*') || request()->routeIs('warehouses.*') || request()->routeIs('stocks.*') || request()->routeIs('stock-movements.*') || request()->routeIs('product-imports.*') ? 'menu-is-opening ' : '' }}">
             <a href="#" class="nav-link">
                 <x-icon-shopping class="nav-icon" />
                 <p> {{ __('header.sales') }}
@@ -53,11 +53,21 @@
                         <p>Import sản phẩm</p>
                     </a>
                 </li>
-                {{-- ---<li class="nav-item">
-                    <a href="pages/UI/icons.html" class="nav-link">
-                        <p>Tồn kho</p>
+                <li class="nav-item">
+                    <a href="{{ route('warehouses.index') }}" class="nav-link {{ request()->routeIs('warehouses.*') ? 'active' : '' }}">
+                        <p>{{ __('warehouse.management_title') }}</p>
                     </a>
-                </li> --}}
+                </li>
+                <li class="nav-item">
+                    <a href="{{ route('stocks.index') }}" class="nav-link {{ request()->routeIs('stocks.*') ? 'active' : '' }}">
+                        <p>{{ __('stock.management_title') }}</p>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="{{ route('stock-movements.index') }}" class="nav-link {{ request()->routeIs('stock-movements.*') ? 'active' : '' }}">
+                        <p>{{ __('stock_movement.management_title') }}</p>
+                    </a>
+                </li>
             </ul>
         </li>
 

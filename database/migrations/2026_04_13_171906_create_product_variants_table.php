@@ -14,14 +14,12 @@ return new class extends Migration
         Schema::create('product_variants', function (Blueprint $table) {
             $table->id();
             $table->foreignId('product_id')->constrained('products')->cascadeOnDelete();
-
+            $table->json('attributes')->nullable();
             $table->string('sku', 100)->unique()->index();
 
             $table->decimal('price', 15, 2);
             $table->decimal('compare_at_price', 15, 2)->nullable()->comment('To compare with sale price');
             $table->decimal('cost_price', 15, 2)->nullable();
-
-            $table->json('attributes')->nullable();
 
             $table->boolean('is_active')->default(true);
             $table->timestamps();
