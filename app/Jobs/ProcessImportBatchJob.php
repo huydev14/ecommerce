@@ -59,10 +59,14 @@ class ProcessImportBatchJob implements ShouldQueue
                     $variantPayload = $payload['variant'] ?? [];
 
                     if (empty($variantPayload['unit_id']) && !empty($variantPayload['unit_name'])) {
-                        $rawUnitNames[] = trim($variantPayload['unit_name']);
+                        $rawUnitNames[] = mb_strtolower(trim($variantPayload['unit_name']));
                     }
                     if (empty($variantPayload['tax_id']) && isset($variantPayload['tax']) && $variantPayload['tax'] !== '') {
-                        $rawTaxRates[] = trim($variantPayload['tax']);
+                        $normalizedRate = $this->normalizeRate($variantPayload['tax']);
+
+                        if ($normalizedRate !== null) {
+                            $rawTaxRates[] = $normalizedRate;
+                        }
                     }
                 }
 
@@ -70,7 +74,16 @@ class ProcessImportBatchJob implements ShouldQueue
                     DB::transaction(function () use ($rawUnitNames, $rawTaxRates) {
                         if (!empty($rawUnitNames)) {
                             $uniqueUnits = array_unique($rawUnitNames);
-                            $existingUnits = Unit::whereIn('name', $uniqueUnits)->pluck('name')->toArray();
+                            $existingUnitModels = Unit::withTrashed()
+                                ->whereIn('name', $uniqueUnits)
+                                ->get(['id', 'name', 'deleted_at']);
+
+                            $existingUnitModels->whereNotNull('deleted_at')->each->restore();
+
+                            $existingUnits = $existingUnitModels
+                                ->pluck('name')
+                                ->map(fn($name) => mb_strtolower(trim($name)))
+                                ->toArray();
                             $missingUnits = array_diff($uniqueUnits, $existingUnits);
 
                             if (!empty($missingUnits)) {
@@ -81,11 +94,25 @@ class ProcessImportBatchJob implements ShouldQueue
 
                         if (!empty($rawTaxRates)) {
                             $uniqueTaxes = array_unique($rawTaxRates);
-                            $existingTaxes = Tax::whereIn('rate', $uniqueTaxes)->pluck('rate')->toArray();
+                            $existingTaxModels = Tax::withTrashed()
+                                ->whereIn('rate', $uniqueTaxes)
+                                ->get(['id', 'rate', 'deleted_at']);
+
+                            $existingTaxModels->whereNotNull('deleted_at')->each->restore();
+
+                            $existingTaxes = $existingTaxModels
+                                ->pluck('rate')
+                                ->map(fn($rate) => $this->normalizeRate($rate))
+                                ->toArray();
                             $missingTaxes = array_diff($uniqueTaxes, $existingTaxes);
 
                             if (!empty($missingTaxes)) {
-                                $taxesToInsert = array_map(fn($r) => ['rate' => $r, 'created_at' => now(), 'updated_at' => now()], $missingTaxes);
+                                $taxesToInsert = array_map(fn($rate) => [
+                                    'name' => 'Thuế VAT '. $rate . '%',
+                                    'rate' => $rate,
+                                    'created_at' => now(),
+                                    'updated_at' => now(),
+                                ], $missingTaxes);
                                 Tax::insert($taxesToInsert);
                             }
                         }
@@ -103,9 +130,13 @@ class ProcessImportBatchJob implements ShouldQueue
                 $chunkUnitsMap = empty($allUnitNames) ? [] : Unit::whereIn('name', $allUnitNames)
                     ->pluck('id', 'name')->mapWithKeys(fn($id, $name) => [mb_strtolower(trim($name)) => $id])->toArray();
 
-                $allTaxRates = array_unique(array_filter(array_map(fn($r) => $r['variant']['tax'] ?? null, $parsedRows)));
+                $allTaxRates = array_unique(array_filter(
+                    array_map(fn($r) => $this->normalizeRate($r['variant']['tax'] ?? null), $parsedRows)
+                ));
                 $chunkTaxesMap = empty($allTaxRates) ? [] : Tax::whereIn('rate', $allTaxRates)
-                    ->pluck('id', 'rate')->mapWithKeys(fn($id, $rate) => [(string) $rate => $id])->toArray();
+                    ->pluck('id', 'rate')
+                    ->mapWithKeys(fn($id, $rate) => [$this->normalizeRate($rate) => $id])
+                    ->toArray();
 
                 // --- Prepare payload -----------------
                 $productsToInsert = [];
@@ -125,13 +156,12 @@ class ProcessImportBatchJob implements ShouldQueue
                         'category_id' => $productPayload['category_id'],
                         'brand_id' => $productPayload['brand_id'] ?? null,
                         'status' => $productPayload['status'],
-                        'metadata' => $productPayload['metadata'] ? json_encode(json_decode($productPayload['metadata'], true)) : null,
                         'created_at' => now(),
                         'updated_at' => now(),
                     ];
 
                     $uNameKey = mb_strtolower(trim($variantPayload['unit_name'] ?? ''));
-                    $tRateKey = (string) ($variantPayload['tax'] ?? '');
+                    $tRateKey = $this->normalizeRate($variantPayload['tax'] ?? null);
 
                     $variantPayload['unit_id'] = $variantPayload['unit_id'] ?? $chunkUnitsMap[$uNameKey] ?? null;
                     $variantPayload['tax_id'] = $variantPayload['tax_id'] ?? $chunkTaxesMap[$tRateKey] ?? null;
@@ -252,6 +282,14 @@ class ProcessImportBatchJob implements ShouldQueue
 
         ImportProductRow::where('import_batch_id', $this->batchId)
             ->where('status', 'valid')
-            ->delete();
+            ->update(['status' => 'completed']);
+    }
+
+    private function normalizeRate($rate): ?string
+    {
+        if ($rate === null || $rate === '') {
+            return null;
+        }
+        return is_numeric($rate) ? number_format((float) $rate, 2, '.', '') : null;
     }
 }

@@ -96,12 +96,12 @@ return [
         [
             'name' => 'tax',
             'requirement' => 'optional',
-            'guide' => 'Nhập thuế suất dạng số. Hệ thống sẽ khớp với thuế suất đã tồn tại.',
+            'guide' => 'Nhập thuế suất dạng số. Hệ thống sẽ khớp thuế suất đã tồn tại hoặc tạo thuế suất mới.',
         ],
         [
-            'name' => 'metadata / attributes',
+            'name' => 'attributes',
             'requirement' => 'optional',
-            'guide' => 'Dữ liệu mở rộng cho sản phẩm hoặc biến thể. Nếu nhập, nội dung phải là JSON hợp lệ.',
+            'guide' => 'Dữ liệu mở rộng cho biến thể. Nếu nhập, nội dung phải là JSON hợp lệ.',
         ],
         [
             'name' => 'is_active',

@@ -21,7 +21,6 @@ return new class extends Migration
             $table->foreignId('brand_id')->nullable()->constrained()->nullOnDelete();
 
             $table->string('status')->default('draft');
-            $table->json('metadata')->nullable();
             $table->timestamps();
             $table->softDeletes();
         });

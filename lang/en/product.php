@@ -36,14 +36,11 @@ return [
     'description_placeholder' => 'Enter product description',
     'category_placeholder' => 'Select category',
     'brand_placeholder' => 'Select brand',
-    'metadata' => 'Metadata (JSON)',
-    'metadata_placeholder' => '{"color":"black","warranty":"12 months"}',
 
     'name_required' => 'Please enter a product name.',
     'name_unique' => 'This product name already exists in the system.',
     'category_required' => 'Please select a category.',
     'status_required' => 'Please select a status.',
-    'metadata_json' => 'Metadata must be valid JSON format.',
 
     'create_success' => 'Product created successfully!',
     'update_success' => 'Product updated successfully!',
@@ -71,4 +68,3 @@ return [
     'system_error_title' => 'System error',
     'system_error_description' => 'A system error has occurred!',
 ];
-

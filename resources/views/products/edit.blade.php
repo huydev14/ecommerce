@@ -70,12 +70,6 @@
                     <option value="archived" @selected($product->status === 'archived')>{{ __('product.archived') }}</option>
                 </select>
             </div>
-
-            <div>
-                <label for="metadata" class="tw-block tw-text-sm tw-font-medium tw-text-gray-700 tw-mb-1.5">{{ __('product.metadata') }}</label>
-                <textarea name="metadata" id="metadata" rows="1" placeholder="{{ __('product.metadata_placeholder') }}"
-                    class="tw-w-full tw-rounded-md tw-border-gray-300 tw-shadow-sm focus:tw-border-[#0078D4] focus:tw-ring-[#0078D4] tw-text-sm tw-px-3 tw-py-2 tw-transition-colors tw-outline-none">{{ $product->metadata ? json_encode($product->metadata) : '' }}</textarea>
-            </div>
         </div>
     </div>
 </form>

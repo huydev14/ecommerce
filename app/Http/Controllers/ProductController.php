@@ -103,13 +103,11 @@ class ProductController extends Controller
             'category_id' => 'required|exists:categories,id',
             'brand_id' => 'nullable|exists:brands,id',
             'status' => 'required|in:draft,published,archived',
-            'metadata' => 'nullable|json',
         ], [
             'name.required' => __('product.name_required'),
             'name.unique' => __('product.name_unique'),
             'category_id.required' => __('product.category_required'),
             'status.required' => __('product.status_required'),
-            'metadata.json' => __('product.metadata_json'),
         ]);
 
         try {
@@ -120,7 +118,6 @@ class ProductController extends Controller
                 'category_id' => $request->category_id,
                 'brand_id' => $request->brand_id,
                 'status' => $request->status,
-                'metadata' => $request->metadata ? json_decode($request->metadata, true) : null,
             ]);
 
             if ($request->ajax()) {
@@ -161,13 +158,11 @@ class ProductController extends Controller
             'category_id' => 'required|exists:categories,id',
             'brand_id' => 'nullable|exists:brands,id',
             'status' => 'required|in:draft,published,archived',
-            'metadata' => 'nullable|json',
         ], [
             'name.required' => __('product.name_required'),
             'name.unique' => __('product.name_unique'),
             'category_id.required' => __('product.category_required'),
             'status.required' => __('product.status_required'),
-            'metadata.json' => __('product.metadata_json'),
         ]);
 
         try {
@@ -178,7 +173,6 @@ class ProductController extends Controller
                 'category_id' => $request->category_id,
                 'brand_id' => $request->brand_id,
                 'status' => $request->status,
-                'metadata' => $request->metadata ? json_decode($request->metadata, true) : null,
             ]);
 
             return response()->json([

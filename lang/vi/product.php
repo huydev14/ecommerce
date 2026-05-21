@@ -36,14 +36,11 @@ return [
     'description_placeholder' => 'Nhập mô tả sản phẩm',
     'category_placeholder' => 'Chọn danh mục',
     'brand_placeholder' => 'Chọn thương hiệu',
-    'metadata' => 'Metadata (JSON)',
-    'metadata_placeholder' => '{"color":"black","warranty":"12 months"}',
 
     'name_required' => 'Vui lòng nhập tên sản phẩm.',
     'name_unique' => 'Tên sản phẩm này đã tồn tại trên hệ thống.',
     'category_required' => 'Vui lòng chọn danh mục.',
     'status_required' => 'Vui lòng chọn trạng thái.',
-    'metadata_json' => 'Metadata phải là định dạng JSON hợp lệ.',
 
     'create_success' => 'Thêm sản phẩm thành công!',
     'update_success' => 'Cập nhật sản phẩm thành công!',

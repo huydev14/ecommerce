@@ -38,6 +38,8 @@ class TempProductsImport implements ToCollection, WithChunkReading, WithHeadingR
     public function __construct($batchId)
     {
         $this->batchId = $batchId;
+        self::$seenProductNames = [];
+        self::$seenSkus = [];
     }
 
     public function collection(Collection $rows)
@@ -116,10 +118,10 @@ class TempProductsImport implements ToCollection, WithChunkReading, WithHeadingR
                 'cost_price' => $row[self::EXCEL_COL_COST_PRICE] ?? null,
 
                 'unit_id' => $unitsMap[$uName] ?? null,
-                'unit_name' => trim($row[self::EXCEL_COL_UNIT] ?? '') ?: null,
+                'unit_name' => $uName ?: null,
 
                 'tax_id' => $taxesMap[$taxRateKey] ?? null,
-                'tax' => $taxRaw !== '' ? $taxRaw : null,
+                'tax' => $taxRateKey,
 
                 'attributes' => !empty($row[self::EXCEL_COL_VARIANT])
                     ? json_encode(['variant_name' => trim($row[self::EXCEL_COL_VARIANT])])
@@ -142,14 +144,11 @@ class TempProductsImport implements ToCollection, WithChunkReading, WithHeadingR
                 'category_id' => ['required', 'integer'],
                 'sku' => ['required', 'string', 'max:100'],
                 'price' => ['required', 'numeric', 'min:0'],
-                'stock_quantity' => ['required', 'integer', 'min:0'],
+                'stock_quantity' => ['required', 'integer', 'min:0', 'max:999999'],
                 'cost_price' => ['nullable', 'numeric', 'min:0'],
-                'unit_id' => ['nullable', 'integer', 'required_with:unit_name'],
-                'tax_id' => ['nullable', 'integer', 'required_with:tax'],
-            ],
-            [
-                'unit_id.required_with' => 'Đơn vị tính không tồn tại trên hệ thống.',
-                'tax_id.required_with' => 'Thuế suất không tồn tại trên hệ thống.',
+                'unit_id' => ['nullable', 'integer'],
+                'tax_id' => ['nullable', 'integer'],
+                'tax' => ['nullable', 'numeric', 'min:0', 'max:100'],
             ]
         );
 

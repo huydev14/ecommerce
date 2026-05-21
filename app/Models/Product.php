@@ -20,11 +20,6 @@ class Product extends Model
         'category_id',
         'brand_id',
         'status',
-        'metadata',
-    ];
-
-    protected $casts = [
-        'metadata' => 'json',
     ];
 
     public function category(): BelongsTo

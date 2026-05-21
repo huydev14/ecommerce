@@ -96,12 +96,12 @@ return [
         [
             'name' => 'tax',
             'requirement' => 'optional',
-            'guide' => 'Enter the tax rate as a number. It will be matched with an existing tax rate in the system.',
+            'guide' => 'Enter the tax rate as a number. The system will match an existing rate or create a new tax rate.',
         ],
         [
-            'name' => 'metadata / attributes',
+            'name' => 'attributes',
             'requirement' => 'optional',
-            'guide' => 'Extended product or variant data. If provided, the content must be valid JSON.',
+            'guide' => 'Extended variant data. If provided, the content must be valid JSON.',
         ],
         [
             'name' => 'is_active',
