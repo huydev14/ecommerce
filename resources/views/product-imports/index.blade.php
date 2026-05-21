@@ -21,6 +21,25 @@
 
                     <div class="tw-grid tw-grid-cols-1 tw-gap-5">
                         <div>
+                            <label for="warehouse_id" class="tw-mb-2 tw-block tw-text-sm tw-font-medium tw-text-gray-700">
+                                Warehouse
+                            </label>
+                            <select id="warehouse_id" name="warehouse_id" required
+                                class="tw-w-full tw-rounded-md tw-border tw-border-gray-300 tw-bg-white tw-px-3 tw-py-2 tw-text-sm tw-text-gray-900 tw-shadow-sm focus:tw-border-[#0f6cbd] focus:tw-outline-none focus:tw-ring-2 focus:tw-ring-[#0f6cbd]/20">
+                                <option value="">Select warehouse</option>
+                                @foreach ($warehouses as $warehouse)
+                                    <option value="{{ $warehouse->id }}" @selected(old('warehouse_id') == $warehouse->id)>
+                                        {{ $warehouse->name }}
+                                    </option>
+                                @endforeach
+                            </select>
+
+                            @error('warehouse_id')
+                                <p class="tw-mt-2 tw-text-sm tw-font-medium tw-text-red-600">{{ $message }}</p>
+                            @enderror
+                        </div>
+
+                        <div>
                             <label for="excel_file"
                                 class="tw-flex tw-min-h-[280px] tw-cursor-pointer tw-flex-col tw-items-center tw-justify-center tw-rounded tw-border-2 tw-border-dashed tw-border-gray-300 tw-bg-gray-50 tw-px-6 tw-py-8 tw-text-center tw-transition hover:tw-border-[#0f6cbd] hover:tw-bg-[#f5faff]">
                                 <span class="tw-flex tw-h-14 tw-w-14 tw-items-center tw-justify-center tw-rounded tw-bg-white tw-text-[#0f6cbd] tw-shadow-sm">

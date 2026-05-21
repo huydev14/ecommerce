@@ -6,6 +6,7 @@ use App\Imports\TempProductsImport;
 use App\Jobs\ProcessImportBatchJob;
 use App\Models\ImportBatch;
 use App\Models\ImportProductRow;
+use App\Models\Warehouse;
 use Illuminate\Http\Request;
 use Maatwebsite\Excel\Facades\Excel;
 
@@ -18,18 +19,25 @@ class ProductImportController extends Controller
             ->take(5)
             ->get();
 
-        return view('product-imports.index', compact('latestBatches'));
+        $warehouses = Warehouse::query()
+            ->where('is_active', true)
+            ->orderBy('name')
+            ->get(['id', 'name']);
+
+        return view('product-imports.index', compact('latestBatches', 'warehouses'));
     }
 
     public function uploadAndPreview(Request $request)
     {
         $request->validate([
             'excel_file' => 'required|mimes:xlsx,xls,csv|max:10240',
+            'warehouse_id' => 'required|exists:warehouses,id',
         ]);
 
         $batch = ImportBatch::create([
-            'user_id' => auth()->id(),
+            'user_id' => $request->user()->id,
             'status' => 'processing',
+            'warehouse_id' => $request->warehouse_id,
         ]);
 
         Excel::import(new TempProductsImport($batch->id), $request->file('excel_file'));

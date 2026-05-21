@@ -8,6 +8,7 @@ class ImportBatch extends Model
 {
     protected $fillable = [
         'user_id',
+        'warehouse_id',
         'status',
         'total_rows'
     ];
