@@ -8,6 +8,8 @@ use App\Models\Product;
 use App\Models\ProductVariant;
 use App\Models\Stock;
 use App\Models\StockMovement;
+use App\Models\Unit;
+use App\Models\Tax;
 use DragonCode\Support\Facades\Helpers\Str;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
@@ -46,11 +48,70 @@ class ProcessImportBatchJob implements ShouldQueue
         ImportProductRow::where('import_batch_id', $this->batchId)
             ->where('status', 'valid')
             ->chunkById(1000, function ($rows) use ($targetWarehouseId) {
-                $productsToInsert = [];
-                $variantsToInsert = [];
+                $parsedRows = [];
+                $rawUnitNames = [];
+                $rawTaxRates = [];
 
                 foreach ($rows as $row) {
                     $payload = is_array($row->data) ? $row->data : json_decode($row->data, true);
+
+                    $parsedRows[$row->id] = $payload;
+                    $variantPayload = $payload['variant'] ?? [];
+
+                    if (empty($variantPayload['unit_id']) && !empty($variantPayload['unit_name'])) {
+                        $rawUnitNames[] = trim($variantPayload['unit_name']);
+                    }
+                    if (empty($variantPayload['tax_id']) && isset($variantPayload['tax']) && $variantPayload['tax'] !== '') {
+                        $rawTaxRates[] = trim($variantPayload['tax']);
+                    }
+                }
+
+                try {
+                    DB::transaction(function () use ($rawUnitNames, $rawTaxRates) {
+                        if (!empty($rawUnitNames)) {
+                            $uniqueUnits = array_unique($rawUnitNames);
+                            $existingUnits = Unit::whereIn('name', $uniqueUnits)->pluck('name')->toArray();
+                            $missingUnits = array_diff($uniqueUnits, $existingUnits);
+
+                            if (!empty($missingUnits)) {
+                                $unitsToInsert = array_map(fn($n) => ['name' => $n, 'created_at' => now(), 'updated_at' => now()], $missingUnits);
+                                Unit::insert($unitsToInsert);
+                            }
+                        }
+
+                        if (!empty($rawTaxRates)) {
+                            $uniqueTaxes = array_unique($rawTaxRates);
+                            $existingTaxes = Tax::whereIn('rate', $uniqueTaxes)->pluck('rate')->toArray();
+                            $missingTaxes = array_diff($uniqueTaxes, $existingTaxes);
+
+                            if (!empty($missingTaxes)) {
+                                $taxesToInsert = array_map(fn($r) => ['rate' => $r, 'created_at' => now(), 'updated_at' => now()], $missingTaxes);
+                                Tax::insert($taxesToInsert);
+                            }
+                        }
+                    });
+                } catch (\Throwable $exception) {
+                    $rowIds = $rows->pluck('id')->toArray();
+                    ImportProductRow::whereIn('id', $rowIds)->update([
+                        'status' => 'error',
+                        'error_message' => 'Auto-create dependencies failed: ' . $exception->getMessage(),
+                    ]);
+                    return;
+                }
+
+                $allUnitNames = array_unique(array_filter(array_map(fn($r) => $r['variant']['unit_name'] ?? null, $parsedRows)));
+                $chunkUnitsMap = empty($allUnitNames) ? [] : Unit::whereIn('name', $allUnitNames)
+                    ->pluck('id', 'name')->mapWithKeys(fn($id, $name) => [mb_strtolower(trim($name)) => $id])->toArray();
+
+                $allTaxRates = array_unique(array_filter(array_map(fn($r) => $r['variant']['tax'] ?? null, $parsedRows)));
+                $chunkTaxesMap = empty($allTaxRates) ? [] : Tax::whereIn('rate', $allTaxRates)
+                    ->pluck('id', 'rate')->mapWithKeys(fn($id, $rate) => [(string) $rate => $id])->toArray();
+
+                // --- Prepare payload -----------------
+                $productsToInsert = [];
+                $variantsToInsert = [];
+
+                foreach ($parsedRows as $rowId => $payload) {
                     $productPayload = $payload['product'] ?? [];
                     $variantPayload = $payload['variant'] ?? [];
                     $stockPayload = $payload['stock'] ?? [];
@@ -68,6 +129,12 @@ class ProcessImportBatchJob implements ShouldQueue
                         'created_at' => now(),
                         'updated_at' => now(),
                     ];
+
+                    $uNameKey = mb_strtolower(trim($variantPayload['unit_name'] ?? ''));
+                    $tRateKey = (string) ($variantPayload['tax'] ?? '');
+
+                    $variantPayload['unit_id'] = $variantPayload['unit_id'] ?? $chunkUnitsMap[$uNameKey] ?? null;
+                    $variantPayload['tax_id'] = $variantPayload['tax_id'] ?? $chunkTaxesMap[$tRateKey] ?? null;
 
                     $variantPayload['_import_quantity'] = $stockPayload['quantity'] ?? 0;
                     $variantsToInsert[$slug] = $variantPayload;
@@ -99,7 +166,6 @@ class ProcessImportBatchJob implements ShouldQueue
                                     'unit_id' => $variantPayload['unit_id'] ?? null,
                                     'tax_id' => $variantPayload['tax_id'] ?? null,
                                     'is_active' => $variantPayload['is_active'] ?? true,
-
                                     'created_at' => now(),
                                     'updated_at' => now(),
                                 ];
@@ -111,7 +177,7 @@ class ProcessImportBatchJob implements ShouldQueue
                             ProductVariant::insert($finalVariants);
                         }
 
-                        // --- Handle stock increment and log logic ------------------
+                        // --- Handle stock increment and log ------------------
                         $skus = array_column($finalVariants, 'sku');
                         $insertedVariants = ProductVariant::whereIn('sku', $skus)->get(['id', 'sku'])->keyBy('sku');
 
@@ -124,7 +190,6 @@ class ProcessImportBatchJob implements ShouldQueue
                             $importQuantity = $variantPayload['_import_quantity'] ?? 0;
 
                             if ($variant && $importQuantity > 0 && $targetWarehouseId) {
-
                                 $stocksToInsert[] = [
                                     'product_variant_id' => $variant->id,
                                     'warehouse_id' => $targetWarehouseId,
