@@ -18,6 +18,7 @@ use Maatwebsite\Excel\Concerns\WithChunkReading;
 use Maatwebsite\Excel\Concerns\WithHeadingRow;
 
 use Illuminate\Contracts\Queue\ShouldQueue;
+use Illuminate\Support\Facades\Cache;
 use Maatwebsite\Excel\Concerns\WithEvents;
 use Maatwebsite\Excel\Events\AfterImport;
 use Maatwebsite\Excel\Events\BeforeImport;
@@ -212,17 +213,23 @@ class TempProductsImport implements ToCollection, WithChunkReading, WithHeadingR
     {
         $skuKey = mb_strtolower(trim($payload['variant']['sku']));
         if ($skuKey !== '') {
-            if (isset(self::$seenSkus[$skuKey])) {
-                $errors[] = 'Mã SKU bị trùng lặp trong file.';
-                $errorCodes[] = 'duplicate_sku_in_file';
-            }
-
+            // Check duplicate SKU in DB
             if (isset($dbSkus[$skuKey])) {
                 $errors[] = 'Mã SKU đã tồn tại trên hệ thống.';
                 $errorCodes[] = 'duplicate_sku_in_database';
             }
 
-            self::$seenSkus[$skuKey] = true;
+            // Check duplicate SKU in batch
+            $cacheKey = "import_batch_{$this->batchId}_sku_{$skuKey}";
+            $cacheTags = ["import_batch_{$this->batchId}"];
+
+            if (isset(self::$seenSkus[$skuKey]) || Cache::tags($cacheTags)->has($cacheKey)) {
+                $errors[] = 'Mã SKU bị trùng lặp trong file.';
+                $errorCodes[] = 'duplicate_sku_in_file';
+            } else {
+                self::$seenSkus[$skuKey] = true;
+                Cache::tags($cacheTags)->put($cacheKey, true, now()->addHours(1));
+            }
         }
     }
 
@@ -265,28 +272,30 @@ class TempProductsImport implements ToCollection, WithChunkReading, WithHeadingR
 
     private function buildCategoryHierachyMap(): array
     {
-        $categories = Category::all();
-        $parentsMap = [];
-        $childrenMap = [];
+        return Cache::remember('category_map', 300, function () {
+            $categories = Category::all();
+            $parentsMap = [];
+            $childrenMap = [];
 
-        foreach ($categories as $category) {
-            $nameKey = mb_strtolower(trim($category->name));
+            foreach ($categories as $category) {
+                $nameKey = mb_strtolower(trim($category->name));
 
-            if (empty($category->parent_id)) {
-                $parentsMap[$nameKey] = $category->id;
-                continue;
+                if (empty($category->parent_id)) {
+                    $parentsMap[$nameKey] = $category->id;
+                    continue;
+                }
+
+                $parent = $categories->firstWhere('id', $category->parent_id);
+                if ($parent) {
+                    $childrenMap[mb_strtolower(trim($parent->name)) . '|' . $nameKey] = $category->id;
+                }
             }
 
-            $parent = $categories->firstWhere('id', $category->parent_id);
-            if ($parent) {
-                $childrenMap[mb_strtolower(trim($parent->name)) . '|' . $nameKey] = $category->id;
-            }
-        }
-
-        return [
-            'parents' => $parentsMap,
-            'children' => $childrenMap,
-        ];
+            return [
+                'parents' => $parentsMap,
+                'children' => $childrenMap,
+            ];
+        });
     }
 
     private function importBatchExists(): bool
@@ -325,6 +334,8 @@ class TempProductsImport implements ToCollection, WithChunkReading, WithHeadingR
                     'status' => 'ready',
                     'total_rows' => $totalRows,
                 ]);
+
+                Cache::tags(["import_batch_{$this->batchId}"])->flush();
             },
         ];
     }
