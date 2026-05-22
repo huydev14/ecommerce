@@ -2,7 +2,6 @@
 
 namespace App\Imports;
 
-use App\Events\ImportProgressUpdated;
 use App\Models\Brand;
 use App\Models\Category;
 use App\Models\ImportBatch;
@@ -13,9 +12,7 @@ use App\Models\Unit;
 
 use Illuminate\Support\Collection;
 use Illuminate\Database\QueryException;
-use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Validator;
-use Throwable;
 use Maatwebsite\Excel\Concerns\ToCollection;
 use Maatwebsite\Excel\Concerns\WithChunkReading;
 use Maatwebsite\Excel\Concerns\WithHeadingRow;
@@ -103,7 +100,9 @@ class TempProductsImport implements ToCollection, WithChunkReading, WithHeadingR
         $processed = ImportProductRow::where('import_batch_id', $this->batchId)->count();
         $total = ImportBatch::where('id', $this->batchId)->value('total_rows') ?: $processed;
 
-        $this->broadcastProgress($processed, $total);
+        ImportBatch::where('id', $this->batchId)->update([
+            'total_rows' => max($total, $processed),
+        ]);
     }
 
     private function normalizePayload($row, array $categoryData, array $brandsMap, array $unitsMap, array $taxesMap): array
@@ -295,20 +294,6 @@ class TempProductsImport implements ToCollection, WithChunkReading, WithHeadingR
         return ImportBatch::whereKey($this->batchId)->exists();
     }
 
-    private function broadcastProgress(int $processedRows, int $totalRows): void
-    {
-        try {
-            broadcast(new ImportProgressUpdated($this->batchId, $processedRows, $totalRows));
-        } catch (Throwable $exception) {
-            Log::warning('Unable to broadcast product import progress.', [
-                'batch_id' => $this->batchId,
-                'processed_rows' => $processedRows,
-                'total_rows' => $totalRows,
-                'exception' => $exception->getMessage(),
-            ]);
-        }
-    }
-
     public function chunkSize(): int
     {
         return 1000;
@@ -328,8 +313,6 @@ class TempProductsImport implements ToCollection, WithChunkReading, WithHeadingR
                 ImportBatch::where('id', $this->batchId)->update([
                     'total_rows' => $totalRows,
                 ]);
-
-                $this->broadcastProgress(0, $totalRows);
             },
             AfterImport::class => function (AfterImport $event) {
                 if (! $this->importBatchExists()) {
@@ -342,8 +325,6 @@ class TempProductsImport implements ToCollection, WithChunkReading, WithHeadingR
                     'status' => 'ready',
                     'total_rows' => $totalRows,
                 ]);
-
-                $this->broadcastProgress($totalRows, $totalRows);
             },
         ];
     }

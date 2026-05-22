@@ -66,15 +66,6 @@
                     });
                 },
                 init() {
-                    if (!window.Echo) {
-                        this.fetchProgress();
-                        this.pollTimer = setInterval(() => this.fetchProgress(), 1500);
-                        return;
-                    }
-
-                    window.Echo.channel('import.' + this.batchId)
-                        .listen('.progress.updated', (event) => this.updateProgress(event));
-
                     this.fetchProgress();
                     this.pollTimer = setInterval(() => this.fetchProgress(), 1500);
                 }
