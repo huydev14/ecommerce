@@ -2,6 +2,7 @@
 
 namespace App\Imports;
 
+use App\Events\ImportProgressUpdated;
 use App\Models\Brand;
 use App\Models\Category;
 use App\Models\ImportBatch;
@@ -11,7 +12,10 @@ use App\Models\Tax;
 use App\Models\Unit;
 
 use Illuminate\Support\Collection;
+use Illuminate\Database\QueryException;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Validator;
+use Throwable;
 use Maatwebsite\Excel\Concerns\ToCollection;
 use Maatwebsite\Excel\Concerns\WithChunkReading;
 use Maatwebsite\Excel\Concerns\WithHeadingRow;
@@ -19,7 +23,7 @@ use Maatwebsite\Excel\Concerns\WithHeadingRow;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Maatwebsite\Excel\Concerns\WithEvents;
 use Maatwebsite\Excel\Events\AfterImport;
-use Override;
+use Maatwebsite\Excel\Events\BeforeImport;
 
 class TempProductsImport implements ToCollection, WithChunkReading, WithHeadingRow, ShouldQueue, WithEvents
 {
@@ -47,7 +51,7 @@ class TempProductsImport implements ToCollection, WithChunkReading, WithHeadingR
 
     public function collection(Collection $rows)
     {
-        if ($rows->isEmpty()) {
+        if ($rows->isEmpty() || ! $this->importBatchExists()) {
             return;
         }
 
@@ -82,7 +86,24 @@ class TempProductsImport implements ToCollection, WithChunkReading, WithHeadingR
             ];
         }
 
-        ImportProductRow::insert($rowsToInsert);
+        if (! $this->importBatchExists()) {
+            return;
+        }
+
+        try {
+            ImportProductRow::insert($rowsToInsert);
+        } catch (QueryException $exception) {
+            if (! $this->importBatchExists()) {
+                return;
+            }
+
+            throw $exception;
+        }
+
+        $processed = ImportProductRow::where('import_batch_id', $this->batchId)->count();
+        $total = ImportBatch::where('id', $this->batchId)->value('total_rows') ?: $processed;
+
+        $this->broadcastProgress($processed, $total);
     }
 
     private function normalizePayload($row, array $categoryData, array $brandsMap, array $unitsMap, array $taxesMap): array
@@ -269,6 +290,25 @@ class TempProductsImport implements ToCollection, WithChunkReading, WithHeadingR
         ];
     }
 
+    private function importBatchExists(): bool
+    {
+        return ImportBatch::whereKey($this->batchId)->exists();
+    }
+
+    private function broadcastProgress(int $processedRows, int $totalRows): void
+    {
+        try {
+            broadcast(new ImportProgressUpdated($this->batchId, $processedRows, $totalRows));
+        } catch (Throwable $exception) {
+            Log::warning('Unable to broadcast product import progress.', [
+                'batch_id' => $this->batchId,
+                'processed_rows' => $processedRows,
+                'total_rows' => $totalRows,
+                'exception' => $exception->getMessage(),
+            ]);
+        }
+    }
+
     public function chunkSize(): int
     {
         return 1000;
@@ -277,13 +317,33 @@ class TempProductsImport implements ToCollection, WithChunkReading, WithHeadingR
     public function registerEvents(): array
     {
         return [
+            BeforeImport::class => function (BeforeImport $event) {
+                if (! $this->importBatchExists()) {
+                    return;
+                }
+
+                $sheetRows = $event->getReader()->getTotalRows();
+                $totalRows = max(array_sum($sheetRows) - count($sheetRows), 0);
+
+                ImportBatch::where('id', $this->batchId)->update([
+                    'total_rows' => $totalRows,
+                ]);
+
+                $this->broadcastProgress(0, $totalRows);
+            },
             AfterImport::class => function (AfterImport $event) {
+                if (! $this->importBatchExists()) {
+                    return;
+                }
+
                 $totalRows = ImportProductRow::where('import_batch_id', $this->batchId)->count();
 
                 ImportBatch::where('id', $this->batchId)->update([
                     'status' => 'ready',
                     'total_rows' => $totalRows,
                 ]);
+
+                $this->broadcastProgress($totalRows, $totalRows);
             },
         ];
     }

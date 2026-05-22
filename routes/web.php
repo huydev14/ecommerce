@@ -149,8 +149,10 @@ Route::prefix('admin')->middleware('auth')->group(function () {
         Route::get('/', [ProductImportController::class, 'index'])->name('index');
         Route::post('/preview', [ProductImportController::class, 'uploadAndPreview'])->name('upload');
         Route::get('/{batchId}/preview', [ProductImportController::class, 'showPreview'])->name('preview');
+        Route::get('/{batchId}/progress', [ProductImportController::class, 'progress'])->name('progress');
         Route::post('/{batchId}/resolve-master-data', [ProductImportController::class, 'resolveMissingMasterData'])->name('resolve-master-data');
         Route::post('/{batchId}/confirm', [ProductImportController::class, 'confirmImport'])->name('confirm');
+        Route::delete('/{batchId}/cancel', [ProductImportController::class, 'cancelImport'])->name('cancel');
         Route::get('/download-template', [ProductImportController::class, 'downloadTemplate'])->name('download-template');
     });
 

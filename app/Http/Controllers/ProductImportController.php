@@ -9,6 +9,7 @@ use App\Models\ImportBatch;
 use App\Models\ImportProductRow;
 use App\Models\Warehouse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use Maatwebsite\Excel\Facades\Excel;
 
@@ -76,8 +77,25 @@ class ProductImportController extends Controller
         $errorRows = ImportProductRow::where('import_batch_id', $batchId)->where('status', 'error')->count();
         $missingMasterData = $this->missingMasterDataSummary((int) $batchId);
         $canResolveMasterData = in_array($batch->status, ['ready', 'completed_with_errors'], true);
+        $canCancelImport = in_array($batch->status, ['processing', 'preview_ready', 'ready'], true);
+        $canConfirmImport = in_array($batch->status, ['ready', 'preview_ready'], true);
 
-        return view('product-imports.preview', compact('batch', 'rows', 'validRows', 'errorRows', 'missingMasterData', 'canResolveMasterData'));
+        return view('product-imports.preview', compact('batch', 'rows', 'validRows', 'errorRows', 'missingMasterData', 'canResolveMasterData', 'canCancelImport', 'canConfirmImport'));
+    }
+
+    public function progress($batchId)
+    {
+        $batch = ImportBatch::findOrFail($batchId);
+        $processedRows = ImportProductRow::where('import_batch_id', $batchId)->count();
+        $totalRows = max((int) $batch->total_rows, $processedRows);
+
+        return response()->json([
+            'batchId' => (int) $batch->id,
+            'processedRows' => $processedRows,
+            'totalRows' => $totalRows,
+            'status' => $batch->status,
+            'isFinished' => in_array($batch->status, ['ready', 'completed', 'completed_with_errors'], true),
+        ]);
     }
 
     public function confirmImport($batchId)
@@ -92,6 +110,24 @@ class ProductImportController extends Controller
 
         return redirect()->route('products.index')
             ->with('success', 'Hệ thống đang đưa sản phẩm vào kho.');
+    }
+
+    public function cancelImport($batchId)
+    {
+        $batch = ImportBatch::findOrFail($batchId);
+
+        if (! in_array($batch->status, ['processing', 'preview_ready', 'ready'], true)) {
+            return redirect()->back()->with('error', __('product_import.cancel_invalid_status'));
+        }
+
+        DB::transaction(function () use ($batch) {
+            $batch->rows()->delete();
+            $batch->delete();
+        });
+
+        return redirect()
+            ->route('product-imports.index')
+            ->with('success', __('product_import.cancel_success'));
     }
 
     public function resolveMissingMasterData($batchId, ResolveProductImportMasterDataAction $action)
