@@ -12,10 +12,6 @@
 
                 <div class="tw-grid tw-grid-cols-1 md:tw-grid-cols-3 tw-gap-x-8 tw-gap-y-4">
                     <div class="tw-flex tw-flex-col tw-gap-1">
-                        <x-label-small for="f_product">{{ __('product_variant.product') }}</x-label-small>
-                        <x-filter-select id="f_product" :placeholder="__('product_variant.placeholder')" />
-                    </div>
-                    <div class="tw-flex tw-flex-col tw-gap-1">
                         <x-label-small for="f_isActive">{{ __('product_variant.status') }}</x-label-small>
                         <x-filter-select id="f_isActive" :placeholder="__('product_variant.placeholder')" />
                     </div>
@@ -27,7 +23,7 @@
             <table id="productVariantTable" class="display table table-hover text-nowrap" style="width: 100%;">
                 <thead>
                     <tr>
-                        <th>{{ __('product_variant.product') }}</th>
+                        <th>{{ __('product_variant.variant_name') }}</th>
                         <th>{{ __('product_variant.sku') }}</th>
                         <th>{{ __('product_variant.price') }}</th>
                         <th>{{ __('product_variant.compare_at_price') }}</th>

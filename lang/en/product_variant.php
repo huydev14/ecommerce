@@ -3,6 +3,7 @@
 return [
     'title' => 'Filter',
     'product' => 'Product',
+    'variant_name' => 'Variant name',
     'status' => 'Status',
     'placeholder' => 'Choose an option',
 

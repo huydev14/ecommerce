@@ -123,14 +123,13 @@ $(function () {
         ajax: {
             url: route('product-variants.data'),
             data: function (d) {
-                d.product_id = $('#f_product').val() || '';
                 d.is_active = $('#f_isActive').val() || '';
             },
         },
         columns: [
             {
-                data: 'product_name',
-                name: 'product.name',
+                data: 'variant_name',
+                name: 'variant_name',
                 orderable: false,
                 searchable: false,
             },
@@ -182,7 +181,7 @@ $(function () {
     $('#toggle-filter-btn').on('click', function () {
         $('#filter-panel').slideToggle('fast');
 
-        $('#f_product, #f_isActive').val('').trigger('change.select2');
+        $('#f_isActive').val('').trigger('change.select2');
         productVariantTable.ajax.reload();
     });
 
@@ -192,7 +191,6 @@ $(function () {
 
     $.getJSON(route('product-variants.filter_data'))
         .done(function (res) {
-            renderOptions('#f_product', res.products);
             renderOptions('#f_isActive', res.status);
         })
         .fail(function (xhr) {

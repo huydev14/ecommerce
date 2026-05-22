@@ -23,8 +23,8 @@ class ProductVariantController extends Controller
             $this->applyFilters($variants, $request);
 
             return DataTables::of($variants)
-                ->addColumn('product_name', function ($variant) {
-                    return $variant->product?->name ?? '<span class="tw-text-gray-400 tw-italic tw-text-sm">---</span>';
+                ->addColumn('variant_name', function ($variant) {
+                    return $variant->attributes['variant_name'] ?? '<span class="tw-text-gray-400 tw-italic tw-text-sm">---</span>';
                 })
                 ->editColumn('price', function ($variant) {
                     return $this->formatVnd($variant->price);
@@ -44,7 +44,7 @@ class ProductVariantController extends Controller
                 ->editColumn('action', function ($variant) {
                     return view('product-variants._product-variants-action', compact('variant'))->render();
                 })
-                ->rawColumns(['product_name', 'compare_at_price', 'cost_price', 'is_active', 'action'])
+                ->rawColumns(['variant_name', 'compare_at_price', 'cost_price', 'is_active', 'action'])
                 ->make(true);
         }
     }
