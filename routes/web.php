@@ -151,6 +151,7 @@ Route::prefix('admin')->middleware('auth')->group(function () {
         Route::get('/{batchId}/preview', [ProductImportController::class, 'showPreview'])->name('preview');
         Route::post('/{batchId}/resolve-master-data', [ProductImportController::class, 'resolveMissingMasterData'])->name('resolve-master-data');
         Route::post('/{batchId}/confirm', [ProductImportController::class, 'confirmImport'])->name('confirm');
+        Route::get('/download-template', [ProductImportController::class, 'downloadTemplate'])->name('download-template');
     });
 
     // --- Admin Settings -------------------------------

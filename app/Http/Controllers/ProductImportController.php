@@ -9,6 +9,7 @@ use App\Models\ImportBatch;
 use App\Models\ImportProductRow;
 use App\Models\Warehouse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Storage;
 use Maatwebsite\Excel\Facades\Excel;
 
 class ProductImportController extends Controller
@@ -26,6 +27,15 @@ class ProductImportController extends Controller
             ->get(['id', 'name']);
 
         return view('product-imports.index', compact('latestBatches', 'warehouses'));
+    }
+
+    public function downloadTemplate()
+    {
+        if (! Storage::disk('app_files')->exists('templates/product_import_sample.xlsx')) {
+            abort(404, __('product_import.template_not_found'));
+        }
+
+        return Storage::disk('app_files')->download('templates/product_import_sample.xlsx');
     }
 
     public function uploadAndPreview(Request $request)

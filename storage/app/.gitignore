@@ -1,4 +1,6 @@
 *
 !private/
 !public/
+!templates/
+!templates/product_import_sample.xlsx
 !.gitignore
