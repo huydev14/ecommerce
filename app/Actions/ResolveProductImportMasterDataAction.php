@@ -103,10 +103,10 @@ class ResolveProductImportMasterDataAction
         ];
     }
 
-    private function resolveUnits(array $payloads): int
+    private function resolveUnits(array $namesList): int
     {
-        $names = collect($payloads)
-            ->map(fn($payload) => $this->normalizeName($payload['variant']['unit_name'] ?? null))
+        $names = collect($namesList)
+            ->map(fn($name) => $this->normalizeName($name))
             ->filter()
             ->unique()
             ->values();
@@ -139,10 +139,10 @@ class ResolveProductImportMasterDataAction
         ])->all());
     }
 
-    private function resolveTaxes(array $payloads): int
+    private function resolveTaxes(array $ratesList): int
     {
-        $rates = collect($payloads)
-            ->map(fn($payload) => $this->normalizeRate($payload['variant']['tax'] ?? null))
+        $rates = collect($ratesList)
+            ->map(fn($rate) => $this->normalizeRate($rate))
             ->filter()
             ->unique()
             ->values();

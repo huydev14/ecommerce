@@ -74,9 +74,15 @@ class TempProductsImport implements ToCollection, WithChunkReading, WithHeadingR
 
             // Cache missing metadata (for after import process handling)
             if (in_array('missing_category', $errorCodes)) {
-                $catName = $payload['product']['sub_category_name'] ?? $payload['product']['parent_category_name'] ?? $payload['product']['category_name'];
-                if ($catName) {
-                    Redis::sAdd("import_batch_{$this->batchId}_missing_categories", trim($catName));
+                $parent = trim($payload['product']['parent_category_name'] ?? '');
+                $child = trim($payload['product']['sub_category_name'] ?? '');
+
+                if ($parent !== '' && $child !== '') {
+                    Redis::sAdd("import_batch_{$this->batchId}_missing_categories", "{$parent}|{$child}");
+                } elseif ($parent !== '') {
+                    Redis::sAdd("import_batch_{$this->batchId}_missing_categories", $parent);
+                } elseif (!empty($payload['product']['category_name'])) {
+                    Redis::sAdd("import_batch_{$this->batchId}_missing_categories", trim($payload['product']['category_name']));
                 }
             }
             if (in_array('missing_unit', $errorCodes)) {
