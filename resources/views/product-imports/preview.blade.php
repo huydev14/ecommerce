@@ -6,27 +6,31 @@
 
 @section('content')
     @php
-        $statusClass = [
-            'ready' => 'tw-bg-[#eff6fc] tw-text-[#0f6cbd]',
-            'processing' => 'tw-bg-amber-50 tw-text-amber-700',
-            'importing' => 'tw-bg-violet-50 tw-text-violet-700',
-            'completed' => 'tw-bg-emerald-50 tw-text-emerald-700',
-            'completed_with_errors' => 'tw-bg-red-50 tw-text-red-700',
-        ][$batch->status] ?? 'tw-bg-gray-100 tw-text-gray-700';
+        $statusClass =
+            [
+                'ready' => 'tw-bg-[#eff6fc] tw-text-[#0f6cbd]',
+                'processing' => 'tw-bg-amber-50 tw-text-amber-700',
+                'importing' => 'tw-bg-violet-50 tw-text-violet-700',
+                'completed' => 'tw-bg-emerald-50 tw-text-emerald-700',
+                'completed_with_errors' => 'tw-bg-red-50 tw-text-red-700',
+            ][$batch->status] ?? 'tw-bg-gray-100 tw-text-gray-700';
         $initialProcessedRows = $rows->total();
         $initialTotalRows = max((int) $batch->total_rows, $initialProcessedRows);
-        $initialPercentage = $initialTotalRows > 0 ? min(100, (int) round(($initialProcessedRows / $initialTotalRows) * 100)) : 0;
+        $initialPercentage =
+            $initialTotalRows > 0 ? min(100, (int) round(($initialProcessedRows / $initialTotalRows) * 100)) : 0;
         $showProgress = in_array($batch->status, ['processing', 'preview_ready'], true);
     @endphp
 
     <div class="tw-h-full tw-overflow-y-auto tw-px-6 tw-pb-6">
         @if (session('error'))
-            <div class="tw-mb-4 tw-rounded tw-border tw-border-red-200 tw-bg-red-50 tw-px-4 tw-py-3 tw-text-sm tw-text-red-700">
+            <div
+                class="tw-mb-4 tw-rounded tw-border tw-border-red-200 tw-bg-red-50 tw-px-4 tw-py-3 tw-text-sm tw-text-red-700">
                 {{ session('error') }}
             </div>
         @endif
         @if (session('success'))
-            <div class="tw-mb-4 tw-rounded tw-border tw-border-emerald-200 tw-bg-emerald-50 tw-px-4 tw-py-3 tw-text-sm tw-text-emerald-700">
+            <div
+                class="tw-mb-4 tw-rounded tw-border tw-border-emerald-200 tw-bg-emerald-50 tw-px-4 tw-py-3 tw-text-sm tw-text-emerald-700">
                 {{ session('success') }}
             </div>
         @endif
@@ -47,12 +51,12 @@
                     this.total = Number(event.totalRows || 0);
                     this.status = event.status || this.status;
                     this.percentage = this.total > 0 ? Math.min(100, Math.round((this.processed / this.total) * 100)) : 0;
-
+            
                     if ((event.isFinished || this.percentage >= 100) && !this.refreshTimer) {
                         if (this.pollTimer) {
                             clearInterval(this.pollTimer);
                         }
-
+            
                         this.refreshTimer = setTimeout(() => window.location.reload(), 1000);
                     }
                 },
@@ -60,7 +64,7 @@
                     if (!window.axios) {
                         return;
                     }
-
+            
                     window.axios.get(this.progressUrl).then((response) => {
                         this.updateProgress(response.data || {});
                     });
@@ -112,17 +116,20 @@
         @endif
 
         <section class="tw-bg-white tw-border tw-border-gray-200 tw-rounded tw-shadow-sm tw-overflow-hidden">
-            <div class="tw-flex tw-flex-col lg:tw-flex-row lg:tw-items-center lg:tw-justify-between tw-gap-4 tw-px-6 tw-py-5 tw-border-b tw-border-gray-100">
+            <div
+                class="tw-flex tw-flex-col lg:tw-flex-row lg:tw-items-center lg:tw-justify-between tw-gap-4 tw-px-6 tw-py-5 tw-border-b tw-border-gray-100">
                 <div>
                     <div class="tw-flex tw-flex-wrap tw-items-center tw-gap-2">
-                        <span class="tw-inline-flex tw-rounded tw-px-2.5 tw-py-1 tw-text-xs tw-font-semibold {{ $statusClass }}">
+                        <span
+                            class="tw-inline-flex tw-rounded tw-px-2.5 tw-py-1 tw-text-xs tw-font-semibold {{ $statusClass }}">
                             {{ __('product_import.batch_statuses.' . $batch->status) }}
                         </span>
                         <span class="tw-text-xs tw-text-gray-500">
                             {{ __('product_import.created_at_label', ['time' => $batch->created_at->format('d/m/Y H:i')]) }}
                         </span>
                     </div>
-                    <h3 class="tw-mt-3 tw-text-2xl tw-font-semibold tw-text-gray-950">{{ __('product_import.preview_heading') }}</h3>
+                    <h3 class="tw-mt-3 tw-text-2xl tw-font-semibold tw-text-gray-950">
+                        {{ __('product_import.preview_heading') }}</h3>
                     <p class="tw-mt-1 tw-text-sm tw-text-gray-500">{{ __('product_import.preview_hint') }}</p>
                 </div>
 
@@ -161,15 +168,19 @@
 
             <div class="tw-grid tw-grid-cols-1 md:tw-grid-cols-3 tw-border-b tw-border-gray-100">
                 <div class="tw-px-6 tw-py-4 md:tw-border-r tw-border-gray-100">
-                    <p class="tw-text-xs tw-font-medium tw-uppercase tw-text-gray-500">{{ __('product_import.total_rows') }}</p>
-                    <p class="tw-mt-2 tw-text-2xl tw-font-semibold tw-text-gray-950">{{ number_format($batch->total_rows) }}</p>
+                    <p class="tw-text-xs tw-font-medium tw-uppercase tw-text-gray-500">
+                        {{ __('product_import.total_rows') }}</p>
+                    <p class="tw-mt-2 tw-text-2xl tw-font-semibold tw-text-gray-950">
+                        {{ number_format($batch->total_rows) }}</p>
                 </div>
                 <div class="tw-px-6 tw-py-4 md:tw-border-r tw-border-gray-100">
-                    <p class="tw-text-xs tw-font-medium tw-uppercase tw-text-gray-500">{{ __('product_import.valid_rows') }}</p>
+                    <p class="tw-text-xs tw-font-medium tw-uppercase tw-text-gray-500">
+                        {{ __('product_import.valid_rows') }}</p>
                     <p class="tw-mt-2 tw-text-2xl tw-font-semibold tw-text-emerald-700">{{ number_format($validRows) }}</p>
                 </div>
                 <div class="tw-px-6 tw-py-4">
-                    <p class="tw-text-xs tw-font-medium tw-uppercase tw-text-gray-500">{{ __('product_import.error_rows') }}</p>
+                    <p class="tw-text-xs tw-font-medium tw-uppercase tw-text-gray-500">
+                        {{ __('product_import.error_rows') }}</p>
                     <p class="tw-mt-2 tw-text-2xl tw-font-semibold tw-text-red-700">{{ number_format($errorRows) }}</p>
                 </div>
             </div>
@@ -178,7 +189,8 @@
                 <div class="tw-border-b tw-border-amber-100 tw-bg-amber-50 tw-px-6 tw-py-4">
                     <div class="tw-flex tw-flex-col lg:tw-flex-row lg:tw-items-center lg:tw-justify-between tw-gap-4">
                         <div>
-                            <h4 class="tw-text-sm tw-font-semibold tw-text-amber-900">{{ __('product_import.resolve_title') }}</h4>
+                            <h4 class="tw-text-sm tw-font-semibold tw-text-amber-900">
+                                {{ __('product_import.resolve_title') }}</h4>
                             <p class="tw-mt-1 tw-text-sm tw-text-amber-800">
                                 {{ __('product_import.resolve_description', [
                                     'categories' => number_format($missingMasterData['categories']),
@@ -200,27 +212,73 @@
             @endif
 
             <div class="tw-overflow-x-auto">
-                <table class="tw-w-full tw-min-w-[1480px] tw-table-fixed tw-divide-y tw-divide-gray-200">
+                <table class="tw-w-full tw-min-w-[1680px] tw-table-fixed tw-divide-y tw-divide-gray-200">
+
+                    <colgroup>
+                        <col style="width: 80px;">
+                        <col style="width: 180px;">
+                        <col style="width: 180px;">
+                        <col style="width: 300px;">
+                        <col style="width: 150px;">
+                        <col style="width: 120px;">
+                        <col style="width: 100px;">
+                        <col style="width: 80px;">
+                        <col style="width: 140px;">
+                        <col style="width: 350px;">
+                    </colgroup>
+
                     <thead class="tw-bg-gray-50">
                         <tr>
-                            <th class="tw-w-[80px] tw-whitespace-nowrap tw-px-5 tw-py-3 tw-text-left tw-text-xs tw-font-semibold tw-uppercase tw-text-gray-500">{{ __('product_import.preview_columns.row') }}</th>
-                            <th class="tw-w-[230px] tw-whitespace-nowrap tw-px-5 tw-py-3 tw-text-left tw-text-xs tw-font-semibold tw-uppercase tw-text-gray-500">{{ __('product_import.preview_columns.category') }}</th>
-                            <th class="tw-w-[360px] tw-whitespace-nowrap tw-px-5 tw-py-3 tw-text-left tw-text-xs tw-font-semibold tw-uppercase tw-text-gray-500">{{ __('product_import.preview_columns.product') }}</th>
-                            <th class="tw-w-[180px] tw-whitespace-nowrap tw-px-5 tw-py-3 tw-text-left tw-text-xs tw-font-semibold tw-uppercase tw-text-gray-500">{{ __('product_import.preview_columns.sku') }}</th>
-                            <th class="tw-w-[140px] tw-whitespace-nowrap tw-px-5 tw-py-3 tw-text-left tw-text-xs tw-font-semibold tw-uppercase tw-text-gray-500">{{ __('product_import.preview_columns.variant_price') }}</th>
-                            <th class="tw-w-[120px] tw-whitespace-nowrap tw-px-5 tw-py-3 tw-text-left tw-text-xs tw-font-semibold tw-uppercase tw-text-gray-500">{{ __('product_import.preview_columns.unit') }}</th>
-                            <th class="tw-w-[100px] tw-whitespace-nowrap tw-px-5 tw-py-3 tw-text-left tw-text-xs tw-font-semibold tw-uppercase tw-text-gray-500">{{ __('product_import.preview_columns.tax') }}</th>
-                            <th class="tw-w-[120px] tw-whitespace-nowrap tw-px-5 tw-py-3 tw-text-left tw-text-xs tw-font-semibold tw-uppercase tw-text-gray-500">{{ __('product_import.preview_columns.status') }}</th>
-                            <th class="tw-w-[350px] tw-px-5 tw-py-3 tw-text-left tw-text-xs tw-font-semibold tw-uppercase tw-text-gray-500">{{ __('product_import.preview_columns.note') }}</th>
+                            <th
+                                class="tw-whitespace-nowrap tw-px-5 tw-py-3 tw-text-left tw-text-xs tw-font-semibold tw-uppercase tw-text-gray-500">
+                                {{ __('product_import.preview_columns.row') }}</th>
+                            <th
+                                class="tw-whitespace-nowrap tw-px-5 tw-py-3 tw-text-left tw-text-xs tw-font-semibold tw-uppercase tw-text-gray-500">
+                                {{ __('product_import.preview_columns.category') }}</th>
+                            <th
+                                class="tw-whitespace-nowrap tw-px-5 tw-py-3 tw-text-left tw-text-xs tw-font-semibold tw-uppercase tw-text-gray-500">
+                                {{ __('product_import.preview_columns.sub_category') }}</th>
+                            <th
+                                class="tw-whitespace-nowrap tw-px-5 tw-py-3 tw-text-left tw-text-xs tw-font-semibold tw-uppercase tw-text-gray-500">
+                                {{ __('product_import.preview_columns.product') }}</th>
+                            <th
+                                class="tw-whitespace-nowrap tw-px-5 tw-py-3 tw-text-left tw-text-xs tw-font-semibold tw-uppercase tw-text-gray-500">
+                                {{ __('product_import.preview_columns.sku') }}</th>
+                            <th
+                                class="tw-whitespace-nowrap tw-px-5 tw-py-3 tw-text-left tw-text-xs tw-font-semibold tw-uppercase tw-text-gray-500">
+                                {{ __('product_import.preview_columns.variant_price') }}</th>
+                            <th
+                                class="tw-whitespace-nowrap tw-px-5 tw-py-3 tw-text-left tw-text-xs tw-font-semibold tw-uppercase tw-text-gray-500">
+                                {{ __('product_import.preview_columns.unit') }}</th>
+                            <th
+                                class="tw-whitespace-nowrap tw-px-5 tw-py-3 tw-text-left tw-text-xs tw-font-semibold tw-uppercase tw-text-gray-500">
+                                {{ __('product_import.preview_columns.tax') }}</th>
+                            <th
+                                class="tw-whitespace-nowrap tw-px-5 tw-py-3 tw-text-left tw-text-xs tw-font-semibold tw-uppercase tw-text-gray-500">
+                                {{ __('product_import.preview_columns.status') }}</th>
+                            <th
+                                class="tw-px-5 tw-py-3 tw-text-left tw-text-xs tw-font-semibold tw-uppercase tw-text-gray-500">
+                                {{ __('product_import.preview_columns.note') }}</th>
                         </tr>
                     </thead>
                     <tbody class="tw-divide-y tw-divide-gray-100 tw-bg-white">
                         @forelse ($rows as $row)
-                            <tr class="hover:tw-bg-gray-50">
-                                <td class="tw-whitespace-nowrap tw-px-5 tw-py-3 tw-text-sm tw-font-medium tw-text-gray-900">#{{ $row->row_number }}</td>
+                            <tr @class([
+                                'hover:tw-bg-gray-50',
+                                'tw-bg-red-50/40' => $row->status === 'error',
+                            ])>
+                                <td class="tw-whitespace-nowrap tw-px-5 tw-py-3 tw-text-sm tw-font-medium tw-text-gray-900">
+                                    #{{ $row->row_number }}</td>
                                 <td class="tw-px-5 tw-py-3 tw-text-sm tw-text-gray-700">
-                                    <div class="tw-truncate" title="{{ $row->data['product']['category_name'] ?? $row->data['product']['category_id'] ?? '-' }}">
-                                        {{ $row->data['product']['category_name'] ?? $row->data['product']['category_id'] ?? '-' }}
+                                    <div class="tw-truncate"
+                                        title="{{ $row->data['product']['parent_category_name'] ?? ($row->data['product']['category_name'] ?? ($row->data['product']['category_id'] ?? '-')) }}">
+                                        {{ $row->data['product']['parent_category_name'] ?? ($row->data['product']['category_name'] ?? ($row->data['product']['category_id'] ?? '-')) }}
+                                    </div>
+                                </td>
+                                <td class="tw-px-5 tw-py-3 tw-text-sm tw-text-gray-700">
+                                    <div class="tw-truncate"
+                                        title="{{ $row->data['product']['sub_category_name'] ?? '-' }}">
+                                        {{ $row->data['product']['sub_category_name'] ?? '-' }}
                                     </div>
                                 </td>
                                 <td class="tw-px-5 tw-py-3 tw-text-sm tw-text-gray-700">
@@ -233,33 +291,47 @@
                                         {{ $row->data['variant']['sku'] ?? '-' }}
                                     </div>
                                 </td>
-                                <td class="tw-whitespace-nowrap tw-px-5 tw-py-3 tw-text-sm tw-text-gray-700">{{ isset($row->data['variant']['price']) ? number_format((float) $row->data['variant']['price']) : '-' }}</td>
+                                <td class="tw-whitespace-nowrap tw-px-5 tw-py-3 tw-text-sm tw-text-gray-700">
+                                    {{ isset($row->data['variant']['price']) ? number_format((float) $row->data['variant']['price']) : '-' }}
+                                </td>
                                 <td class="tw-px-5 tw-py-3 tw-text-sm tw-text-gray-700">
-                                    <div class="tw-truncate" title="{{ $row->data['variant']['unit_name'] ?? $row->data['variant']['unit_id'] ?? '-' }}">
-                                        {{ $row->data['variant']['unit_name'] ?? $row->data['variant']['unit_id'] ?? '-' }}
+                                    <div class="tw-truncate"
+                                        title="{{ $row->data['variant']['unit_name'] ?? ($row->data['variant']['unit_id'] ?? '-') }}">
+                                        {{ $row->data['variant']['unit_name'] ?? ($row->data['variant']['unit_id'] ?? '-') }}
                                     </div>
                                 </td>
-                                <td class="tw-whitespace-nowrap tw-px-5 tw-py-3 tw-text-sm tw-text-gray-700">{{ $row->data['variant']['tax'] ?? '-' }}</td>
+                                <td class="tw-whitespace-nowrap tw-px-5 tw-py-3 tw-text-sm tw-text-gray-700">
+                                    {{ $row->data['variant']['tax'] ?? '-' }}</td>
                                 <td class="tw-whitespace-nowrap tw-px-5 tw-py-3">
                                     @if ($row->status === 'valid')
-                                        <span class="tw-inline-flex tw-items-center tw-gap-1.5 tw-rounded tw-bg-emerald-50 tw-px-2 tw-py-1 tw-text-xs tw-font-semibold tw-text-emerald-700">
+                                        <span
+                                            class="tw-inline-flex tw-items-center tw-gap-1.5 tw-rounded tw-bg-emerald-50 tw-px-2 tw-py-1 tw-text-xs tw-font-semibold tw-text-emerald-700">
                                             <i class="fas fa-circle-check"></i>
                                             {{ __('product_import.row_status_valid') }}
                                         </span>
                                     @else
-                                        <span class="tw-inline-flex tw-items-center tw-gap-1.5 tw-rounded tw-bg-red-50 tw-px-2 tw-py-1 tw-text-xs tw-font-semibold tw-text-red-700">
+                                        <span
+                                            class="tw-inline-flex tw-items-center tw-gap-1.5 tw-rounded tw-bg-red-100 tw-px-2 tw-py-1 tw-text-xs tw-font-semibold tw-text-red-700">
                                             <i class="fas fa-circle-exclamation"></i>
                                             {{ __('product_import.row_status_error') }}
                                         </span>
                                     @endif
                                 </td>
-                                <td class="tw-px-5 tw-py-3 tw-text-sm tw-leading-6 tw-text-gray-600">
-                                    {{ $row->error_message ?: __('product_import.ready_to_import') }}
+                                <td class="tw-px-5 tw-py-3 tw-text-sm tw-text-gray-700">
+                                    @if ($row->status === 'error')
+                                        <ul class="tw-list-disc tw-list-inside tw-space-y-1">
+                                            @foreach (array_filter(explode('. ', $row->error_message)) as $err)
+                                                <li>{{ trim($err) }}</li>
+                                            @endforeach
+                                        </ul>
+                                    @else
+                                        {{ __('product_import.ready_to_import') }}
+                                    @endif
                                 </td>
                             </tr>
                         @empty
                             <tr>
-                                <td colspan="9" class="tw-px-5 tw-py-10 tw-text-center tw-text-sm tw-text-gray-500">
+                                <td colspan="10" class="tw-px-5 tw-py-10 tw-text-center tw-text-sm tw-text-gray-500">
                                     {{ __('product_import.empty_preview') }}
                                 </td>
                             </tr>

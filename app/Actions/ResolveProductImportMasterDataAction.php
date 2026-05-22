@@ -7,75 +7,100 @@ use App\Models\Category;
 use App\Models\ImportProductRow;
 use App\Models\Tax;
 use App\Models\Unit;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Redis;
 use Illuminate\Support\Str;
 
 class ResolveProductImportMasterDataAction
 {
     public function execute(int $batchId): array
     {
-        $rows = ImportProductRow::where('import_batch_id', $batchId)
-            ->where('status', 'error')
-            ->get();
+        // Read missing metadata from cache
+        $missingCategories = Redis::sMembers("import_batch_{$batchId}_missing_categories") ?: [];
+        $missingUnits = Redis::sMembers("import_batch_{$batchId}_missing_units") ?: [];
+        $missingTaxes = Redis::sMembers("import_batch_{$batchId}_missing_taxes") ?: [];
 
-        if ($rows->isEmpty()) {
-            return [
-                'units' => 0,
-                'taxes' => 0,
-                'categories' => 0,
-                'resolved_rows' => 0,
-            ];
-        }
+        $createdCategories = 0;
+        $createdUnits = 0;
+        $createdTaxes = 0;
 
-        $payloads = $rows->mapWithKeys(fn($row) => [$row->id => $this->payload($row->data)]);
-
-        return DB::transaction(function () use ($rows, $payloads) {
-            $createdUnits = $this->resolveUnits($payloads->all());
-            $createdTaxes = $this->resolveTaxes($payloads->all());
-            $createdCategories = $this->resolveCategories($payloads->all());
-
-            $unitMap = $this->unitMap($payloads->all());
-            $taxMap = $this->taxMap($payloads->all());
-            $categoryMap = $this->categoryMap();
-
-            $resolvedRows = 0;
-
-            foreach ($rows as $row) {
-                $payload = $payloads[$row->id];
-                $retainedErrorCodes = array_values(array_diff($payload['error_codes'] ?? [], [
-                    'missing_category',
-                    'missing_unit',
-                    'missing_tax',
-                    'duplicate_product_in_file',
-                    'duplicate_product_in_database',
-                ]));
-
-                $this->patchPayload($payload, $unitMap, $taxMap, $categoryMap);
-
-                [$errors, $errorCodes] = TempProductsImport::validatePayload($payload);
-                $errorCodes = array_values(array_unique(array_merge($errorCodes, $retainedErrorCodes)));
-
-                $payload['error_codes'] = $errorCodes;
-                $hasErrors = !empty($errors) || !empty($retainedErrorCodes);
-
-                $row->update([
-                    'data' => $payload,
-                    'status' => $hasErrors ? 'error' : 'valid',
-                    'error_message' => $hasErrors ? ($errors ? implode(' ', $errors) : $row->error_message) : null,
-                ]);
-
-                if (!$hasErrors) {
-                    $resolvedRows++;
-                }
+        // Bulk insert master data
+        DB::transaction(function () use (&$createdCategories, &$createdUnits, &$createdTaxes, $missingCategories, $missingUnits, $missingTaxes) {
+            if (!empty($missingUnits)) {
+                $createdUnits = $this->resolveUnits($missingUnits);
             }
-
-            return [
-                'units' => $createdUnits,
-                'taxes' => $createdTaxes,
-                'categories' => $createdCategories,
-                'resolved_rows' => $resolvedRows,
-            ];
+            if (!empty($missingTaxes)) {
+                $createdTaxes = $this->resolveTaxes($missingTaxes);
+            }
+            if (!empty($missingCategories)) {
+                $createdCategories = $this->resolveCategories($missingCategories);
+            }
         });
+
+        Cache::forget('category_map');
+
+        // Update error batch rows
+        $resolvedRowsCount = 0;
+
+        $unitMap = $this->unitMap();
+        $taxMap = $this->taxMap();
+        $categoryMap = $this->categoryMap();
+
+        ImportProductRow::where('import_batch_id', $batchId)
+            ->where('status', 'error')
+            ->orderBy('id')
+            ->chunkById(500, function ($rows) use (&$resolvedRowsCount, $unitMap, $taxMap, $categoryMap) {
+
+                $updates = [];
+
+                foreach ($rows as $row) {
+                    $payload = is_array($row->data) ? $row->data : json_decode($row->data, true);
+
+                    // Remove error codes
+                    $retainedErrorCodes = array_values(array_diff($payload['error_codes'] ?? [], [
+                        'missing_category',
+                        'missing_unit',
+                        'missing_tax'
+                    ]));
+
+                    $this->patchPayload($payload, $unitMap, $taxMap, $categoryMap);
+
+                    // Validate lại lần cuối
+                    [$errors, $errorCodes] = TempProductsImport::validatePayload($payload);
+                    $finalErrorCodes = array_values(array_unique(array_merge($errorCodes, $retainedErrorCodes)));
+                    $payload['error_codes'] = $finalErrorCodes;
+
+                    $hasErrors = !empty($errors) || !empty($retainedErrorCodes);
+
+                    $updates[] = [
+                        'id' => $row->id,
+                        'import_batch_id' => $row->import_batch_id,
+                        'row_number' => $row->row_number,
+                        'data' => json_encode($payload),
+                        'status' => $hasErrors ? 'error' : 'valid',
+                        'error_message' => $hasErrors ? ($errors ? implode(' ', $errors) : $row->error_message) : null,
+                    ];
+
+                    if (!$hasErrors) {
+                        $resolvedRowsCount++;
+                    }
+                }
+                if (!empty($updates)) {
+                    ImportProductRow::upsert($updates, ['id'], ['data', 'status', 'error_message']);
+                }
+            });
+
+        Redis::del("import_batch_{$batchId}_missing_categories");
+        Redis::del("import_batch_{$batchId}_missing_units");
+        Redis::del("import_batch_{$batchId}_missing_taxes");
+
+        return [
+            'units' => $createdUnits,
+            'taxes' => $createdTaxes,
+            'categories' => $createdCategories,
+            'resolved_rows' => $resolvedRowsCount,
+        ];
     }
 
     private function resolveUnits(array $payloads): int
@@ -151,10 +176,14 @@ class ResolveProductImportMasterDataAction
         ])->all());
     }
 
-    private function resolveCategories(array $payloads): int
+    private function resolveCategories(array $categoryStrings): int
     {
-        $parentNames = collect($payloads)
-            ->map(fn($payload) => $this->normalizeName($payload['product']['parent_category_name'] ?? null))
+        // 1. Extract all unique parent names from the strings
+        $parentNames = collect($categoryStrings)
+            ->map(function ($str) {
+                $parts = explode('|', $str);
+                return $this->normalizeName($parts[0] ?? null);
+            })
             ->filter()
             ->unique()
             ->values();
@@ -173,10 +202,15 @@ class ResolveProductImportMasterDataAction
 
         $parents->whereNotNull('deleted_at')->each->restore();
 
-        $childrenToCreate = collect($payloads)
-            ->map(function ($payload) use ($parents) {
-                $parentName = $this->normalizeName($payload['product']['parent_category_name'] ?? null);
-                $childName = $this->normalizeName($payload['product']['sub_category_name'] ?? null);
+        // 2. Extract children that need to be created
+        $childrenToCreate = collect($categoryStrings)
+            ->map(function ($str) use ($parents) {
+                $parts = explode('|', $str);
+                if (count($parts) < 2)
+                    return null; // It's just a parent
+    
+                $parentName = $this->normalizeName($parts[0]);
+                $childName = $this->normalizeName($parts[1]);
 
                 if (!$parentName || !$childName || !$parents->has($parentName)) {
                     return null;
@@ -288,37 +322,16 @@ class ResolveProductImportMasterDataAction
         }
     }
 
-    private function unitMap(array $payloads): array
+    private function unitMap(): array
     {
-        $names = collect($payloads)
-            ->map(fn($payload) => $this->normalizeName($payload['variant']['unit_name'] ?? null))
-            ->filter()
-            ->unique()
-            ->all();
-
-        $map = [];
-
-        foreach ($names as $name) {
-            $id = Unit::where('name', $name)->value('id');
-
-            if ($id) {
-                $map[$name] = $id;
-            }
-        }
-
-        return $map;
+        return Unit::pluck('id', 'name')
+            ->mapWithKeys(fn($id, $name) => [$this->normalizeName($name) => $id])
+            ->toArray();
     }
 
-    private function taxMap(array $payloads): array
+    private function taxMap(): array
     {
-        $rates = collect($payloads)
-            ->map(fn($payload) => $this->normalizeRate($payload['variant']['tax'] ?? null))
-            ->filter()
-            ->unique()
-            ->all();
-
-        return empty($rates) ? [] : Tax::whereIn('rate', $rates)
-            ->pluck('id', 'rate')
+        return Tax::pluck('id', 'rate')
             ->mapWithKeys(fn($id, $rate) => [$this->normalizeRate($rate) => $id])
             ->toArray();
     }
@@ -343,11 +356,6 @@ class ResolveProductImportMasterDataAction
         }
 
         return $map;
-    }
-
-    private function payload($data): array
-    {
-        return is_array($data) ? $data : json_decode($data, true);
     }
 
     private function normalizeName($name): ?string

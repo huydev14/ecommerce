@@ -19,6 +19,7 @@ use Maatwebsite\Excel\Concerns\WithHeadingRow;
 
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Redis;
 use Maatwebsite\Excel\Concerns\WithEvents;
 use Maatwebsite\Excel\Events\AfterImport;
 use Maatwebsite\Excel\Events\BeforeImport;
@@ -49,7 +50,7 @@ class TempProductsImport implements ToCollection, WithChunkReading, WithHeadingR
 
     public function collection(Collection $rows)
     {
-        if ($rows->isEmpty() || ! $this->importBatchExists()) {
+        if ($rows->isEmpty() || !$this->importBatchExists()) {
             return;
         }
 
@@ -71,6 +72,25 @@ class TempProductsImport implements ToCollection, WithChunkReading, WithHeadingR
             [$errors, $errorCodes] = self::validatePayload($payload);
             $this->checkDuplicatesAndDatabase($payload, $dbSkus, $errors, $errorCodes);
 
+            // Cache missing metadata (for after import process handling)
+            if (in_array('missing_category', $errorCodes)) {
+                $catName = $payload['product']['sub_category_name'] ?? $payload['product']['parent_category_name'] ?? $payload['product']['category_name'];
+                if ($catName) {
+                    Redis::sAdd("import_batch_{$this->batchId}_missing_categories", trim($catName));
+                }
+            }
+            if (in_array('missing_unit', $errorCodes)) {
+                $unitName = $payload['variant']['unit_name'];
+                if ($unitName) {
+                    Redis::sAdd("import_batch_{$this->batchId}_missing_units", trim($unitName));
+                }
+            }
+            if (in_array('missing_tax', $errorCodes)) {
+                $taxRate = $payload['variant']['tax'];
+                if ($taxRate !== null && $taxRate !== '') {
+                    Redis::sAdd("import_batch_{$this->batchId}_missing_taxes", trim($taxRate));
+                }
+            }
             $payload['error_codes'] = array_values(array_unique($errorCodes));
 
             $rowsToInsert[] = [
@@ -84,14 +104,14 @@ class TempProductsImport implements ToCollection, WithChunkReading, WithHeadingR
             ];
         }
 
-        if (! $this->importBatchExists()) {
+        if (!$this->importBatchExists()) {
             return;
         }
 
         try {
             ImportProductRow::insert($rowsToInsert);
         } catch (QueryException $exception) {
-            if (! $this->importBatchExists()) {
+            if (!$this->importBatchExists()) {
                 return;
             }
 
@@ -312,7 +332,7 @@ class TempProductsImport implements ToCollection, WithChunkReading, WithHeadingR
     {
         return [
             BeforeImport::class => function (BeforeImport $event) {
-                if (! $this->importBatchExists()) {
+                if (!$this->importBatchExists()) {
                     return;
                 }
 
@@ -324,7 +344,7 @@ class TempProductsImport implements ToCollection, WithChunkReading, WithHeadingR
                 ]);
             },
             AfterImport::class => function (AfterImport $event) {
-                if (! $this->importBatchExists()) {
+                if (!$this->importBatchExists()) {
                     return;
                 }
 

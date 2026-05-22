@@ -71,6 +71,7 @@ return [
     'preview_columns' => [
         'row' => 'Row',
         'category' => 'Category',
+        'sub_category' => 'Sub category',
         'product' => 'Product',
         'sku' => 'SKU',
         'variant_price' => 'Variant price',

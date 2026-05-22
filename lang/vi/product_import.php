@@ -71,6 +71,7 @@ return [
     'preview_columns' => [
         'row' => 'Dòng',
         'category' => 'Danh mục',
+        'sub_category' => 'Danh mục con',
         'product' => 'Sản phẩm',
         'sku' => 'SKU',
         'variant_price' => 'Giá variant',
