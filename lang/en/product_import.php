@@ -64,9 +64,9 @@ return [
     'ready_to_import' => 'Ready to import',
     'empty_preview' => 'No data to display.',
     'resolve_title' => 'New master data detected',
-    'resolve_description' => 'Missing categories: :categories, units: :units, tax rates: :taxes. Create them and re-validate the temporary rows.',
+    'resolve_description' => 'Missing categories: :categories, brands: :brands, units: :units, tax rates: :taxes. Create them and re-validate the temporary rows.',
     'resolve_action' => 'Create missing master data',
-    'resolve_success' => 'Resolved :rows rows. Created :categories categories, :units units, and :taxes tax rates.',
+    'resolve_success' => 'Resolved :rows rows. Created :categories categories, :brands brands, :units units, and :taxes tax rates.',
     'resolve_invalid_status' => 'This import batch cannot be resolved in its current status.',
     'preview_columns' => [
         'row' => 'Row',

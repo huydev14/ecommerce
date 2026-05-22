@@ -145,6 +145,7 @@ class ProductImportController extends Controller
             ->with('success', __('product_import.resolve_success', [
                 'rows' => $result['resolved_rows'],
                 'categories' => $result['categories'],
+                'brands' => $result['brands'],
                 'units' => $result['units'],
                 'taxes' => $result['taxes'],
             ]));
@@ -154,6 +155,7 @@ class ProductImportController extends Controller
     {
         $summary = [
             'categories' => 0,
+            'brands' => 0,
             'units' => 0,
             'taxes' => 0,
             'total' => 0,
@@ -169,6 +171,10 @@ class ProductImportController extends Controller
                     $summary['categories']++;
                 }
 
+                if (in_array('missing_brand', $codes, true)) {
+                    $summary['brands']++;
+                }
+
                 if (in_array('missing_unit', $codes, true)) {
                     $summary['units']++;
                 }
@@ -178,7 +184,7 @@ class ProductImportController extends Controller
                 }
             });
 
-        $summary['total'] = $summary['categories'] + $summary['units'] + $summary['taxes'];
+        $summary['total'] = $summary['categories'] + $summary['brands'] + $summary['units'] + $summary['taxes'];
 
         return $summary;
     }

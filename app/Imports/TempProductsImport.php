@@ -85,6 +85,12 @@ class TempProductsImport implements ToCollection, WithChunkReading, WithHeadingR
                     Redis::sAdd("import_batch_{$this->batchId}_missing_categories", trim($payload['product']['category_name']));
                 }
             }
+            if (in_array('missing_brand', $errorCodes)) {
+                $brandName = trim($payload['product']['brand_name'] ?? '');
+                if ($brandName !== '') {
+                    Redis::sAdd("import_batch_{$this->batchId}_missing_brands", $brandName);
+                }
+            }
             if (in_array('missing_unit', $errorCodes)) {
                 $unitName = $payload['variant']['unit_name'];
                 if ($unitName) {
@@ -211,6 +217,10 @@ class TempProductsImport implements ToCollection, WithChunkReading, WithHeadingR
             $errors[] = 'Vui lòng nhập danh mục.';
         }
 
+        if (in_array('missing_brand', $masterDataCodes, true)) {
+            $errors[] = 'Thương hiệu không tồn tại trên hệ thống.';
+        }
+
         return [$errors, $masterDataCodes];
     }
 
@@ -222,6 +232,10 @@ class TempProductsImport implements ToCollection, WithChunkReading, WithHeadingR
 
         if (empty($product['category_id']) && !empty($product['category_name'])) {
             $codes[] = 'missing_category';
+        }
+
+        if (empty($product['brand_id']) && !empty($product['brand_name'])) {
+            $codes[] = 'missing_brand';
         }
 
         if (empty($variant['unit_id']) && !empty($variant['unit_name'])) {

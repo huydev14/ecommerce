@@ -194,6 +194,7 @@
                             <p class="tw-mt-1 tw-text-sm tw-text-amber-800">
                                 {{ __('product_import.resolve_description', [
                                     'categories' => number_format($missingMasterData['categories']),
+                                    'brands' => number_format($missingMasterData['brands']),
                                     'units' => number_format($missingMasterData['units']),
                                     'taxes' => number_format($missingMasterData['taxes']),
                                 ]) }}

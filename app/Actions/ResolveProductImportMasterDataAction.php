@@ -3,6 +3,7 @@
 namespace App\Actions;
 
 use App\Imports\TempProductsImport;
+use App\Models\Brand;
 use App\Models\Category;
 use App\Models\ImportProductRow;
 use App\Models\Tax;
@@ -18,20 +19,25 @@ class ResolveProductImportMasterDataAction
     {
         // Read missing metadata from cache
         $missingCategories = Redis::sMembers("import_batch_{$batchId}_missing_categories") ?: [];
+        $missingBrands = Redis::sMembers("import_batch_{$batchId}_missing_brands") ?: [];
         $missingUnits = Redis::sMembers("import_batch_{$batchId}_missing_units") ?: [];
         $missingTaxes = Redis::sMembers("import_batch_{$batchId}_missing_taxes") ?: [];
 
         $createdCategories = 0;
+        $createdBrands = 0;
         $createdUnits = 0;
         $createdTaxes = 0;
 
         // Bulk insert master data
-        DB::transaction(function () use (&$createdCategories, &$createdUnits, &$createdTaxes, $missingCategories, $missingUnits, $missingTaxes) {
+        DB::transaction(function () use (&$createdCategories, &$createdBrands, &$createdUnits, &$createdTaxes, $missingCategories, $missingBrands, $missingUnits, $missingTaxes) {
             if (!empty($missingUnits)) {
                 $createdUnits = $this->resolveUnits($missingUnits);
             }
             if (!empty($missingTaxes)) {
                 $createdTaxes = $this->resolveTaxes($missingTaxes);
+            }
+            if (!empty($missingBrands)) {
+                $createdBrands = $this->resolveBrands($missingBrands);
             }
             if (!empty($missingCategories)) {
                 $createdCategories = $this->resolveCategories($missingCategories);
@@ -45,12 +51,13 @@ class ResolveProductImportMasterDataAction
 
         $unitMap = $this->unitMap();
         $taxMap = $this->taxMap();
+        $brandMap = $this->brandMap();
         $categoryMap = $this->categoryMap();
 
         ImportProductRow::where('import_batch_id', $batchId)
             ->where('status', 'error')
             ->orderBy('id')
-            ->chunkById(500, function ($rows) use (&$resolvedRowsCount, $unitMap, $taxMap, $categoryMap) {
+            ->chunkById(500, function ($rows) use (&$resolvedRowsCount, $unitMap, $taxMap, $brandMap, $categoryMap) {
 
                 $updates = [];
 
@@ -60,11 +67,12 @@ class ResolveProductImportMasterDataAction
                     // Remove error codes
                     $retainedErrorCodes = array_values(array_diff($payload['error_codes'] ?? [], [
                         'missing_category',
+                        'missing_brand',
                         'missing_unit',
                         'missing_tax'
                     ]));
 
-                    $this->patchPayload($payload, $unitMap, $taxMap, $categoryMap);
+                    $this->patchPayload($payload, $unitMap, $taxMap, $brandMap, $categoryMap);
 
                     // Validate lại lần cuối
                     [$errors, $errorCodes] = TempProductsImport::validatePayload($payload);
@@ -92,15 +100,57 @@ class ResolveProductImportMasterDataAction
             });
 
         Redis::del("import_batch_{$batchId}_missing_categories");
+        Redis::del("import_batch_{$batchId}_missing_brands");
         Redis::del("import_batch_{$batchId}_missing_units");
         Redis::del("import_batch_{$batchId}_missing_taxes");
 
         return [
             'units' => $createdUnits,
             'taxes' => $createdTaxes,
+            'brands' => $createdBrands,
             'categories' => $createdCategories,
             'resolved_rows' => $resolvedRowsCount,
         ];
+    }
+
+    private function resolveBrands(array $namesList): int
+    {
+        $names = collect($namesList)
+            ->map(fn($name) => $this->normalizeName($name))
+            ->filter()
+            ->unique()
+            ->values();
+
+        if ($names->isEmpty()) {
+            return 0;
+        }
+
+        $existingModels = Brand::withTrashed()
+            ->whereIn('name', $names)
+            ->get(['id', 'name', 'deleted_at']);
+
+        $existingModels->whereNotNull('deleted_at')->each->restore();
+
+        $existing = $existingModels
+            ->pluck('name')
+            ->map(fn($name) => $this->normalizeName($name))
+            ->all();
+
+        $missing = $names->diff($existing)->values();
+
+        if ($missing->isEmpty()) {
+            return 0;
+        }
+
+        return Brand::query()->insertOrIgnore($missing->map(fn($name) => [
+            'name' => $name,
+            'slug' => $this->uniqueBrandSlug($name),
+            'logo' => null,
+            'website' => null,
+            'is_active' => true,
+            'created_at' => now(),
+            'updated_at' => now(),
+        ])->all());
     }
 
     private function resolveUnits(array $namesList): int
@@ -300,10 +350,11 @@ class ResolveProductImportMasterDataAction
         ])->all());
     }
 
-    private function patchPayload(array &$payload, array $unitMap, array $taxMap, array $categoryMap): void
+    private function patchPayload(array &$payload, array $unitMap, array $taxMap, array $brandMap, array $categoryMap): void
     {
         $unitName = $this->normalizeName($payload['variant']['unit_name'] ?? null);
         $taxRate = $this->normalizeRate($payload['variant']['tax'] ?? null);
+        $brandName = $this->normalizeName($payload['product']['brand_name'] ?? null);
         $parentName = $this->normalizeName($payload['product']['parent_category_name'] ?? null);
         $childName = $this->normalizeName($payload['product']['sub_category_name'] ?? null);
 
@@ -314,6 +365,10 @@ class ResolveProductImportMasterDataAction
         if ($taxRate && empty($payload['variant']['tax_id'])) {
             $payload['variant']['tax_id'] = $taxMap[$taxRate] ?? null;
             $payload['variant']['tax'] = $taxRate;
+        }
+
+        if ($brandName && empty($payload['product']['brand_id'])) {
+            $payload['product']['brand_id'] = $brandMap[$brandName] ?? null;
         }
 
         if (empty($payload['product']['category_id'])) {
@@ -333,6 +388,13 @@ class ResolveProductImportMasterDataAction
     {
         return Tax::pluck('id', 'rate')
             ->mapWithKeys(fn($id, $rate) => [$this->normalizeRate($rate) => $id])
+            ->toArray();
+    }
+
+    private function brandMap(): array
+    {
+        return Brand::pluck('id', 'name')
+            ->mapWithKeys(fn($id, $name) => [$this->normalizeName($name) => $id])
             ->toArray();
     }
 
@@ -381,6 +443,20 @@ class ResolveProductImportMasterDataAction
         $index = 2;
 
         while (Category::withTrashed()->where('slug', $slug)->exists()) {
+            $slug = $base . '-' . $index;
+            $index++;
+        }
+
+        return $slug;
+    }
+
+    private function uniqueBrandSlug(string $name): string
+    {
+        $base = Str::slug($name);
+        $slug = $base;
+        $index = 2;
+
+        while (Brand::withTrashed()->where('slug', $slug)->exists()) {
             $slug = $base . '-' . $index;
             $index++;
         }
