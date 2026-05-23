@@ -70,7 +70,7 @@ class TempProductsImport implements ToCollection, WithChunkReading, WithHeadingR
         foreach ($rows as $index => $row) {
             $payload = $this->normalizePayload($row, $categoryData, $brandsMap, $unitsMap, $taxesMap);
             [$errors, $errorCodes] = self::validatePayload($payload);
-            $this->checkDuplicatesAndDatabase($payload, $dbSkus, $errors, $errorCodes);
+            $this->checkDuplicates($payload, $dbSkus, $errors, $errorCodes);
 
             // Cache missing metadata (for after import process handling)
             if (in_array('missing_category', $errorCodes)) {
@@ -249,7 +249,7 @@ class TempProductsImport implements ToCollection, WithChunkReading, WithHeadingR
         return $codes;
     }
 
-    private function checkDuplicatesAndDatabase(array $payload, array $dbSkus, array &$errors, array &$errorCodes): void
+    private function checkDuplicates(array $payload, array $dbSkus, array &$errors, array &$errorCodes): void
     {
         $skuKey = mb_strtolower(trim($payload['variant']['sku']));
         if ($skuKey !== '') {

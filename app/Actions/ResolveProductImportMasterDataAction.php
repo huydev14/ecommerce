@@ -5,6 +5,7 @@ namespace App\Actions;
 use App\Imports\TempProductsImport;
 use App\Models\Brand;
 use App\Models\Category;
+use App\Models\ImportBatch;
 use App\Models\ImportProductRow;
 use App\Models\Tax;
 use App\Models\Unit;
@@ -27,9 +28,24 @@ class ResolveProductImportMasterDataAction
         $createdBrands = 0;
         $createdUnits = 0;
         $createdTaxes = 0;
+        $totalRowsToResolve = ImportProductRow::where('import_batch_id', $batchId)
+            ->where('status', 'error')
+            ->count();
+        $processedRows = 0;
+
+        $this->updateResolutionProgress($batchId, $processedRows, $totalRowsToResolve);
 
         // Bulk insert master data
-        DB::transaction(function () use (&$createdCategories, &$createdBrands, &$createdUnits, &$createdTaxes, $missingCategories, $missingBrands, $missingUnits, $missingTaxes) {
+        DB::transaction(function () use (
+            &$createdCategories,
+            &$createdBrands,
+            &$createdUnits,
+            &$createdTaxes,
+            $missingCategories,
+            $missingBrands,
+            $missingUnits,
+            $missingTaxes
+        ) {
             if (!empty($missingUnits)) {
                 $createdUnits = $this->resolveUnits($missingUnits);
             }
@@ -57,7 +73,16 @@ class ResolveProductImportMasterDataAction
         ImportProductRow::where('import_batch_id', $batchId)
             ->where('status', 'error')
             ->orderBy('id')
-            ->chunkById(500, function ($rows) use (&$resolvedRowsCount, $unitMap, $taxMap, $brandMap, $categoryMap) {
+            ->chunkById(500, function ($rows) use (
+                $batchId,
+                &$resolvedRowsCount,
+                &$processedRows,
+                $totalRowsToResolve,
+                $unitMap,
+                $taxMap,
+                $brandMap,
+                $categoryMap
+            ) {
 
                 $updates = [];
 
@@ -74,7 +99,7 @@ class ResolveProductImportMasterDataAction
 
                     $this->patchPayload($payload, $unitMap, $taxMap, $brandMap, $categoryMap);
 
-                    // Validate lại lần cuối
+                    // Validate again
                     [$errors, $errorCodes] = TempProductsImport::validatePayload($payload);
                     $finalErrorCodes = array_values(array_unique(array_merge($errorCodes, $retainedErrorCodes)));
                     $payload['error_codes'] = $finalErrorCodes;
@@ -97,6 +122,9 @@ class ResolveProductImportMasterDataAction
                 if (!empty($updates)) {
                     ImportProductRow::upsert($updates, ['id'], ['data', 'status', 'error_message']);
                 }
+
+                $processedRows += $rows->count();
+                $this->updateResolutionProgress($batchId, $processedRows, $totalRowsToResolve);
             });
 
         Redis::del("import_batch_{$batchId}_missing_categories");
@@ -110,7 +138,35 @@ class ResolveProductImportMasterDataAction
             'brands' => $createdBrands,
             'categories' => $createdCategories,
             'resolved_rows' => $resolvedRowsCount,
+            'processed_rows' => $processedRows,
+            'total_rows' => $totalRowsToResolve,
+            'percentage' => $this->resolutionPercentage($processedRows, $totalRowsToResolve),
+            'status' => 'completed',
         ];
+    }
+
+    private function updateResolutionProgress(int $batchId, int $processedRows, int $totalRows): void
+    {
+        $current = ImportBatch::whereKey($batchId)->value('master_data_resolution_result') ?? [];
+        $current = is_array($current) ? $current : json_decode($current, true) ?? [];
+
+        ImportBatch::whereKey($batchId)->update([
+            'master_data_resolution_result' => array_merge($current, [
+                'status' => 'processing',
+                'processed_rows' => $processedRows,
+                'total_rows' => $totalRows,
+                'percentage' => $this->resolutionPercentage($processedRows, $totalRows),
+            ]),
+        ]);
+    }
+
+    private function resolutionPercentage(int $processedRows, int $totalRows): int
+    {
+        if ($totalRows <= 0) {
+            return 100;
+        }
+
+        return min(100, (int) round(($processedRows / $totalRows) * 100));
     }
 
     private function resolveBrands(array $namesList): int
@@ -169,7 +225,10 @@ class ResolveProductImportMasterDataAction
             ->whereIn('name', $names)
             ->get(['id', 'name', 'deleted_at']);
 
-        $existingModels->whereNotNull('deleted_at')->each->restore();
+        $idsToRestore = $existingModels->whereNotNull('deleted_at')->pluck('id');
+        if ($idsToRestore->isNotEmpty()) {
+            Brand::whereIn('id', $idsToRestore)->restore();
+        }
 
         $existing = $existingModels
             ->pluck('name')
@@ -400,7 +459,7 @@ class ResolveProductImportMasterDataAction
 
     private function categoryMap(): array
     {
-        $categories = Category::all();
+        $categories = Category::get(['id', 'name', 'parent_id'])->keyBy('id');
         $map = [];
 
         foreach ($categories as $category) {
@@ -411,9 +470,10 @@ class ResolveProductImportMasterDataAction
                 continue;
             }
 
-            $parent = $categories->firstWhere('id', $category->parent_id);
+            $parent = $categories->get($category->parent_id);
             if ($parent) {
-                $map[$this->normalizeName($parent->name) . '|' . $name] = $category->id;
+                $parentName = $this->normalizeName($parent->name);
+                $map[$parentName . '|' . $name] = $category->id;
             }
         }
 

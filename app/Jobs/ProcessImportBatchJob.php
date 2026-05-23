@@ -34,14 +34,20 @@ class ProcessImportBatchJob implements ShouldQueue
             return;
         }
 
-        $batch->update(['status' => 'importing']);
+        $totalRows = ImportProductRow::where('import_batch_id', $this->batchId)
+            ->where('status', 'valid')
+            ->count();
+        $processedRows = 0;
+
+        $this->updateImportProgress($batch, $processedRows, $totalRows, 'processing');
 
         $targetWarehouseId = $batch->warehouse_id;
 
         ImportProductRow::where('import_batch_id', $this->batchId)
             ->where('status', 'valid')
-            ->chunkById(1000, function ($rows) use ($targetWarehouseId) {
+            ->chunkById(1000, function ($rows) use ($batch, $targetWarehouseId, &$processedRows, $totalRows) {
                 $parsedRows = [];
+                $rowIds = $rows->pluck('id')->all();
 
                 foreach ($rows as $row) {
                     $parsedRows[$row->id] = is_array($row->data) ? $row->data : json_decode($row->data, true);
@@ -75,21 +81,17 @@ class ProcessImportBatchJob implements ShouldQueue
                     DB::transaction(function () use ($productsToInsert, $variantsToInsert, $targetWarehouseId) {
                         Product::insert($productsToInsert);
 
-                        $insertedProducts = Product::whereIn('slug', array_keys($variantsToInsert))
-                            ->get(['id', 'slug'])
-                            ->keyBy('slug');
+                        $slugs = array_keys($variantsToInsert);
+                        $insertedProducts = Product::whereIn('slug', $slugs)
+                            ->pluck('id', 'slug');
 
                         $finalVariants = [];
-
                         foreach ($variantsToInsert as $slug => $variantPayload) {
-                            $product = $insertedProducts->get($slug);
-
-                            if (!$product) {
+                            if (!isset($insertedProducts[$slug]))
                                 continue;
-                            }
 
                             $finalVariants[] = [
-                                'product_id' => $product->id,
+                                'product_id' => $insertedProducts[$slug],
                                 'attributes' => !empty($variantPayload['attributes']) ? json_encode(json_decode($variantPayload['attributes'], true)) : null,
                                 'sku' => $variantPayload['sku'],
                                 'price' => $variantPayload['price'],
@@ -103,25 +105,22 @@ class ProcessImportBatchJob implements ShouldQueue
                             ];
                         }
 
-                        if (!empty($finalVariants)) {
-                            ProductVariant::insert($finalVariants);
-                        }
+                        ProductVariant::insert($finalVariants);
 
                         $skus = array_column($finalVariants, 'sku');
                         $insertedVariants = ProductVariant::whereIn('sku', $skus)
-                            ->get(['id', 'sku'])
-                            ->keyBy('sku');
+                            ->pluck('id', 'sku');
 
                         $stocksToInsert = [];
                         $movementsDataMap = [];
 
                         foreach ($variantsToInsert as $variantPayload) {
-                            $variant = $insertedVariants->get($variantPayload['sku']);
+                            $variantId = $insertedVariants[$variantPayload['sku']] ?? null;
                             $importQuantity = $variantPayload['_import_quantity'] ?? 0;
 
-                            if ($variant && $importQuantity > 0 && $targetWarehouseId) {
+                            if ($variantId && $importQuantity > 0 && $targetWarehouseId) {
                                 $stocksToInsert[] = [
-                                    'product_variant_id' => $variant->id,
+                                    'product_variant_id' => $variantId,
                                     'warehouse_id' => $targetWarehouseId,
                                     'quantity' => $importQuantity,
                                     'reserved_quantity' => 0,
@@ -130,7 +129,7 @@ class ProcessImportBatchJob implements ShouldQueue
                                     'updated_at' => now(),
                                 ];
 
-                                $movementsDataMap[$variant->id] = $importQuantity;
+                                $movementsDataMap[$variantId] = $importQuantity;
                             }
                         }
 
@@ -142,17 +141,16 @@ class ProcessImportBatchJob implements ShouldQueue
 
                         $insertedStocks = Stock::where('warehouse_id', $targetWarehouseId)
                             ->whereIn('product_variant_id', array_keys($movementsDataMap))
-                            ->get(['id', 'product_variant_id'])
-                            ->keyBy('product_variant_id');
+                            ->pluck('id', 'product_variant_id');
 
                         $movementsToInsert = [];
 
                         foreach ($movementsDataMap as $variantId => $importQuantity) {
-                            $stock = $insertedStocks->get($variantId);
+                            $stockId = $insertedStocks[$variantId] ?? null;
 
-                            if ($stock) {
+                            if ($stockId) {
                                 $movementsToInsert[] = [
-                                    'stock_id' => $stock->id,
+                                    'stock_id' => $stockId,
                                     'type' => 'in',
                                     'quantity_changed' => $importQuantity,
                                     'quantity_after' => $importQuantity,
@@ -167,22 +165,42 @@ class ProcessImportBatchJob implements ShouldQueue
                             StockMovement::insert($movementsToInsert);
                         }
                     });
+
+                    ImportProductRow::whereIn('id', $rowIds)->update(['status' => 'completed']);
                 } catch (\Throwable $exception) {
-                    ImportProductRow::whereIn('id', $rows->pluck('id')->toArray())->update([
+                    ImportProductRow::whereIn('id', $rowIds)->update([
                         'status' => 'error',
                         'error_message' => 'Thêm sản phẩm vào hệ thống thất bại: ' . $exception->getMessage(),
                     ]);
                 }
+
+                $processedRows += count($rowIds);
+                $this->updateImportProgress($batch, $processedRows, $totalRows, 'processing');
             });
 
         $failedRows = ImportProductRow::where('import_batch_id', $this->batchId)
             ->where('status', 'error')
             ->count();
 
+        $this->updateImportProgress($batch, $processedRows, $totalRows, 'completed');
         $batch->update(['status' => $failedRows > 0 ? 'completed_with_errors' : 'completed']);
+    }
 
-        ImportProductRow::where('import_batch_id', $this->batchId)
-            ->where('status', 'valid')
-            ->update(['status' => 'completed']);
+    private function updateImportProgress(ImportBatch $batch, int $processedRows, int $totalRows, string $status): void
+    {
+        $result = $batch->master_data_resolution_result ?? [];
+
+        $batch->update([
+            'status' => 'importing',
+            'master_data_resolution_result' => array_merge($result, [
+                'import_progress' => [
+                    'status' => $status,
+                    'processed_rows' => $processedRows,
+                    'total_rows' => $totalRows,
+                    'percentage' => $totalRows > 0 ? min(100, (int) round(($processedRows / $totalRows) * 100)) : 100,
+                    'updated_at' => now()->toDateTimeString(),
+                ],
+            ]),
+        ]);
     }
 }

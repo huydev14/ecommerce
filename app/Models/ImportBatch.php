@@ -10,7 +10,12 @@ class ImportBatch extends Model
         'user_id',
         'warehouse_id',
         'status',
-        'total_rows'
+        'total_rows',
+        'master_data_resolution_result'
+    ];
+
+    protected $casts = [
+        'master_data_resolution_result' => 'array',
     ];
 
     public function user()

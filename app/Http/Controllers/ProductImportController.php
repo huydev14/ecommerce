@@ -2,9 +2,9 @@
 
 namespace App\Http\Controllers;
 
-use App\Actions\ResolveProductImportMasterDataAction;
 use App\Imports\TempProductsImport;
 use App\Jobs\ProcessImportBatchJob;
+use App\Jobs\ProcessResolveProductImportMasterDataJob;
 use App\Models\ImportBatch;
 use App\Models\ImportProductRow;
 use App\Models\Warehouse;
@@ -36,7 +36,9 @@ class ProductImportController extends Controller
             abort(404, __('product_import.template_not_found'));
         }
 
-        return Storage::disk('app_files')->download('templates/product_import_sample.xlsx');
+        $templatePath = Storage::disk('app_files')->path('templates/product_import_sample.xlsx');
+
+        return response()->download($templatePath, 'product_import_sample.xlsx');
     }
 
     public function uploadAndPreview(Request $request)
@@ -76,11 +78,13 @@ class ProductImportController extends Controller
         $validRows = ImportProductRow::where('import_batch_id', $batchId)->where('status', 'valid')->count();
         $errorRows = ImportProductRow::where('import_batch_id', $batchId)->where('status', 'error')->count();
         $missingMasterData = $this->missingMasterDataSummary((int) $batchId);
+        $resolveResult = $batch->master_data_resolution_result;
+        $showResolveProgress = $batch->status === 'resolving_master_data';
         $canResolveMasterData = in_array($batch->status, ['ready', 'completed_with_errors'], true);
         $canCancelImport = in_array($batch->status, ['processing', 'preview_ready', 'ready'], true);
         $canConfirmImport = in_array($batch->status, ['ready', 'preview_ready'], true);
 
-        return view('product-imports.preview', compact('batch', 'rows', 'validRows', 'errorRows', 'missingMasterData', 'canResolveMasterData', 'canCancelImport', 'canConfirmImport'));
+        return view('product-imports.preview', compact('batch', 'rows', 'validRows', 'errorRows', 'missingMasterData', 'resolveResult', 'showResolveProgress', 'canResolveMasterData', 'canCancelImport', 'canConfirmImport'));
     }
 
     public function progress($batchId)
@@ -88,6 +92,13 @@ class ProductImportController extends Controller
         $batch = ImportBatch::findOrFail($batchId);
         $processedRows = ImportProductRow::where('import_batch_id', $batchId)->count();
         $totalRows = max((int) $batch->total_rows, $processedRows);
+        $resolution = $batch->master_data_resolution_result ?? [];
+
+        if ($batch->status === 'importing') {
+            $importProgress = $resolution['import_progress'] ?? [];
+            $processedRows = (int) ($importProgress['processed_rows'] ?? 0);
+            $totalRows = max((int) ($importProgress['total_rows'] ?? 0), $processedRows);
+        }
 
         return response()->json([
             'batchId' => (int) $batch->id,
@@ -95,6 +106,9 @@ class ProductImportController extends Controller
             'totalRows' => $totalRows,
             'status' => $batch->status,
             'isFinished' => in_array($batch->status, ['ready', 'completed', 'completed_with_errors'], true),
+            'resolution' => $resolution,
+            'isResolutionFinished' => $batch->status !== 'resolving_master_data'
+                && in_array($resolution['status'] ?? null, ['completed', 'failed'], true),
         ]);
     }
 
@@ -106,10 +120,27 @@ class ProductImportController extends Controller
             return redirect()->back()->with('error', 'Trạng thái file không hợp lệ để import.');
         }
 
+        $totalRows = ImportProductRow::where('import_batch_id', $batch->id)
+            ->where('status', 'valid')
+            ->count();
+        $result = $batch->master_data_resolution_result ?? [];
+
+        $batch->update([
+            'status' => 'importing',
+            'master_data_resolution_result' => array_merge($result, [
+                'import_progress' => [
+                    'status' => 'processing',
+                    'processed_rows' => 0,
+                    'total_rows' => $totalRows,
+                    'percentage' => $totalRows > 0 ? 0 : 100,
+                    'started_at' => now()->toDateTimeString(),
+                ],
+            ]),
+        ]);
+
         ProcessImportBatchJob::dispatch($batch->id);
 
-        return redirect()->route('products.index')
-            ->with('success', 'Hệ thống đang đưa sản phẩm vào kho.');
+        return redirect()->route('product-imports.preview', $batch->id);
     }
 
     public function cancelImport($batchId)
@@ -130,7 +161,7 @@ class ProductImportController extends Controller
             ->with('success', __('product_import.cancel_success'));
     }
 
-    public function resolveMissingMasterData($batchId, ResolveProductImportMasterDataAction $action)
+    public function resolveMissingMasterData($batchId)
     {
         $batch = ImportBatch::findOrFail($batchId);
 
@@ -138,17 +169,27 @@ class ProductImportController extends Controller
             return redirect()->back()->with('error', __('product_import.resolve_invalid_status'));
         }
 
-        $result = $action->execute((int) $batch->id);
+        $errorRows = ImportProductRow::where('import_batch_id', $batchId)
+            ->where('status', 'error')
+            ->count();
+
+        $batch->update([
+            'status' => 'resolving_master_data',
+            'master_data_resolution_result' => [
+                'status' => 'processing',
+                'previous_status' => $batch->status,
+                'processed_rows' => 0,
+                'total_rows' => $errorRows,
+                'percentage' => $errorRows > 0 ? 0 : 100,
+                'started_at' => now()->toDateTimeString(),
+            ],
+        ]);
+
+        ProcessResolveProductImportMasterDataJob::dispatch((int) $batch->id);
 
         return redirect()
             ->route('product-imports.preview', $batch->id)
-            ->with('success', __('product_import.resolve_success', [
-                'rows' => $result['resolved_rows'],
-                'categories' => $result['categories'],
-                'brands' => $result['brands'],
-                'units' => $result['units'],
-                'taxes' => $result['taxes'],
-            ]));
+            ->with('success', 'Hệ thống đang xử lý. Xin vui lòng chờ kết quả được cập nhật.');
     }
 
     private function missingMasterDataSummary(int $batchId): array

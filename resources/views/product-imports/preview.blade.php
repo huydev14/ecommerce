@@ -11,30 +11,35 @@
                 'ready' => 'tw-bg-[#eff6fc] tw-text-[#0f6cbd]',
                 'processing' => 'tw-bg-amber-50 tw-text-amber-700',
                 'importing' => 'tw-bg-violet-50 tw-text-violet-700',
+                'resolving_master_data' => 'tw-bg-amber-50 tw-text-amber-700',
                 'completed' => 'tw-bg-emerald-50 tw-text-emerald-700',
-                'completed_with_errors' => 'tw-bg-red-50 tw-text-red-700',
+                'completed_with_errors' => 'tw-bg-amber-50 tw-text-amber-700',
             ][$batch->status] ?? 'tw-bg-gray-100 tw-text-gray-700';
-        $initialProcessedRows = $rows->total();
-        $initialTotalRows = max((int) $batch->total_rows, $initialProcessedRows);
+        $resolveProgress = $resolveResult ?? [];
+        $importProgress = $resolveProgress['import_progress'] ?? [];
+        $initialProcessedRows =
+            $batch->status === 'importing' ? (int) ($importProgress['processed_rows'] ?? 0) : $rows->total();
+        $initialTotalRows =
+            $batch->status === 'importing'
+                ? max((int) ($importProgress['total_rows'] ?? 0), $initialProcessedRows)
+                : max((int) $batch->total_rows, $initialProcessedRows);
         $initialPercentage =
             $initialTotalRows > 0 ? min(100, (int) round(($initialProcessedRows / $initialTotalRows) * 100)) : 0;
-        $showProgress = in_array($batch->status, ['processing', 'preview_ready'], true);
+        $showProgress = in_array($batch->status, ['processing', 'preview_ready', 'importing'], true);
+        $progressTitle =
+            $batch->status === 'importing'
+                ? __('product_import.confirm_progress_title')
+                : __('product_import.import_progress_title');
+        $progressDescription =
+            $batch->status === 'importing'
+                ? __('product_import.confirm_progress_description')
+                : __('product_import.import_progress_description');
+        $initialResolveProcessedRows = (int) ($resolveProgress['processed_rows'] ?? 0);
+        $initialResolveTotalRows = max((int) ($resolveProgress['total_rows'] ?? 0), $errorRows);
+        $initialResolvePercentage = (int) ($resolveProgress['percentage'] ?? 0);
     @endphp
 
     <div class="tw-h-full tw-overflow-y-auto tw-px-6 tw-pb-6">
-        @if (session('error'))
-            <div
-                class="tw-mb-4 tw-rounded tw-border tw-border-red-200 tw-bg-red-50 tw-px-4 tw-py-3 tw-text-sm tw-text-red-700">
-                {{ session('error') }}
-            </div>
-        @endif
-        @if (session('success'))
-            <div
-                class="tw-mb-4 tw-rounded tw-border tw-border-emerald-200 tw-bg-emerald-50 tw-px-4 tw-py-3 tw-text-sm tw-text-emerald-700">
-                {{ session('success') }}
-            </div>
-        @endif
-
         @if ($showProgress)
             <div x-data="{
                 batchId: @js((string) $batch->id),
@@ -52,7 +57,7 @@
                     this.status = event.status || this.status;
                     this.percentage = this.total > 0 ? Math.min(100, Math.round((this.processed / this.total) * 100)) : 0;
             
-                    if ((event.isFinished || this.percentage >= 100) && !this.refreshTimer) {
+                    if ((event.isFinished || (this.status !== 'importing' && this.percentage >= 100)) && !this.refreshTimer) {
                         if (this.pollTimer) {
                             clearInterval(this.pollTimer);
                         }
@@ -78,10 +83,10 @@
                 <div class="tw-flex tw-flex-col tw-gap-4 lg:tw-flex-row lg:tw-items-center lg:tw-justify-between">
                     <div>
                         <h3 class="tw-text-base tw-font-semibold tw-text-gray-950">
-                            {{ __('product_import.import_progress_title') }}
+                            {{ $progressTitle }}
                         </h3>
                         <p class="tw-mt-1 tw-text-sm tw-text-gray-600">
-                            {{ __('product_import.import_progress_description') }}
+                            {{ $progressDescription }}
                         </p>
                     </div>
                     <div class="tw-grid tw-grid-cols-3 tw-gap-4 tw-text-sm">
@@ -115,13 +120,91 @@
             </div>
         @endif
 
+        @if ($showResolveProgress)
+            <div x-data="{
+                progressUrl: @js(route('product-imports.progress', $batch->id)),
+                processed: @js($initialResolveProcessedRows),
+                total: @js($initialResolveTotalRows),
+                percentage: @js($initialResolvePercentage),
+                refreshTimer: null,
+                pollTimer: null,
+                updateProgress(event) {
+                    const resolution = event.resolution || {};
+                    this.processed = Number(resolution.processed_rows || 0);
+                    this.total = Number(resolution.total_rows || this.total || 0);
+                    this.percentage = Number(resolution.percentage || 0);
+
+                    if ((event.isResolutionFinished || resolution.status === 'completed' || resolution.status === 'failed') && !this.refreshTimer) {
+                        if (this.pollTimer) {
+                            clearInterval(this.pollTimer);
+                        }
+
+                        this.refreshTimer = setTimeout(() => window.location.reload(), 1000);
+                    }
+                },
+                fetchProgress() {
+                    if (!window.axios) {
+                        return;
+                    }
+
+                    window.axios.get(this.progressUrl).then((response) => {
+                        this.updateProgress(response.data || {});
+                    });
+                },
+                init() {
+                    this.fetchProgress();
+                    this.pollTimer = setInterval(() => this.fetchProgress(), 1500);
+                }
+            }"
+                class="tw-mb-5 tw-rounded tw-border tw-border-amber-200 tw-bg-amber-50/70 tw-p-5 tw-shadow-sm">
+                <div class="tw-flex tw-flex-col tw-gap-4 lg:tw-flex-row lg:tw-items-center lg:tw-justify-between">
+                    <div>
+                        <h3 class="tw-text-base tw-font-semibold tw-text-gray-950">
+                            {{ __('product_import.resolve_progress_title') }}
+                        </h3>
+                        <p class="tw-mt-1 tw-text-sm tw-text-gray-600">
+                            {{ __('product_import.resolve_progress_description') }}
+                        </p>
+                    </div>
+                    <div class="tw-grid tw-grid-cols-3 tw-gap-4 tw-text-sm">
+                        <div>
+                            <p class="tw-text-xs tw-font-medium tw-uppercase tw-text-gray-500">
+                                {{ __('product_import.progress_total') }}
+                            </p>
+                            <p class="tw-mt-1 tw-text-lg tw-font-semibold tw-text-gray-950" x-text="total">0</p>
+                        </div>
+                        <div>
+                            <p class="tw-text-xs tw-font-medium tw-uppercase tw-text-gray-500">
+                                {{ __('product_import.progress_processed') }}
+                            </p>
+                            <p class="tw-mt-1 tw-text-lg tw-font-semibold tw-text-gray-950" x-text="processed">0</p>
+                        </div>
+                        <div>
+                            <p class="tw-text-xs tw-font-medium tw-uppercase tw-text-gray-500">
+                                {{ __('product_import.progress_percent') }}
+                            </p>
+                            <p class="tw-mt-1 tw-text-lg tw-font-semibold tw-text-gray-950">
+                                <span x-text="percentage">0</span>%
+                            </p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="tw-mt-4 tw-h-2.5 tw-w-full tw-overflow-hidden tw-rounded-full tw-bg-amber-100">
+                    <div class="tw-h-2.5 tw-rounded-full tw-bg-amber-600 tw-transition-all tw-duration-300"
+                        x-bind:style="'width: ' + percentage + '%'"></div>
+                </div>
+            </div>
+        @endif
+
         <section class="tw-bg-white tw-border tw-border-gray-200 tw-rounded tw-shadow-sm tw-overflow-hidden">
             <div
                 class="tw-flex tw-flex-col lg:tw-flex-row lg:tw-items-center lg:tw-justify-between tw-gap-4 tw-px-6 tw-py-5 tw-border-b tw-border-gray-100">
                 <div>
-                    <div class="tw-flex tw-flex-wrap tw-items-center tw-gap-2">
+                    <div class="tw-flex tw-flex-col tw-items-start tw-gap-2 sm:tw-flex-row sm:tw-items-center">
                         <span
-                            class="tw-inline-flex tw-rounded tw-px-2.5 tw-py-1 tw-text-xs tw-font-semibold {{ $statusClass }}">
+                            class="tw-inline-flex tw-items-center tw-gap-1.5 tw-rounded tw-px-2.5 tw-py-1 tw-text-xs tw-font-semibold {{ $statusClass }}">
+                            <span class="tw-h-1.5 tw-w-1.5 tw-rounded-full tw-bg-current"></span>
                             {{ __('product_import.batch_statuses.' . $batch->status) }}
                         </span>
                         <span class="tw-text-xs tw-text-gray-500">
@@ -402,3 +485,55 @@
         </section>
     </div>
 @endsection
+
+@push('scripts')
+    <script>
+        window.addEventListener('load', function() {
+            if (typeof window.fluentToast !== 'function') {
+                return;
+            }
+
+            @if (session('success'))
+                fluentToast({
+                    type: 'success',
+                    title: @js(__('product_import.toast_success_title')),
+                    description: @js(session('success')),
+                    actionType: 'close',
+                });
+            @endif
+
+            @if (session('error'))
+                fluentToast({
+                    type: 'error',
+                    title: @js(__('product_import.toast_error_title')),
+                    description: @js(session('error')),
+                    actionType: 'close',
+                });
+            @endif
+
+            @if (($resolveResult['status'] ?? null) === 'completed')
+                fluentToast({
+                    type: 'success',
+                    title: @js(__('product_import.resolve_completed_title')),
+                    description: @js(
+                        __('product_import.resolve_success', [
+                            'rows' => number_format($resolveResult['resolved_rows'] ?? 0),
+                            'categories' => number_format($resolveResult['categories'] ?? 0),
+                            'brands' => number_format($resolveResult['brands'] ?? 0),
+                            'units' => number_format($resolveResult['units'] ?? 0),
+                            'taxes' => number_format($resolveResult['taxes'] ?? 0),
+                        ])
+                    ),
+                    actionType: 'close',
+                });
+            @elseif (($resolveResult['status'] ?? null) === 'failed')
+                fluentToast({
+                    type: 'error',
+                    title: @js(__('product_import.resolve_failed_title')),
+                    description: @js(__('product_import.resolve_failed')),
+                    actionType: 'close',
+                });
+            @endif
+        });
+    </script>
+@endpush
