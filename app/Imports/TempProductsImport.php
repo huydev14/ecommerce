@@ -11,8 +11,6 @@ use App\Models\Tax;
 use App\Models\Unit;
 
 use Illuminate\Support\Collection;
-use Illuminate\Database\QueryException;
-use Illuminate\Support\Facades\Validator;
 use Maatwebsite\Excel\Concerns\ToCollection;
 use Maatwebsite\Excel\Concerns\WithChunkReading;
 use Maatwebsite\Excel\Concerns\WithHeadingRow;
@@ -27,7 +25,6 @@ use Maatwebsite\Excel\Events\BeforeImport;
 class TempProductsImport implements ToCollection, WithChunkReading, WithHeadingRow, ShouldQueue, WithEvents
 {
     protected $batchId;
-    protected static array $seenSkus = [];
 
     const EXCEL_COL_NAME = 'ten_san_pham';
     const EXCEL_COL_VARIANT = 'ten_bien_the';
@@ -45,12 +42,11 @@ class TempProductsImport implements ToCollection, WithChunkReading, WithHeadingR
     public function __construct($batchId)
     {
         $this->batchId = $batchId;
-        self::$seenSkus = [];
     }
 
     public function collection(Collection $rows)
     {
-        if ($rows->isEmpty() || !$this->importBatchExists()) {
+        if ($rows->isEmpty()) {
             return;
         }
 
@@ -59,50 +55,55 @@ class TempProductsImport implements ToCollection, WithChunkReading, WithHeadingR
         $unitsMap = $this->nameMap(Unit::class, $rows->pluck(self::EXCEL_COL_UNIT));
         $taxesMap = $this->rateMap($rows->pluck(self::EXCEL_COL_TAX));
 
-        $dbSkus = ProductVariant::whereIn('sku', $rows->pluck(self::EXCEL_COL_SKU)->filter()->toArray())
-            ->pluck('sku')
-            ->map(fn($value) => mb_strtolower(trim($value)))
-            ->flip()
+        $chunkSkus = $rows->pluck(self::EXCEL_COL_SKU)
+            ->map(fn($value) => mb_strtolower(trim((string) $value)))
+            ->filter()
             ->toArray();
 
+        $chunkSkuCounts = array_count_values($chunkSkus);
+
+        $dbSkus = ProductVariant::whereIn('sku', $chunkSkus)->pluck('sku')
+            ->map(fn($value) => mb_strtolower(trim($value)))
+            ->flip()->toArray();
+
+        $redisDuplicateSkus = $this->getDuplicateSkusFromRedis($chunkSkus);
+
+        $rowsToInsert = [];
+
+        $missingCategories = [];
+        $missingBrands = [];
+        $missingUnits = [];
+        $missingTaxes = [];
         $rowsToInsert = [];
 
         foreach ($rows as $index => $row) {
             $payload = $this->normalizePayload($row, $categoryData, $brandsMap, $unitsMap, $taxesMap);
+
+            // Validate data
             [$errors, $errorCodes] = self::validatePayload($payload);
-            $this->checkDuplicates($payload, $dbSkus, $errors, $errorCodes);
 
-            // Cache missing metadata (for after import process handling)
+            // Check duplicate
+            $this->checkDuplicates($payload, $dbSkus, $chunkSkuCounts, $redisDuplicateSkus, $errors, $errorCodes);
+
+            // Save missing metadata to array
             if (in_array('missing_category', $errorCodes)) {
-                $parent = trim($payload['product']['parent_category_name'] ?? '');
-                $child = trim($payload['product']['sub_category_name'] ?? '');
-
-                if ($parent !== '' && $child !== '') {
-                    Redis::sAdd("import_batch_{$this->batchId}_missing_categories", "{$parent}|{$child}");
-                } elseif ($parent !== '') {
-                    Redis::sAdd("import_batch_{$this->batchId}_missing_categories", $parent);
-                } elseif (!empty($payload['product']['category_name'])) {
-                    Redis::sAdd("import_batch_{$this->batchId}_missing_categories", trim($payload['product']['category_name']));
-                }
+                $missingCategories[] = $this->extractMissingCategory($payload);
             }
             if (in_array('missing_brand', $errorCodes)) {
                 $brandName = trim($payload['product']['brand_name'] ?? '');
-                if ($brandName !== '') {
-                    Redis::sAdd("import_batch_{$this->batchId}_missing_brands", $brandName);
-                }
+                if ($brandName !== '')
+                    $missingBrands[] = $brandName;
             }
             if (in_array('missing_unit', $errorCodes)) {
-                $unitName = $payload['variant']['unit_name'];
-                if ($unitName) {
-                    Redis::sAdd("import_batch_{$this->batchId}_missing_units", trim($unitName));
-                }
+                $unitName = trim($payload['variant']['unit_name'] ?? '');
+                $missingUnits[] = $unitName !== '' ? $unitName : 'khác';
             }
             if (in_array('missing_tax', $errorCodes)) {
-                $taxRate = $payload['variant']['tax'];
-                if ($taxRate !== null && $taxRate !== '') {
-                    Redis::sAdd("import_batch_{$this->batchId}_missing_taxes", trim($taxRate));
-                }
+                $taxRate = $payload['variant']['tax'] ?? null;
+                if ($taxRate !== null && $taxRate !== '')
+                    $missingTaxes[] = trim((string) $taxRate);
             }
+
             $payload['error_codes'] = array_values(array_unique($errorCodes));
 
             $rowsToInsert[] = [
@@ -116,25 +117,16 @@ class TempProductsImport implements ToCollection, WithChunkReading, WithHeadingR
             ];
         }
 
-        if (!$this->importBatchExists()) {
-            return;
-        }
+        $this->bulkCacheMissingMetadata($missingCategories, $missingBrands, $missingUnits, $missingTaxes);
 
-        try {
-            ImportProductRow::insert($rowsToInsert);
-        } catch (QueryException $exception) {
-            if (!$this->importBatchExists()) {
-                return;
-            }
+        $this->bulkCacheSeenSkus($chunkSkus);
 
-            throw $exception;
-        }
+        ImportProductRow::insert($rowsToInsert);
 
-        $processed = ImportProductRow::where('import_batch_id', $this->batchId)->count();
-        $total = ImportBatch::where('id', $this->batchId)->value('total_rows') ?: $processed;
+        $total = ImportBatch::where('id', $this->batchId)->value('total_rows');
 
         ImportBatch::where('id', $this->batchId)->update([
-            'total_rows' => max($total, $processed),
+            'total_rows' => $total,
         ]);
     }
 
@@ -189,88 +181,158 @@ class TempProductsImport implements ToCollection, WithChunkReading, WithHeadingR
 
     public static function validatePayload(array $payload): array
     {
-        $validator = Validator::make(
-            array_merge($payload['product'], $payload['variant'], ['stock_quantity' => $payload['stock']['quantity']]),
-            [
-                'name' => ['required', 'string', 'min:2', 'max:255'],
-                'category_id' => ['nullable', 'integer'],
-                'sku' => ['required', 'string', 'max:100'],
-                'price' => ['required', 'numeric', 'min:0'],
-                'stock_quantity' => ['required', 'integer', 'min:0', 'max:999999'],
-                'cost_price' => ['nullable', 'numeric', 'min:0'],
-                'unit_id' => ['nullable', 'integer', 'required_with:unit_name'],
-                'tax_id' => ['nullable', 'integer', 'required_with:tax'],
-                'tax' => ['nullable', 'numeric', 'min:0', 'max:100'],
-            ],
-            [
-                'unit_id.required_with' => 'Đơn vị tính không tồn tại trên hệ thống.',
-                'tax_id.required_with' => 'Thuế suất không tồn tại trên hệ thống.',
-            ]
-        );
+        $errors = [];
+        $masterDataCodes = [];
 
-        $errors = $validator->errors()->all();
-        $masterDataCodes = self::missingMasterDataCodes($payload);
+        $product = $payload['product'] ?? [];
+        $variant = $payload['variant'] ?? [];
+        $stock = $payload['stock'] ?? [];
 
-        if (in_array('missing_category', $masterDataCodes, true)) {
-            $errors[] = 'Danh mục không tồn tại trên hệ thống.';
-        } elseif (empty($payload['product']['category_id']) && empty($payload['product']['category_name'])) {
-            $errors[] = 'Vui lòng nhập danh mục.';
+        // 1. Name
+        $name = $product['name'] ?? '';
+        if ($name === '') {
+            $errors[] = 'Tên sản phẩm là bắt buộc.';
+        } elseif (mb_strlen((string) $name) < 2) {
+            $errors[] = 'Tên sản phẩm phải có ít nhất 2 ký tự.';
+        } elseif (mb_strlen((string) $name) > 255) {
+            $errors[] = 'Tên sản phẩm không được vượt quá 255 ký tự.';
         }
 
-        if (in_array('missing_brand', $masterDataCodes, true)) {
+        // 2. SKU
+        $sku = $variant['sku'] ?? '';
+        if ($sku === '') {
+            $errors[] = 'Mã SKU là bắt buộc.';
+        } elseif (mb_strlen((string) $sku) > 100) {
+            $errors[] = 'Mã SKU không được vượt quá 100 ký tự.';
+        }
+
+        // 3. Price
+        $price = $variant['price'] ?? null;
+        if ($price === null || $price === '') {
+            $errors[] = 'Giá bán là bắt buộc.';
+        } elseif (!is_numeric($price)) {
+            $errors[] = 'Giá bán phải là một số.';
+        } elseif ((float) $price < 0) {
+            $errors[] = 'Giá bán không được nhỏ hơn 0.';
+        }
+
+        // 4. Stock
+        $qty = $stock['quantity'] ?? null;
+        if ($qty === null || $qty === '') {
+            $errors[] = 'Nhập tồn kho là bắt buộc.';
+        } elseif (filter_var($qty, FILTER_VALIDATE_INT) === false) {
+            $errors[] = 'Tồn kho phải là số nguyên.';
+        } elseif ((int) $qty < 0 || (int) $qty > 999999) {
+            $errors[] = 'Tồn kho không được phép âm.';
+        }
+
+        // 5. Cost price
+        $cost = $variant['cost_price'] ?? null;
+        if ($cost !== null && $cost !== '') {
+            if (!is_numeric($cost)) {
+                $errors[] = 'Giá mua phải là một số.';
+            } elseif ((float) $cost < 0) {
+                $errors[] = 'Giá mua không được nhỏ hơn 0.';
+            }
+        }
+
+        // 6. Tax Rate & Master Data Tax
+        $tax = $variant['tax'] ?? null;
+        if ($tax !== null && $tax !== '') {
+            if (!is_numeric($tax)) {
+                $errors[] = 'Thuế suất phải là một số.';
+            } elseif ((float) $tax < 0 || (float) $tax > 100) {
+                $errors[] = 'Thuế suất chỉ cho phép từ 0 đến 100.';
+            } elseif (empty($variant['tax_id'])) {
+                // Nhập số thuế hợp lệ nhưng không tìm thấy ID trong DB
+                $masterDataCodes[] = 'missing_tax';
+                $errors[] = 'Thuế suất không tồn tại trên hệ thống.';
+            }
+        }
+
+        // 7. Unit Master Data
+        if (empty($variant['unit_id'])) {
+            $masterDataCodes[] = 'missing_unit';
+            if (!empty($variant['unit_name'])) {
+                $errors[] = 'Đơn vị tính không tồn tại trên hệ thống.';
+            }
+        }
+
+        // 8. Category Master Data
+        if (empty($product['category_id'])) {
+            $masterDataCodes[] = 'missing_category';
+
+            if (empty($product['category_name']) && empty($product['parent_category_name'])) {
+                $errors[] = 'Vui lòng nhập danh mục.';
+            } else {
+                $errors[] = 'Danh mục không tồn tại trên hệ thống.';
+            }
+        }
+
+        // 9. Brand Master Data
+        if (empty($product['brand_id']) && !empty($product['brand_name'])) {
+            $masterDataCodes[] = 'missing_brand';
             $errors[] = 'Thương hiệu không tồn tại trên hệ thống.';
         }
 
         return [$errors, $masterDataCodes];
     }
 
-    public static function missingMasterDataCodes(array $payload): array
+    private function checkDuplicates(array $payload, array $dbSkus, array $chunkSkuCounts, array $redisDuplicateSkus, array &$errors, array &$errorCodes): void
     {
-        $codes = [];
-        $product = $payload['product'] ?? [];
-        $variant = $payload['variant'] ?? [];
+        $skuKey = mb_strtolower(trim($payload['variant']['sku'] ?? ''));
+        if ($skuKey === '')
+            return;
 
-        if (empty($product['category_id']) && !empty($product['category_name'])) {
-            $codes[] = 'missing_category';
+        // Check duplicates in DB
+        if (isset($dbSkus[$skuKey])) {
+            $errors[] = 'Mã SKU đã tồn tại trên hệ thống.';
+            $errorCodes[] = 'duplicate_sku_in_database';
+            return;
         }
 
-        if (empty($product['brand_id']) && !empty($product['brand_name'])) {
-            $codes[] = 'missing_brand';
+        // Check duplicates in chunk
+        if (($chunkSkuCounts[$skuKey] ?? 0) > 1 || isset($redisDuplicateSkus[$skuKey])) {
+            $errors[] = 'Mã SKU bị trùng lặp trong file.';
+            $errorCodes[] = 'duplicate_sku_in_file';
         }
-
-        if (empty($variant['unit_id']) && !empty($variant['unit_name'])) {
-            $codes[] = 'missing_unit';
-        }
-
-        if (empty($variant['tax_id']) && isset($variant['tax']) && $variant['tax'] !== '') {
-            $codes[] = 'missing_tax';
-        }
-
-        return $codes;
     }
 
-    private function checkDuplicates(array $payload, array $dbSkus, array &$errors, array &$errorCodes): void
+    private function getDuplicateSkusFromRedis(array $chunkSkus): array
     {
-        $skuKey = mb_strtolower(trim($payload['variant']['sku']));
-        if ($skuKey !== '') {
-            // Check duplicate SKU in DB
-            if (isset($dbSkus[$skuKey])) {
-                $errors[] = 'Mã SKU đã tồn tại trên hệ thống.';
-                $errorCodes[] = 'duplicate_sku_in_database';
+        $uniqueSkus = array_unique($chunkSkus);
+        if (empty($uniqueSkus)) {
+            return [];
+        }
+
+        $redisKey = "import_batch_{$this->batchId}_seen_skus";
+        $duplicates = [];
+
+        $results = Redis::pipeline(function ($pipe) use ($redisKey, $uniqueSkus) {
+            foreach ($uniqueSkus as $sku) {
+                $pipe->sismember($redisKey, $sku);
             }
+        });
 
-            // Check duplicate SKU in batch
-            $cacheKey = "import_batch_{$this->batchId}_sku_{$skuKey}";
-            $cacheTags = ["import_batch_{$this->batchId}"];
-
-            if (isset(self::$seenSkus[$skuKey]) || Cache::tags($cacheTags)->has($cacheKey)) {
-                $errors[] = 'Mã SKU bị trùng lặp trong file.';
-                $errorCodes[] = 'duplicate_sku_in_file';
-            } else {
-                self::$seenSkus[$skuKey] = true;
-                Cache::tags($cacheTags)->put($cacheKey, true, now()->addHours(1));
+        foreach (array_values($uniqueSkus) as $index => $sku) {
+            if ($results[$index]) {
+                $duplicates[$sku] = true;
             }
         }
+
+        return $duplicates;
+    }
+
+    private function bulkCacheSeenSkus(array $chunkSkus): void
+    {
+        $uniqueSkus = array_unique($chunkSkus);
+        if (empty($uniqueSkus))
+            {return;}
+
+        $redisKey = "import_batch_{$this->batchId}_seen_skus";
+
+        Redis::sAdd($redisKey, ...$uniqueSkus);
+        Redis::expire($redisKey, 7200);
     }
 
     private function nameMap(string $modelClass, Collection $names): array
@@ -338,9 +400,51 @@ class TempProductsImport implements ToCollection, WithChunkReading, WithHeadingR
         });
     }
 
-    private function importBatchExists(): bool
+    private function extractMissingCategory(array $payload): string
     {
-        return ImportBatch::whereKey($this->batchId)->exists();
+        $parent = trim($payload['product']['parent_category_name'] ?? '');
+        $child = trim($payload['product']['sub_category_name'] ?? '');
+
+        if ($parent !== '' && $child !== '') {
+            return "{$parent}|{$child}";
+        }
+
+        if ($parent !== '') {
+            return $parent;
+        }
+
+        if (!empty($payload['product']['category_name'])) {
+            return trim($payload['product']['category_name']);
+        }
+
+        return 'Other';
+    }
+
+    private function bulkCacheMissingMetadata(array $categories, array $brands, array $units, array $taxes): void
+    {
+        $categories = array_unique($categories);
+        $brands = array_unique($brands);
+        $units = array_unique($units);
+        $taxes = array_unique($taxes);
+
+        if (empty($categories) && empty($brands) && empty($units) && empty($taxes)) {
+            return;
+        }
+
+        Redis::pipeline(function ($pipe) use ($categories, $brands, $units, $taxes) {
+            foreach ($categories as $item) {
+                $pipe->sadd("import_batch_{$this->batchId}_missing_categories", $item);
+            }
+            foreach ($brands as $item) {
+                $pipe->sadd("import_batch_{$this->batchId}_missing_brands", $item);
+            }
+            foreach ($units as $item) {
+                $pipe->sadd("import_batch_{$this->batchId}_missing_units", $item);
+            }
+            foreach ($taxes as $item) {
+                $pipe->sadd("import_batch_{$this->batchId}_missing_taxes", $item);
+            }
+        });
     }
 
     public function chunkSize(): int
@@ -352,9 +456,6 @@ class TempProductsImport implements ToCollection, WithChunkReading, WithHeadingR
     {
         return [
             BeforeImport::class => function (BeforeImport $event) {
-                if (!$this->importBatchExists()) {
-                    return;
-                }
 
                 $sheetRows = $event->getReader()->getTotalRows();
                 $totalRows = max(array_sum($sheetRows) - count($sheetRows), 0);
@@ -364,9 +465,6 @@ class TempProductsImport implements ToCollection, WithChunkReading, WithHeadingR
                 ]);
             },
             AfterImport::class => function (AfterImport $event) {
-                if (!$this->importBatchExists()) {
-                    return;
-                }
 
                 $totalRows = ImportProductRow::where('import_batch_id', $this->batchId)->count();
 

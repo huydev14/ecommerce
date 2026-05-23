@@ -227,7 +227,7 @@ class ResolveProductImportMasterDataAction
 
         $idsToRestore = $existingModels->whereNotNull('deleted_at')->pluck('id');
         if ($idsToRestore->isNotEmpty()) {
-            Brand::whereIn('id', $idsToRestore)->restore();
+            Unit::whereIn('id', $idsToRestore)->restore();
         }
 
         $existing = $existingModels
@@ -417,8 +417,10 @@ class ResolveProductImportMasterDataAction
         $parentName = $this->normalizeName($payload['product']['parent_category_name'] ?? null);
         $childName = $this->normalizeName($payload['product']['sub_category_name'] ?? null);
 
-        if ($unitName && empty($payload['variant']['unit_id'])) {
-            $payload['variant']['unit_id'] = $unitMap[$unitName] ?? null;
+        if (empty($payload['variant']['unit_id'])) {
+            $unitKey = $unitName ?: $this->normalizeName('khác');
+            $payload['variant']['unit_id'] = $unitMap[$unitKey] ?? null;
+            $payload['variant']['unit_name'] = $unitKey;
         }
 
         if ($taxRate && empty($payload['variant']['tax_id'])) {
@@ -431,8 +433,9 @@ class ResolveProductImportMasterDataAction
         }
 
         if (empty($payload['product']['category_id'])) {
-            $categoryKey = $childName ? $parentName . '|' . $childName : $parentName;
+            $categoryKey = $childName ? $parentName . '|' . $childName : ($parentName ?: $this->normalizeName('Khác'));
             $payload['product']['category_id'] = $categoryMap[$categoryKey] ?? null;
+            $payload['product']['category_name'] = $payload['product']['category_name'] ?? $categoryKey;
         }
     }
 
