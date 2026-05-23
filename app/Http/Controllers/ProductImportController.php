@@ -75,7 +75,9 @@ class ProductImportController extends Controller
         $rows = ImportProductRow::where('import_batch_id', $batchId)
             ->orderByRaw("CASE WHEN status = 'error' THEN 0 ELSE 1 END")
             ->paginate(20);
-        $validRows = ImportProductRow::where('import_batch_id', $batchId)->where('status', 'valid')->count();
+        $validRows = ImportProductRow::where('import_batch_id', $batchId)
+            ->whereIn('status', ['valid', 'completed'])
+            ->count();
         $errorRows = ImportProductRow::where('import_batch_id', $batchId)->where('status', 'error')->count();
         $missingMasterData = $this->missingMasterDataSummary((int) $batchId);
         $resolveResult = $batch->master_data_resolution_result;
