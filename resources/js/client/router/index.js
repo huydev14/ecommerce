@@ -63,6 +63,13 @@ const routes = [
 const router = createRouter({
     history: createWebHistory('/'),
     routes,
+    scrollBehavior(to, from, savedPosition) {
+        if (savedPosition) return savedPosition;
+        if (to.name === 'ProductDetail') {
+            return { left: 0, top: 0 };
+        }
+        return false;
+    },
 });
 
 router.beforeEach(async (to, from) => {

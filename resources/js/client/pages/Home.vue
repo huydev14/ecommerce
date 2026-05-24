@@ -245,11 +245,11 @@ onMounted(() => {
                 <div class="amazon-new-products__rows">
                     <div v-for="(row, rowIndex) in newProductRows" :key="rowIndex" class="amazon-new-products__row">
                         <article v-for="product in row" :key="product.id || product.slug || product.name" class="amazon-new-product">
-                            <a href="#" class="amazon-new-product__image">
+                            <router-link :to="{ name: 'ProductDetail', params: { slug: product.slug } }" class="amazon-new-product__image">
                                 <img :src="product.thumbnail" :alt="product.name" loading="lazy" />
-                            </a>
+                            </router-link>
                             <div>
-                                <a href="#" class="amazon-new-product__name">{{ product.name }}</a>
+                                <router-link :to="{ name: 'ProductDetail', params: { slug: product.slug } }" class="amazon-new-product__name">{{ product.name }}</router-link>
                                 <span>{{ formatPrice(product.price) }}</span>
                             </div>
                         </article>
