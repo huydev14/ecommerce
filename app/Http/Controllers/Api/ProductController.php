@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Http\Resources\ProductResource;
+use App\Models\Brand;
 use App\Models\Category;
 use App\Models\Product;
 use Illuminate\Http\Request;
@@ -13,21 +14,28 @@ class ProductController extends Controller
 {
     public function index(Request $request)
     {
-        $query = Product::query()->where('status', 'published');
-
-        if ($request->has('category')) {
-            $categorySlug = $request->category;
-
-            $category = Category::with('children')->where('slug', $categorySlug)->first();
-            if ($category) {
-                $categoryIds = $category->getAllChildIds();
-                $query->whereIn('category_id', $categoryIds);
-            }
+        $categoryIds = [];
+        if ($request->category && $category = Category::where('slug', $request->category)->first()) {
+            $categoryIds = $category->getAllChildIds();
         }
 
-        $products = $query->with(['cheapestVariant'])
-            ->orderBy('created_at', 'desc')
+        $products = Product::with(['cheapestVariant', 'brand'])
+            ->where('status', 'published')
+            ->when(!empty($categoryIds), fn($q) => $q->whereIn('category_id', $categoryIds))
+
+            ->when($request->input('brand', $request->input('brands')), function ($q, $brands) {
+                $brandSlugs = is_array($brands) ? $brands : explode(',', str_replace(' ', '', $brands));
+                $q->whereHas('brand', fn($q) => $q->whereIn('slug', $brandSlugs));
+            })
+            ->latest()
             ->paginate(24);
+
+        $availableBrands = Brand::where('is_active', true)
+            ->when(!empty($categoryIds), function ($q) use ($categoryIds) {
+                $q->whereHas('products', fn($p) => $p->whereIn('category_id', $categoryIds));
+            })
+            ->get(['name', 'slug']);
+
         return response()->json([
             'success' => true,
             'data' => ProductResource::collection($products),
@@ -35,6 +43,9 @@ class ProductController extends Controller
                 'current_page' => $products->currentPage(),
                 'last_page' => $products->lastPage(),
                 'total' => $products->total(),
+                'filters' => [
+                    'brands' => $availableBrands,
+                ],
             ]
         ]);
     }

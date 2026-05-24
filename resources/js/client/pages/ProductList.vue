@@ -1,9 +1,10 @@
 <script setup>
 import { computed, onMounted, ref, watch } from 'vue';
-import { useRoute } from 'vue-router';
+import { useRoute, useRouter } from 'vue-router';
 import api from '@/services/api';
 
 const route = useRoute();
+const router = useRouter();
 
 const filters = [
     {
@@ -40,6 +41,7 @@ const colors = [
 ];
 
 const products = ref([]);
+const brandOptions = ref([]);
 const meta = ref({
     current_page: 1,
     last_page: 1,
@@ -52,6 +54,7 @@ const categorySlug = computed(() => route.query.category || '');
 const searchQuery = computed(() => route.query.q || categorySlug.value || 'tất cả sản phẩm');
 const currentPage = computed(() => Number(route.query.page || 1));
 const hasProducts = computed(() => products.value.length > 0);
+const selectedBrands = computed(() => parseCommaQuery(route.query.brand));
 const paginationQuery = (page) => ({
     ...route.query,
     page,
@@ -68,6 +71,35 @@ const resultRange = computed(() => {
 });
 
 const productUrl = () => '#';
+const parseCommaQuery = (value) => {
+    if (!value) {
+        return [];
+    }
+
+    return String(value)
+        .split(',')
+        .map((item) => item.trim())
+        .filter(Boolean);
+};
+
+const toggleBrand = (brandSlug) => {
+    const nextBrands = new Set(selectedBrands.value);
+
+    if (nextBrands.has(brandSlug)) {
+        nextBrands.delete(brandSlug);
+    } else {
+        nextBrands.add(brandSlug);
+    }
+
+    const query = {
+        ...route.query,
+        page: undefined,
+        brand: nextBrands.size ? Array.from(nextBrands).join(',') : undefined,
+    };
+
+    router.push({ name: 'ProductList', query });
+};
+
 const formatPrice = (price) => {
     const numericPrice = Number(price || 0);
 
@@ -91,6 +123,7 @@ const fetchProducts = async () => {
             params: {
                 page: currentPage.value,
                 ...(categorySlug.value ? { category: categorySlug.value } : {}),
+                ...(selectedBrands.value.length ? { brand: selectedBrands.value.join(',') } : {}),
             },
         });
 
@@ -101,6 +134,7 @@ const fetchProducts = async () => {
                 last_page: response.data.meta?.last_page || 1,
                 total: response.data.meta?.total || 0,
             };
+            brandOptions.value = response.data.meta?.filters?.brands || brandOptions.value;
         } else {
             products.value = [];
             errorMessage.value = 'Không thể tải danh sách sản phẩm.';
@@ -117,7 +151,7 @@ const fetchProducts = async () => {
 onMounted(fetchProducts);
 
 watch(
-    () => [route.query.category, route.query.page],
+    () => [route.query.category, route.query.page, route.query.brand],
     fetchProducts,
 );
 </script>
@@ -139,6 +173,22 @@ watch(
 
         <div class="listing-shell">
             <aside class="listing-filters" aria-label="Product filters">
+                <section class="filter-group">
+                    <h2>Thương hiệu</h2>
+
+                    <div v-if="brandOptions.length" class="filter-options">
+                        <label v-for="brand in brandOptions" :key="brand.slug" class="filter-check">
+                            <input
+                                type="checkbox"
+                                :checked="selectedBrands.includes(brand.slug)"
+                                @change="toggleBrand(brand.slug)"
+                            />
+                            <span>{{ brand.name }}</span>
+                        </label>
+                    </div>
+                    <p v-else class="filter-empty">Chưa có thương hiệu.</p>
+                </section>
+
                 <section v-for="group in filters" :key="group.title" class="filter-group">
                     <h2>{{ group.title }}</h2>
 
@@ -340,6 +390,12 @@ watch(
 .filter-links {
     display: grid;
     gap: 7px;
+}
+
+.filter-empty {
+    margin: 0;
+    color: #565959;
+    font-size: 13px;
 }
 
 .review-filter {
