@@ -6,6 +6,7 @@ use App\Observers\CategoryObserver;
 use Illuminate\Database\Eloquent\Attributes\ObservedBy;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Support\Facades\Cache;
 
 #[ObservedBy(CategoryObserver::class)]
 class Category extends Model
@@ -40,6 +41,16 @@ class Category extends Model
 
     public function children()
     {
-        return $this->hasMany(Category::class, 'parent_id')->orderBy('sort_order');
+        return $this->hasMany(Category::class, 'parent_id');
+    }
+
+    protected static function booted()
+    {
+        static::saved(function ($category) {
+            Cache::forget('api_category_tree');
+        });
+        static::deleted(function ($category) {
+            Cache::forget('api_category_tree');
+        });
     }
 }

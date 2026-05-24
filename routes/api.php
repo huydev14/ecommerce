@@ -27,5 +27,5 @@ Route::prefix('v1')->middleware('throttle:5,1')->group(function () {
         Route::get('google/callback', [OAuthController::class, 'googleCallback'])->name('oauth.google.callback');
     });
 
-    Route::get('/categories', [CategoryController::class, 'index']);
+    Route::get('/categories/tree', [CategoryController::class, 'tree']);
 });

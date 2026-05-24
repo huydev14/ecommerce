@@ -11,11 +11,26 @@ const userName = computed(() => authStore.user?.name || authStore.user?.fullname
 const userAvatar = computed(() => authStore.user?.avatar || authStore.user?.photo_url || authStore.user?.image || '');
 const userInitial = computed(() => userName.value.trim().charAt(0).toUpperCase() || 'U');
 
+const getCategoryItems = (payload) => {
+    if (Array.isArray(payload?.data?.data)) {
+        return payload.data.data;
+    }
+
+    if (Array.isArray(payload?.data)) {
+        return payload.data;
+    }
+
+    return [];
+};
+
+const hasChildren = (category) => Array.isArray(category.children) && category.children.length > 0;
+const categoryUrl = (category) => (category.slug ? `/products?category=${category.slug}` : '#');
+
 const fetchCategories = async () => {
     try {
-        const response = await axios.get('/api/v1/categories');
+        const response = await axios.get('/api/v1/categories/tree');
         if (response.data && response.data.success) {
-            categories.value = response.data.data;
+            categories.value = getCategoryItems(response.data);
         }
     } catch (error) {
         console.error('Lỗi khi lấy danh mục:', error);
@@ -151,26 +166,41 @@ onBeforeUnmount(() => {
                         <h3 class="tw-px-5 tw-py-3 tw-text-[17px] tw-font-bold tw-text-[#111827]">{{ category.name }}</h3>
 
                         <div class="tw-space-y-1 tw-pb-2">
-                            <a
+                            <div
                                 v-for="child in category.children"
                                 :key="child.id"
-                                href="#"
-                                class="tw-flex tw-items-center tw-justify-between tw-px-5 tw-py-2 tw-text-[14px] tw-text-[#111827] hover:tw-bg-gray-50"
+                                class="tw-text-[#111827]"
                             >
-                                <span>{{ child.name }}</span>
-                                <svg
-                                    xmlns="http://www.w3.org/2000/svg"
-                                    class="tw-h-4 tw-w-4 tw-text-gray-400"
-                                    viewBox="0 0 20 20"
-                                    fill="currentColor"
+                                <a
+                                    :href="categoryUrl(child)"
+                                    class="tw-flex tw-items-center tw-justify-between tw-px-5 tw-py-2 tw-text-[14px] hover:tw-bg-gray-50"
                                 >
-                                    <path
-                                        fill-rule="evenodd"
-                                        d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 111.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z"
-                                        clip-rule="evenodd"
-                                    />
-                                </svg>
-                            </a>
+                                    <span>{{ child.name }}</span>
+                                    <svg
+                                        xmlns="http://www.w3.org/2000/svg"
+                                        class="tw-h-4 tw-w-4 tw-text-gray-400"
+                                        viewBox="0 0 20 20"
+                                        fill="currentColor"
+                                    >
+                                        <path
+                                            fill-rule="evenodd"
+                                            d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 111.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z"
+                                            clip-rule="evenodd"
+                                        />
+                                    </svg>
+                                </a>
+
+                                <div v-if="hasChildren(child)" class="tw-pb-1">
+                                    <a
+                                        v-for="grandchild in child.children"
+                                        :key="grandchild.id"
+                                        :href="categoryUrl(grandchild)"
+                                        class="tw-block tw-py-1.5 tw-pl-8 tw-pr-5 tw-text-[13px] tw-text-gray-600 hover:tw-bg-gray-100 hover:tw-text-[#111827]"
+                                    >
+                                        {{ grandchild.name }}
+                                    </a>
+                                </div>
+                            </div>
                         </div>
                     </section>
                 </div>
