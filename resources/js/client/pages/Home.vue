@@ -1,5 +1,6 @@
 <script setup>
-import { ref } from 'vue';
+import { computed, onMounted, ref } from 'vue';
+import api from '../services/api';
 
 const categoryCards = [
     {
@@ -58,32 +59,7 @@ const featuredProducts = [
     { icon: '🖱', name: 'Wireless Mouse Pro', price: '₫459.000', tag: 'WorkHub pick' },
 ];
 
-const newProductRows = [
-    [
-        { icon: '🖥', name: 'Màn hình WorkView 27 inch', price: '₫4.990.000' },
-        { icon: '📱', name: 'Điện thoại Nova X', price: '₫7.490.000' },
-        { icon: '🎒', name: 'Balo laptop chống sốc', price: '₫590.000' },
-        { icon: '🔌', name: 'Dock USB-C 8 trong 1', price: '₫890.000' },
-    ],
-    [
-        { icon: '🍳', name: 'Nồi chiên không dầu', price: '₫1.490.000' },
-        { icon: '☕', name: 'Máy pha cà phê mini', price: '₫2.190.000' },
-        { icon: '🧺', name: 'Kệ lưu trữ đa năng', price: '₫349.000' },
-        { icon: '🛋', name: 'Ghế lounge phòng khách', price: '₫3.590.000' },
-    ],
-    [
-        { icon: '👕', name: 'Áo polo basic nam', price: '₫249.000' },
-        { icon: '👟', name: 'Giày sneaker daily', price: '₫899.000' },
-        { icon: '🧴', name: 'Bộ chăm sóc cá nhân', price: '₫329.000' },
-        { icon: '🧸', name: 'Đồ chơi lắp ráp sáng tạo', price: '₫459.000' },
-    ],
-    [
-        { icon: '📚', name: 'Combo sách kỹ năng', price: '₫399.000' },
-        { icon: '📓', name: 'Planner văn phòng', price: '₫129.000' },
-        { icon: '🛠', name: 'Bộ dụng cụ sửa chữa', price: '₫699.000' },
-        { icon: '🧳', name: 'Vali cabin 20 inch', price: '₫1.190.000' },
-    ],
-];
+const newProducts = ref([]);
 
 const recommendationRows = [
     {
@@ -114,12 +90,65 @@ const recommendationRows = [
 
 const featuredSlider = ref(null);
 
+const normalizeProducts = (payload) => {
+    if (Array.isArray(payload?.data?.data)) {
+        return payload.data.data;
+    }
+
+    if (Array.isArray(payload?.data)) {
+        return payload.data;
+    }
+
+    return [];
+};
+
+const formatPrice = (price) => {
+    const amount = Number(price);
+
+    if (!Number.isFinite(amount) || amount <= 0) {
+        return 'Liên hệ';
+    }
+
+    return new Intl.NumberFormat('vi-VN', {
+        style: 'currency',
+        currency: 'VND',
+        maximumFractionDigits: 0,
+    }).format(amount);
+};
+
+const newProductRows = computed(() => {
+    const chunkSize = 4;
+    const rows = [];
+
+    for (let index = 0; index < newProducts.value.length; index += chunkSize) {
+        rows.push(newProducts.value.slice(index, index + chunkSize));
+    }
+
+    return rows;
+});
+
+const fetchNewArrivals = async () => {
+    try {
+        const response = await api.get('/products/new-arrivals');
+
+        if (response.data?.success) {
+            newProducts.value = normalizeProducts(response.data);
+        }
+    } catch (error) {
+        console.error('Lỗi khi lấy sản phẩm mới:', error);
+    }
+};
+
 const scrollFeatured = (direction) => {
     featuredSlider.value?.scrollBy({
         left: direction * 360,
         behavior: 'smooth',
     });
 };
+
+onMounted(() => {
+    fetchNewArrivals();
+});
 </script>
 
 <template>
@@ -215,14 +244,18 @@ const scrollFeatured = (direction) => {
 
                 <div class="amazon-new-products__rows">
                     <div v-for="(row, rowIndex) in newProductRows" :key="rowIndex" class="amazon-new-products__row">
-                        <article v-for="product in row" :key="product.name" class="amazon-new-product">
-                            <a href="#" class="amazon-new-product__image">{{ product.icon }}</a>
+                        <article v-for="product in row" :key="product.id || product.slug || product.name" class="amazon-new-product">
+                            <a href="#" class="amazon-new-product__image">
+                                <img :src="product.thumbnail" :alt="product.name" loading="lazy" />
+                            </a>
                             <div>
                                 <a href="#" class="amazon-new-product__name">{{ product.name }}</a>
-                                <span>{{ product.price }}</span>
+                                <span>{{ formatPrice(product.price) }}</span>
                             </div>
                         </article>
                     </div>
+
+                    <p v-if="newProductRows.length === 0" class="amazon-new-products__empty">Chưa có sản phẩm mới.</p>
                 </div>
             </section>
 
@@ -679,17 +712,34 @@ const scrollFeatured = (direction) => {
 
 .amazon-new-product__image {
     display: grid;
-    height: 82px;
     place-items: center;
     background: #f7fafa;
     font-size: 34px;
     text-decoration: none;
+
+    width: 100%;
+    aspect-ratio: 1 / 1;
+    overflow: hidden;
+}
+
+.amazon-new-product__image img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: center;
 }
 
 .amazon-new-product span {
     display: block;
     margin-top: 6px;
     font-size: 16px;
+    line-height: 20px;
+}
+
+.amazon-new-products__empty {
+    margin: 0;
+    color: #566;
+    font-size: 14px;
     line-height: 20px;
 }
 

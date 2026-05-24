@@ -9,6 +9,7 @@ use DragonCode\Support\Facades\Helpers\Str;
 use Exception;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Storage;
 use Yajra\DataTables\DataTables;
 
 class ProductController extends Controller
@@ -97,9 +98,10 @@ class ProductController extends Controller
 
     public function store(Request $request)
     {
-        $request->validate([
+        $data = $request->validate([
             'name' => 'required|string|min:2|max:255|unique:products,name',
             'description' => 'nullable|string',
+            'thumbnail' => 'nullable|image|mimes:jpeg,png,jpg,webp|max:2048',
             'category_id' => 'required|exists:categories,id',
             'brand_id' => 'nullable|exists:brands,id',
             'status' => 'required|in:draft,published,archived',
@@ -110,19 +112,18 @@ class ProductController extends Controller
             'status.required' => __('product.status_required'),
         ]);
 
+        $path = null;
+        if ($request->hasFile('thumbnail')) {
+            $path = $request->file('thumbnail')->store('products/thumbnails', 'public');
+        }
+
+        $data['slug'] = Str::slug($request->name);
+        $data['thumbnail'] = $path;
+
         try {
-            Product::create([
-                'name' => $request->name,
-                'slug' => Str::slug($request->name),
-                'description' => $request->description,
-                'category_id' => $request->category_id,
-                'brand_id' => $request->brand_id,
-                'status' => $request->status,
-            ]);
+            Product::create($data);
 
-            if ($request->ajax()) {
-                session()->flash('success', __('product.create_success'));
-
+            if ($request->ajax() || $request->wantsJson()) {
                 return response()->json([
                     'success' => true,
                     'msg' => __('product.create_success'),
@@ -130,15 +131,20 @@ class ProductController extends Controller
             }
 
             return redirect()->route('products.index')->with('success', __('product.create_success'));
-        } catch (Exception $e) {
+
+        } catch (\Exception $e) {
             Log::error('Create product failed: ' . $e->getMessage(), [
                 'trace' => $e->getTraceAsString(),
             ]);
 
-            return response()->json([
-                'status' => 'error',
-                'msg' => __('product.system_error'),
-            ], 500);
+            if ($request->ajax() || $request->wantsJson()) {
+                return response()->json([
+                    'success' => false,
+                    'msg' => __('product.system_error'),
+                ], 500);
+            }
+
+            return back()->withInput()->with('error', __('product.system_error'));
         }
     }
 
@@ -152,9 +158,10 @@ class ProductController extends Controller
 
     public function update(Request $request, Product $product)
     {
-        $request->validate([
+        $data = $request->validate([
             'name' => 'required|string|min:2|max:255|unique:products,name,' . $product->id,
             'description' => 'nullable|string',
+            'thumbnail' => 'nullable|image|mimes:jpeg,png,jpg,webp|max:2048',
             'category_id' => 'required|exists:categories,id',
             'brand_id' => 'nullable|exists:brands,id',
             'status' => 'required|in:draft,published,archived',
@@ -165,15 +172,20 @@ class ProductController extends Controller
             'status.required' => __('product.status_required'),
         ]);
 
+        $path = $product->thumbnail;
+
+        if ($request->hasFile('thumbnail')) {
+            if ($product->thumbnail && Storage::disk('public')->exists($product->thumbnail)) {
+                Storage::disk('public')->delete($product->thumbnail);
+            }
+            $path = $request->file('thumbnail')->store('products/thumbnails', 'public');
+        }
+
+        $data['slug'] = Str::slug($request->name);
+        $data['thumbnail'] = $path;
+
         try {
-            $product->update([
-                'name' => $request->name,
-                'slug' => Str::slug($request->name),
-                'description' => $request->description,
-                'category_id' => $request->category_id,
-                'brand_id' => $request->brand_id,
-                'status' => $request->status,
-            ]);
+            $product->update($data);
 
             return response()->json([
                 'success' => true,

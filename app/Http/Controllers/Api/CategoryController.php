@@ -25,6 +25,7 @@ class CategoryController extends Controller
                     }
                 ])
                 ->orderBy('sort_order')
+                ->take(10)
                 ->get();
         });
 

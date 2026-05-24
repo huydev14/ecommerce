@@ -163,7 +163,7 @@ onBeforeUnmount(() => {
 
                 <div class="tw-divide-y tw-divide-gray-200 tw-bg-white">
                     <section v-for="category in categories" :key="category.id" class="tw-px-0 tw-py-2">
-                        <h3 class="tw-px-5 tw-py-3 tw-text-[17px] tw-font-bold tw-text-[#111827]">{{ category.name }}</h3>
+                        <h3 class="tw-capitalize tw-truncate tw-px-5 tw-py-3 tw-text-[17px] tw-font-bold tw-text-[#111827]">{{ category.name }}</h3>
 
                         <div class="tw-space-y-1 tw-pb-2">
                             <div
@@ -175,7 +175,7 @@ onBeforeUnmount(() => {
                                     :href="categoryUrl(child)"
                                     class="tw-flex tw-items-center tw-justify-between tw-px-5 tw-py-2 tw-text-[14px] hover:tw-bg-gray-50"
                                 >
-                                    <span>{{ child.name }}</span>
+                                    <span class="tw-capitalize tw-truncate">{{ child.name }}</span>
                                     <svg
                                         xmlns="http://www.w3.org/2000/svg"
                                         class="tw-h-4 tw-w-4 tw-text-gray-400"
@@ -195,7 +195,7 @@ onBeforeUnmount(() => {
                                         v-for="grandchild in child.children"
                                         :key="grandchild.id"
                                         :href="categoryUrl(grandchild)"
-                                        class="tw-block tw-py-1.5 tw-pl-8 tw-pr-5 tw-text-[13px] tw-text-gray-600 hover:tw-bg-gray-100 hover:tw-text-[#111827]"
+                                        class="tw-capitalize tw-truncate tw-block tw-py-1.5 tw-pl-8 tw-pr-5 tw-text-[13px] tw-text-gray-600 hover:tw-bg-gray-100 hover:tw-text-[#111827]"
                                     >
                                         {{ grandchild.name }}
                                     </a>

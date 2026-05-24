@@ -17,6 +17,7 @@ class Product extends Model
         'name',
         'slug',
         'description',
+        'thumbnail',
         'category_id',
         'brand_id',
         'status',
@@ -35,6 +36,11 @@ class Product extends Model
     public function variants()
     {
         return $this->hasMany(ProductVariant::class);
+    }
+
+    public function cheapestVariant()
+    {
+        return $this->hasOne(ProductVariant::class)->ofMany('price', 'min');
     }
 
     public function inventories()
