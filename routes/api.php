@@ -35,5 +35,6 @@ Route::prefix('v1')->group(function () {
     Route::get('/categories/tree', [CategoryController::class, 'tree']);
 
     // ----- Products API -------------------------
+    Route::get('/products', [ProductController::class, 'index']);
     Route::get('/products/new-arrivals', [ProductController::class, 'newArrivals']);
 });

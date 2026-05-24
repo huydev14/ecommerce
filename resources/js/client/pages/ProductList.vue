@@ -1,28 +1,22 @@
 <script setup>
-import { computed } from 'vue';
+import { computed, onMounted, ref, watch } from 'vue';
 import { useRoute } from 'vue-router';
+import api from '@/services/api';
 
 const route = useRoute();
 
-const searchQuery = computed(() => route.query.q || 'fitness clothing');
-
 const filters = [
     {
-        title: 'Gender',
-        options: ['Men', 'Women', 'Boys', 'Girls', 'Babies', 'Unisex'],
+        title: 'Khoảng giá',
+        links: ['Dưới 500.000đ', '500.000đ - 1.000.000đ', 'Trên 1.000.000đ'],
     },
     {
-        title: 'Brands',
-        options: ['Reebok', 'Under Armour', 'adidas', 'Amazon Essentials', 'PUMA', 'BAMBOO COOL', 'COOFANDY'],
-        hasMore: true,
+        title: 'Tình trạng',
+        options: ['Còn hàng', 'Hàng mới', 'Bán chạy'],
     },
     {
-        title: 'Amazon Fashion',
-        options: ['Our Brands', 'Premium Brands', 'Top Brands'],
-    },
-    {
-        title: 'Deals & Discounts',
-        links: ['All Discounts', 'Buy More, Save More', 'Today Deals'],
+        title: 'Ưu đãi',
+        links: ['Có giảm giá', 'Giao nhanh', 'Đánh giá cao'],
     },
 ];
 
@@ -45,110 +39,100 @@ const colors = [
     '#d9f2ff',
 ];
 
-const products = [
-    {
-        badge: 'Overall Pick',
-        title: 'Kinglaman 1/5 Pack Mesh Workout Shirts for Men Dry Fit Gym Quick Dry Athletic Short Sleeve Sports T-Shirt',
-        image: 'https://images.unsplash.com/photo-1523398002811-999ca8dec234?auto=format&fit=crop&w=640&q=80',
-        rating: '4.6',
-        reviews: '2.6K',
-        bought: '2K+ bought in past month',
-        price: '526,697',
-    },
-    {
-        title: "Reebok Men's Small Logo Short Sleeve Crewneck T-Shirt, Standard Fit, Breathable Lightweight Stretch Knit Fabric",
-        image: 'https://images.unsplash.com/photo-1578932750294-f5075e85f44a?auto=format&fit=crop&w=640&q=80',
-        rating: '4.7',
-        reviews: '223',
-        bought: '50+ bought in past month',
-        price: '250,306',
-        original: 'VND283,768',
-    },
-    {
-        title: 'High Impact Sports Bras for Women, High Support Molded Cup Crisscross Back Workout Yoga Top',
-        image: 'https://images.unsplash.com/photo-1518611012118-696072aa579a?auto=format&fit=crop&w=640&q=80',
-        rating: '4.7',
-        reviews: '20',
-        price: '711,133',
-    },
-    {
-        title: "PUMA Men's 5 Pack Performance Boxer Briefs",
-        image: 'https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?auto=format&fit=crop&w=640&q=80',
-        rating: '4.6',
-        reviews: '3.1K',
-        bought: '100+ bought in past month',
-        price: '617,861',
-        tag: '#1 Top Rated',
-    },
-    {
-        badge: 'Best Seller',
-        title: 'SINOPHANT High Waisted Leggings with Pockets Women, Full Length Capri Buttery Soft Stretchy Yoga Pants',
-        image: 'https://images.unsplash.com/photo-1506629905607-d9f297d2b17c?auto=format&fit=crop&w=640&q=80',
-        rating: '4.4',
-        reviews: '11.3K',
-        bought: '7K+ bought in past month',
-        price: '210,521',
-        original: 'VND263,217',
-    },
-    {
-        title: 'Neleus Running Shorts with Zipper Pockets, Lightweight Athletic Training Shorts',
-        image: 'https://images.unsplash.com/photo-1556906781-9a412961c28c?auto=format&fit=crop&w=640&q=80',
-        rating: '4.5',
-        reviews: '6.8K',
-        bought: '900+ bought in past month',
-        price: '318,900',
-    },
-    {
-        title: "Champion Men's Classic Cotton Long Sleeve Tee for Training and Casual Wear",
-        image: 'https://images.unsplash.com/photo-1516826957135-700dedea698c?auto=format&fit=crop&w=640&q=80',
-        rating: '4.6',
-        reviews: '4.2K',
-        price: '285,000',
-    },
-    {
-        title: "Women's Dry Fit Running Shirts Short Sleeve Athletic Gym Workout Tops",
-        image: 'https://images.unsplash.com/photo-1542291026-7eec264c27ff?auto=format&fit=crop&w=640&q=80',
-        rating: '4.5',
-        reviews: '1.9K',
-        bought: '300+ bought in past month',
-        price: '199,000',
-    },
-    {
-        title: "Men's Compression Baselayer Shirt, Long Sleeve Sports Training Top",
-        image: 'https://images.unsplash.com/photo-1520975916090-3105956dac38?auto=format&fit=crop&w=640&q=80',
-        rating: '4.3',
-        reviews: '982',
-        price: '339,500',
-    },
-    {
-        badge: 'Best Seller',
-        title: 'Workout Matching Set for Women, Ribbed Tank Top and Jogger Pants Lounge Set',
-        image: 'https://images.unsplash.com/photo-1548883354-94bcfe321cbb?auto=format&fit=crop&w=640&q=80',
-        rating: '4.6',
-        reviews: '8.4K',
-        bought: '4K+ bought in past month',
-        price: '455,000',
-    },
-];
+const products = ref([]);
+const meta = ref({
+    current_page: 1,
+    last_page: 1,
+    total: 0,
+});
+const isLoading = ref(false);
+const errorMessage = ref('');
 
-const primaryProducts = computed(() => products.slice(0, 5));
-const moreProducts = computed(() => products.slice(5));
+const categorySlug = computed(() => route.query.category || '');
+const searchQuery = computed(() => route.query.q || categorySlug.value || 'tất cả sản phẩm');
+const currentPage = computed(() => Number(route.query.page || 1));
+const hasProducts = computed(() => products.value.length > 0);
+const paginationQuery = (page) => ({
+    ...route.query,
+    page,
+});
+const resultRange = computed(() => {
+    if (!meta.value.total || !hasProducts.value) {
+        return '0 sản phẩm';
+    }
+
+    const start = (meta.value.current_page - 1) * 24 + 1;
+    const end = start + products.value.length - 1;
+
+    return `${start}-${end} trong ${meta.value.total} sản phẩm`;
+});
+
+const productUrl = () => '#';
+const formatPrice = (price) => {
+    const numericPrice = Number(price || 0);
+
+    if (!numericPrice) {
+        return 'Liên hệ';
+    }
+
+    return new Intl.NumberFormat('vi-VN', {
+        style: 'currency',
+        currency: 'VND',
+        maximumFractionDigits: 0,
+    }).format(numericPrice);
+};
+
+const fetchProducts = async () => {
+    isLoading.value = true;
+    errorMessage.value = '';
+
+    try {
+        const response = await api.get('/products', {
+            params: {
+                page: currentPage.value,
+                ...(categorySlug.value ? { category: categorySlug.value } : {}),
+            },
+        });
+
+        if (response.data?.success) {
+            products.value = response.data.data || [];
+            meta.value = {
+                current_page: response.data.meta?.current_page || 1,
+                last_page: response.data.meta?.last_page || 1,
+                total: response.data.meta?.total || 0,
+            };
+        } else {
+            products.value = [];
+            errorMessage.value = 'Không thể tải danh sách sản phẩm.';
+        }
+    } catch (error) {
+        products.value = [];
+        errorMessage.value = 'Có lỗi xảy ra khi tải danh sách sản phẩm.';
+        console.error('Lỗi khi lấy danh sách sản phẩm:', error);
+    } finally {
+        isLoading.value = false;
+    }
+};
+
+onMounted(fetchProducts);
+
+watch(
+    () => [route.query.category, route.query.page],
+    fetchProducts,
+);
 </script>
 
 <template>
     <section class="product-listing">
         <div class="listing-summary">
             <p>
-                1-48 of over 30,000 results for <strong>"{{ searchQuery }}"</strong>
+                {{ resultRange }} cho <strong>"{{ searchQuery }}"</strong>
             </p>
 
             <label class="sort-control">
-                <span>Sort by:</span>
+                <span>Sắp xếp:</span>
                 <select>
-                    <option>Featured</option>
-                    <option>Price: Low to High</option>
-                    <option>Avg. Customer Review</option>
-                    <option>Newest Arrivals</option>
+                    <option>Mới nhất</option>
                 </select>
             </label>
         </div>
@@ -169,16 +153,16 @@ const moreProducts = computed(() => products.slice(5));
                         <a v-for="link in group.links" :key="link" href="#">{{ link }}</a>
                     </div>
 
-                    <button v-if="group.hasMore" type="button" class="filter-more">See more</button>
+                    <button v-if="group.hasMore" type="button" class="filter-more">Xem thêm</button>
                 </section>
 
                 <section class="filter-group">
-                    <h2>Customer Reviews</h2>
-                    <a href="#" class="review-filter"><span>★★★★★</span> & Up</a>
+                    <h2>Đánh giá</h2>
+                    <a href="#" class="review-filter"><span>★★★★★</span> trở lên</a>
                 </section>
 
                 <section class="filter-group">
-                    <h2>Color</h2>
+                    <h2>Màu sắc</h2>
                     <div class="color-grid">
                         <button
                             v-for="color in colors"
@@ -194,65 +178,57 @@ const moreProducts = computed(() => products.slice(5));
 
             <main class="listing-results">
                 <header class="results-header">
-                    <h1>Results</h1>
+                    <h1>Danh sách sản phẩm</h1>
                     <p>
-                        Check each product page for other buying options. Price and other details may vary based on product size and color.
+                        Sản phẩm được lấy từ API và hiển thị theo danh mục nếu URL có tham số category.
                     </p>
                 </header>
 
-                <div class="product-grid">
-                    <article v-for="product in primaryProducts" :key="product.title" class="product-card">
-                        <span v-if="product.badge" class="product-badge" :class="{ 'is-orange': product.badge === 'Best Seller' }">
-                            {{ product.badge }}
-                        </span>
-
-                        <a href="#" class="product-image">
-                            <img :src="product.image" :alt="product.title" />
-                        </a>
-
-                        <div class="product-content">
-                            <a href="#" class="product-title">{{ product.title }}</a>
-                            <p v-if="product.tag" class="product-tag">{{ product.tag }}</p>
-                            <div class="product-rating">
-                                <span class="stars">★★★★★</span>
-                                <span>{{ product.rating }}</span>
-                                <a href="#">({{ product.reviews }})</a>
-                            </div>
-                            <p v-if="product.bought" class="product-bought">{{ product.bought }}</p>
-                            <div class="product-price"><small>VND</small>{{ product.price }}</div>
-                            <p v-if="product.original" class="product-original">
-                                Typical: <s>{{ product.original }}</s>
-                            </p>
-                            <button type="button" class="cart-button">Add to cart</button>
-                        </div>
-                    </article>
-                </div>
-
-                <section class="more-results">
-                    <h2>More results</h2>
-
+                <div v-if="isLoading" class="listing-state">Đang tải sản phẩm...</div>
+                <div v-else-if="errorMessage" class="listing-state is-error">{{ errorMessage }}</div>
+                <div v-else-if="!hasProducts" class="listing-state">Không có sản phẩm phù hợp.</div>
+                <template v-else>
                     <div class="product-grid">
-                        <article v-for="product in moreProducts" :key="product.title" class="product-card">
-                            <span v-if="product.badge" class="product-badge is-orange">{{ product.badge }}</span>
+                        <article v-for="product in products" :key="product.id" class="product-card">
+                            <span class="product-badge">Mới</span>
 
-                            <a href="#" class="product-image">
-                                <img :src="product.image" :alt="product.title" />
+                            <a :href="productUrl(product)" class="product-image">
+                                <img :src="product.thumbnail" :alt="product.name" />
                             </a>
 
                             <div class="product-content">
-                                <a href="#" class="product-title">{{ product.title }}</a>
+                                <a :href="productUrl(product)" class="product-title">{{ product.name }}</a>
                                 <div class="product-rating">
                                     <span class="stars">★★★★★</span>
-                                    <span>{{ product.rating }}</span>
-                                    <a href="#">({{ product.reviews }})</a>
+                                    <span>5.0</span>
                                 </div>
-                                <p v-if="product.bought" class="product-bought">{{ product.bought }}</p>
-                                <div class="product-price"><small>VND</small>{{ product.price }}</div>
-                                <button type="button" class="cart-button">Add to cart</button>
+                                <p class="product-bought">Sản phẩm đang bán trên WorkHub</p>
+                                <div class="product-price">{{ formatPrice(product.price) }}</div>
+                                <button type="button" class="cart-button">Thêm vào giỏ</button>
                             </div>
                         </article>
                     </div>
-                </section>
+
+                    <nav v-if="meta.last_page > 1" class="listing-pagination" aria-label="Product pagination">
+                        <RouterLink
+                            v-if="meta.current_page > 1"
+                            class="pagination-link"
+                            :to="{ name: 'ProductList', query: paginationQuery(meta.current_page - 1) }"
+                        >
+                            Trước
+                        </RouterLink>
+                        <span v-else class="pagination-link is-disabled">Trước</span>
+                        <span>Trang {{ meta.current_page }} / {{ meta.last_page }}</span>
+                        <RouterLink
+                            v-if="meta.current_page < meta.last_page"
+                            class="pagination-link"
+                            :to="{ name: 'ProductList', query: paginationQuery(meta.current_page + 1) }"
+                        >
+                            Sau
+                        </RouterLink>
+                        <span v-else class="pagination-link is-disabled">Sau</span>
+                    </nav>
+                </template>
             </main>
         </div>
     </section>
@@ -512,6 +488,53 @@ const moreProducts = computed(() => products.slice(5));
     font-size: 30px;
     line-height: 1;
     color: #0f1111;
+}
+
+.listing-state {
+    display: grid;
+    min-height: 260px;
+    place-items: center;
+    border: 1px solid #f0f2f2;
+    border-radius: 4px;
+    background: #ffffff;
+    color: #565959;
+    font-size: 15px;
+}
+
+.listing-state.is-error {
+    color: #b42318;
+}
+
+.listing-pagination {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 16px;
+    margin-top: 24px;
+    color: #565959;
+    font-size: 14px;
+}
+
+.pagination-link {
+    min-width: 86px;
+    border: 1px solid #d5d9d9;
+    border-radius: 999px;
+    padding: 8px 16px;
+    background: #ffffff;
+    color: #007185;
+    text-align: center;
+    text-decoration: none;
+}
+
+.pagination-link:hover {
+    border-color: #007185;
+    color: #c45500;
+}
+
+.pagination-link.is-disabled {
+    pointer-events: none;
+    color: #8c8c8c;
+    background: #f7f7f7;
 }
 
 .product-price small {

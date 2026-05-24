@@ -44,6 +44,17 @@ class Category extends Model
         return $this->hasMany(Category::class, 'parent_id');
     }
 
+    public function getAllChildIds(): array
+    {
+        $ids = [$this->id];
+
+        foreach ($this->children as $child) {
+            $ids = array_merge($ids, $child->getAllChildIds());
+        }
+
+        return $ids;
+    }
+
     protected static function booted()
     {
         static::saved(function ($category) {
