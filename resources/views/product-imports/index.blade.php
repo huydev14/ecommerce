@@ -18,7 +18,7 @@
             'data:image/svg+xml;base64,' . base64_encode(file_get_contents(resource_path('svg/excel-logo.svg')));
     @endphp
 
-    <div class="tw-h-full tw-overflow-y-auto tw-px-6 tw-pb-6">
+    <div class="tw-h-full tw-px-6 tw-pb-6">
         <div class="tw-flex tw-flex-col tw-gap-5">
 
 

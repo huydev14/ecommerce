@@ -39,7 +39,7 @@
         $initialResolvePercentage = (int) ($resolveProgress['percentage'] ?? 0);
     @endphp
 
-    <div class="tw-h-full tw-overflow-y-auto tw-px-6 tw-pb-6">
+    <div class="tw-h-full tw-px-6 tw-pb-6">
         @if ($showProgress)
             <div x-data="{
                 batchId: @js((string) $batch->id),
