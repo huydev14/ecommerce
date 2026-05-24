@@ -1,0 +1,565 @@
+<script setup>
+import { computed, onMounted, ref, watch } from 'vue';
+import { useRoute } from 'vue-router';
+import api from '@/services/api';
+
+const route = useRoute();
+
+const product = ref(null);
+const isLoading = ref(false);
+const errorMessage = ref('');
+const selectedImage = ref('');
+const selectedVariantId = ref(null);
+const quantity = ref(1);
+
+const variants = computed(() => product.value?.variants || []);
+const selectedVariant = computed(() => variants.value.find((variant) => variant.id === selectedVariantId.value) || variants.value[0] || null);
+const activePrice = computed(() => selectedVariant.value?.price || product.value?.price || 0);
+const brandName = computed(() => product.value?.brand?.name || 'WorkHub');
+const brandSlug = computed(() => product.value?.brand?.slug || '');
+const categoryName = computed(() => product.value?.category?.name || 'San pham');
+const productImages = computed(() => {
+    const image = product.value?.thumbnail;
+
+    return image ? [image, image, image, image] : [];
+});
+
+const getVariantLabel = (variant, fallback = 'Mặc định') => {
+    const attributes = variant?.attributes || {};
+
+    return attributes.variant_name
+        || attributes.name
+        || attributes.size
+        || attributes.color
+        || variant?.sku
+        || fallback;
+};
+
+const variantLabels = computed(() => {
+    return variants.value.map((variant, index) => ({
+        id: variant.id,
+        label: getVariantLabel(variant, `Lựa chọn ${index + 1}`),
+        price: variant.price,
+    }));
+});
+const descriptionItems = computed(() => {
+    const text = product.value?.description || '';
+    const normalized = text
+        .replace(/<[^>]*>/g, '')
+        .split(/\r?\n|\. /)
+        .map((item) => item.trim())
+        .filter(Boolean);
+
+    return normalized.length ? normalized.slice(0, 5) : ['Sản phẩm chưa có mô tả'];
+});
+const specifications = computed(() => [
+    ['Brand', brandName.value],
+    ['Category', categoryName.value],
+    ['SKU', selectedVariant.value?.sku || 'Dang cap nhat'],
+    ['Variant', getVariantLabel(selectedVariant.value)],
+]);
+
+const fetchProduct = async () => {
+    isLoading.value = true;
+    errorMessage.value = '';
+
+    try {
+        const response = await api.get(`/products/${route.params.slug}`);
+
+        if (response.data?.success) {
+            product.value = response.data.data;
+            selectedImage.value = response.data.data.thumbnail;
+            selectedVariantId.value = response.data.data.variants?.[0]?.id || null;
+        } else {
+            product.value = null;
+            errorMessage.value = 'Khong the tai thong tin san pham.';
+        }
+    } catch (error) {
+        product.value = null;
+        errorMessage.value = 'San pham khong ton tai hoac chua duoc xuat ban.';
+        console.error('Loi khi lay chi tiet san pham:', error);
+    } finally {
+        isLoading.value = false;
+    }
+};
+
+const formatPrice = (price) => {
+    const numericPrice = Number(price || 0);
+
+    if (!numericPrice) {
+        return 'Lien he';
+    }
+
+    return new Intl.NumberFormat('vi-VN', {
+        style: 'currency',
+        currency: 'VND',
+        maximumFractionDigits: 0,
+    }).format(numericPrice);
+};
+
+onMounted(fetchProduct);
+
+watch(
+    () => route.params.slug,
+    fetchProduct,
+);
+</script>
+
+<template>
+    <section class="pdp-page">
+        <div v-if="isLoading" class="pdp-state">Đang tải sản phẩm...</div>
+        <div v-else-if="errorMessage" class="pdp-state is-error">{{ errorMessage }}</div>
+
+        <div v-else-if="product" class="pdp-shell">
+            <aside class="pdp-gallery" aria-label="Product images">
+                <div class="pdp-gallery__main">
+                    <img :src="selectedImage" :alt="product.name" />
+                </div>
+
+                <div class="pdp-gallery__thumbs">
+                    <button
+                        v-for="(image, index) in productImages"
+                        :key="`${image}-${index}`"
+                        type="button"
+                        class="pdp-thumb"
+                        :class="{ 'is-active': selectedImage === image && index === 0 }"
+                        @click="selectedImage = image"
+                    >
+                        <img :src="image" :alt="`${product.name} ${index + 1}`" />
+                    </button>
+                </div>
+
+                <a href="#" class="pdp-gallery__link">Click to see full view</a>
+            </aside>
+
+            <main class="pdp-details">
+                <RouterLink
+                    v-if="brandSlug"
+                    class="pdp-store"
+                    :to="{ name: 'ProductList', query: { brand: brandSlug } }"
+                >
+                    Visit the {{ brandName }} Store
+                </RouterLink>
+                <span v-else class="pdp-store">Visit the {{ brandName }} Store</span>
+                <h1>{{ product.name }}</h1>
+
+                <div class="pdp-rating">
+                    <span>4.7</span>
+                    <span class="pdp-stars">★★★★★</span>
+                    <a href="#">121 ratings</a>
+                    <span>|</span>
+                    <a href="#">Search this page</a>
+                </div>
+
+                <p class="pdp-bought"><strong>10K+</strong> bought in past month</p>
+
+                <hr />
+
+                <div class="pdp-price">{{ formatPrice(activePrice) }}</div>
+                <p class="pdp-shipping">FREE International Returns</p>
+                <p class="pdp-muted">$55.87 Phí vận chuyển</p>
+
+                <section v-if="variantLabels.length" class="pdp-options">
+                    <h2>Options</h2>
+                    <div class="pdp-option-grid">
+                        <button
+                            v-for="variant in variantLabels"
+                            :key="variant.id"
+                            type="button"
+                            class="pdp-option"
+                            :class="{ 'is-selected': selectedVariantId === variant.id }"
+                            @click="selectedVariantId = variant.id"
+                        >
+                            <span>{{ variant.label }}</span>
+                            <small>{{ formatPrice(variant.price) }}</small>
+                        </button>
+                    </div>
+                </section>
+
+                <dl class="pdp-specs">
+                    <template v-for="[label, value] in specifications" :key="label">
+                        <dt>{{ label }}</dt>
+                        <dd>{{ value }}</dd>
+                    </template>
+                </dl>
+
+                <section class="pdp-about">
+                    <h2>About this item</h2>
+                    <ul>
+                        <li v-for="item in descriptionItems" :key="item">{{ item }}</li>
+                    </ul>
+                </section>
+            </main>
+
+            <aside class="pdp-buybox" aria-label="Purchase options">
+                <div class="pdp-buybox__price">{{ formatPrice(activePrice) }}</div>
+                <p class="pdp-muted">$55.87 Shipping</p>
+                <p class="pdp-delivery">Delivery <strong>Wednesday, June 24</strong></p>
+                <a href="#" class="pdp-location">Deliver to Vietnam</a>
+                <p class="pdp-stock">In Stock</p>
+
+                <label class="pdp-qty">
+                    <span>Quantity:</span>
+                    <select v-model="quantity">
+                        <option v-for="value in 10" :key="value" :value="value">{{ value }}</option>
+                    </select>
+                </label>
+
+                <button type="button" class="pdp-cart">Add to cart</button>
+                <button type="button" class="pdp-buy">Buy Now</button>
+
+                <dl class="pdp-seller">
+                    <dt>Shipper / Seller</dt>
+                    <dd>WorkHub</dd>
+                    <dt>Returns</dt>
+                    <dd>FREE 30-day refund/replacement</dd>
+                </dl>
+
+                <button type="button" class="pdp-secondary">Add to List</button>
+            </aside>
+        </div>
+    </section>
+</template>
+
+<style scoped>
+.pdp-page {
+    min-height: 100vh;
+    background: #ffffff;
+    color: #0f1111;
+    font-family: Arial, Helvetica, sans-serif;
+}
+
+.pdp-shell {
+    display: grid;
+    grid-template-columns: minmax(300px, 42vw) minmax(360px, 1fr) 300px;
+    gap: 28px;
+    max-width: 1520px;
+    margin: 0 auto;
+    padding: 24px 28px 56px;
+}
+
+.pdp-gallery {
+    position: sticky;
+    top: 16px;
+    align-self: start;
+}
+
+.pdp-gallery__main {
+    display: grid;
+    min-height: 560px;
+    place-items: center;
+    background: #ffffff;
+}
+
+.pdp-gallery__main img {
+    width: min(100%, 520px);
+    max-height: 540px;
+    object-fit: contain;
+}
+
+.pdp-gallery__thumbs {
+    display: grid;
+    grid-template-columns: repeat(6, 76px);
+    justify-content: center;
+    gap: 10px;
+    margin-top: 18px;
+}
+
+.pdp-thumb {
+    display: grid;
+    width: 76px;
+    height: 76px;
+    place-items: center;
+    border: 1px solid #d5d9d9;
+    border-radius: 8px;
+    background: #ffffff;
+    cursor: pointer;
+}
+
+.pdp-thumb.is-active {
+    border-color: #007185;
+    box-shadow: 0 0 0 2px #c8f3fa;
+}
+
+.pdp-thumb img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+}
+
+.pdp-gallery__link,
+.pdp-store,
+.pdp-rating a,
+.pdp-location {
+    color: #007185;
+    text-decoration: none;
+}
+
+.pdp-gallery__link {
+    display: block;
+    margin-top: 12px;
+    text-align: center;
+    font-size: 14px;
+}
+
+.pdp-details h1 {
+    margin: 4px 0 8px;
+    font-size: 26px;
+    font-weight: 400;
+    line-height: 1.25;
+}
+
+.pdp-store,
+.pdp-rating,
+.pdp-bought,
+.pdp-muted,
+.pdp-shipping,
+.pdp-location,
+.pdp-delivery,
+.pdp-seller {
+    font-size: 14px;
+}
+
+.pdp-rating {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 6px;
+}
+
+.pdp-stars {
+    color: #ff9900;
+    letter-spacing: 0;
+}
+
+.pdp-bought {
+    margin: 14px 0 8px;
+}
+
+.pdp-details hr {
+    border: 0;
+    border-top: 1px solid #d5d9d9;
+    margin: 12px 0 18px;
+}
+
+.pdp-price,
+.pdp-buybox__price {
+    font-size: 30px;
+    line-height: 1;
+}
+
+.pdp-shipping,
+.pdp-location {
+    margin: 18px 0 6px;
+}
+
+.pdp-muted {
+    margin: 0 0 8px;
+    color: #565959;
+    line-height: 1.45;
+}
+
+.pdp-options {
+    margin-top: 18px;
+}
+
+.pdp-options h2,
+.pdp-about h2 {
+    margin: 0 0 10px;
+    font-size: 20px;
+}
+
+.pdp-option-grid {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.pdp-option {
+    min-width: 112px;
+    border: 1px solid #8d9096;
+    border-radius: 8px;
+    background: #ffffff;
+    padding: 9px 12px;
+    text-align: left;
+    cursor: pointer;
+}
+
+.pdp-option span,
+.pdp-option small {
+    display: block;
+}
+
+.pdp-option.is-selected {
+    border-color: #007185;
+    box-shadow: 0 0 0 2px #c8f3fa;
+}
+
+.pdp-keep span {
+    display: grid;
+    width: 22px;
+    height: 22px;
+    place-items: center;
+    border-radius: 50%;
+    background: #008a00;
+    color: #ffffff;
+}
+
+.pdp-specs {
+    display: grid;
+    grid-template-columns: 150px 1fr;
+    gap: 10px 18px;
+    margin: 20px 0;
+    font-size: 15px;
+}
+
+.pdp-specs dt {
+    font-weight: 700;
+}
+
+.pdp-specs dd {
+    margin: 0;
+}
+
+.pdp-about {
+    border-top: 1px solid #d5d9d9;
+    padding-top: 18px;
+}
+
+.pdp-about ul {
+    margin: 0;
+    padding-left: 20px;
+    line-height: 1.45;
+}
+
+.pdp-buybox {
+    align-self: start;
+    border: 1px solid #d5d9d9;
+    border-radius: 8px;
+    padding: 18px;
+}
+
+.pdp-delivery {
+    margin: 8px 0 14px;
+}
+
+.pdp-stock {
+    margin: 18px 0 10px;
+    color: #007600;
+    font-size: 20px;
+}
+
+.pdp-qty {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    border: 1px solid #8d9096;
+    border-radius: 8px;
+    padding: 6px 10px;
+}
+
+.pdp-qty select {
+    flex: 1;
+    border: 0;
+    background: transparent;
+    font-size: 14px;
+}
+
+.pdp-cart,
+.pdp-buy,
+.pdp-secondary {
+    width: 100%;
+    min-height: 36px;
+    border-radius: 999px;
+    padding: 0 16px;
+    font-size: 14px;
+    cursor: pointer;
+}
+
+.pdp-cart {
+    margin-top: 12px;
+    border: 1px solid #ffd814;
+    background: #ffd814;
+}
+
+.pdp-buy {
+    margin-top: 10px;
+    border: 1px solid #ffa41c;
+    background: #ffa41c;
+}
+
+.pdp-secondary {
+    margin-top: 12px;
+    border: 1px solid #8d9096;
+    background: #ffffff;
+}
+
+.pdp-seller {
+    display: grid;
+    grid-template-columns: 90px 1fr;
+    gap: 10px;
+    margin: 18px 0;
+}
+
+.pdp-seller dt {
+    color: #565959;
+}
+
+.pdp-seller dd {
+    margin: 0;
+}
+
+.pdp-state {
+    display: grid;
+    min-height: 420px;
+    place-items: center;
+    color: #565959;
+    font-size: 16px;
+}
+
+.pdp-state.is-error {
+    color: #b42318;
+}
+
+@media (max-width: 1180px) {
+    .pdp-shell {
+        grid-template-columns: minmax(260px, 42%) minmax(0, 1fr);
+    }
+
+    .pdp-buybox {
+        grid-column: 2;
+    }
+}
+
+@media (max-width: 820px) {
+    .pdp-shell {
+        display: block;
+        padding: 16px;
+    }
+
+    .pdp-gallery {
+        position: static;
+    }
+
+    .pdp-gallery__main {
+        min-height: 360px;
+    }
+
+    .pdp-gallery__thumbs {
+        grid-template-columns: repeat(4, 68px);
+    }
+
+    .pdp-thumb {
+        width: 68px;
+        height: 68px;
+    }
+
+    .pdp-details h1 {
+        font-size: 22px;
+    }
+
+    .pdp-buybox {
+        margin-top: 22px;
+    }
+}
+</style>

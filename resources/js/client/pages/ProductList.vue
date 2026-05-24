@@ -70,7 +70,7 @@ const resultRange = computed(() => {
     return `${start}-${end} trong ${meta.value.total} sản phẩm`;
 });
 
-const productUrl = () => '#';
+const productUrl = (product) => (product.slug ? `/products/${product.slug}` : '#');
 const parseCommaQuery = (value) => {
     if (!value) {
         return [];

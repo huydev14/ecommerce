@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Http\Resources\ProductDetailResource;
 use App\Http\Resources\ProductResource;
 use App\Models\Brand;
 use App\Models\Category;
@@ -63,6 +64,20 @@ class ProductController extends Controller
         return response()->json([
             'success' => true,
             'data' => ProductResource::collection($products),
+        ]);
+    }
+
+    public function show(string $slug)
+    {
+        $product = Product::query()
+            ->where('slug', $slug)
+            ->where('status', 'published')
+            ->with(['brand', 'category', 'variants'])
+            ->firstOrFail();
+
+        return response()->json([
+            'success' => true,
+            'data' => new ProductDetailResource($product),
         ]);
     }
 }
