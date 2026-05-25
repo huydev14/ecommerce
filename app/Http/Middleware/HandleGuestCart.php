@@ -1,4 +1,5 @@
 <?php
+
 namespace App\Http\Middleware;
 
 use Closure;
@@ -10,14 +11,19 @@ class HandleGuestCart
 {
     public function handle(Request $request, Closure $next): Response
     {
-        $response = $next($request);
-
-        // Skip if user is authenticated or already has cookie
-        if (auth()->check('api') || $request->hasCookie('guest_cart_token')) {
-            return $response;
+        // Case 1: User is authenticated
+        if (auth('api')->check() || $request->hasCookie('guest_cart_token')) {
+            return $next($request);
         }
 
+        // Case 2: User is not authenticated and no guest_cart_token cookie
         $guestToken = Str::uuid()->toString();
-        return $response->cookie('guest_cart_token', $guestToken, 60 * 24 * 30, '/', null, false, true);
+        $request->merge(['guest_cart_token' => $guestToken]);
+
+        $response = $next($request);
+
+        return $response->cookie(
+            'guest_cart_token', $guestToken,60 * 24 * 30, // 30 days
+        );
     }
 }
