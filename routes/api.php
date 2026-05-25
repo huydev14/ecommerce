@@ -2,6 +2,8 @@
 
 use App\Http\Controllers\Api\Auth\AuthController;
 use App\Http\Controllers\Api\Auth\OAuthController;
+
+use App\Http\Controllers\Api\CartController;
 use App\Http\Controllers\Api\CategoryController;
 use App\Http\Controllers\Api\ProductController;
 use Illuminate\Support\Facades\Route;
@@ -38,4 +40,10 @@ Route::prefix('v1')->group(function () {
     Route::get('/products', [ProductController::class, 'index']);
     Route::get('/products/new-arrivals', [ProductController::class, 'newArrivals']);
     Route::get('/products/{slug}', [ProductController::class, 'show']);
+
+    // ----- Cart API -------------------------
+    Route::get('/cart', [CartController::class, 'index']);
+    Route::post('/cart/items', [CartController::class, 'store']);
+    Route::put('/cart/items/{variantId}', [CartController::class, 'update']);
+    Route::delete('/cart/items/{variantId}', [CartController::class, 'destroy']);
 });

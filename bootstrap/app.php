@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Middleware\HandleGuestCart;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
@@ -16,6 +17,9 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->trustProxies(at: '*');
         $middleware->web(append: [
             SetLocale::class
+        ]);
+        $middleware->api(append: [
+            HandleGuestCart::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {

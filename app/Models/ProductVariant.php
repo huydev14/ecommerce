@@ -49,8 +49,15 @@ class ProductVariant extends Model
         return $this->belongsTo(Tax::class);
     }
 
-    public function inventory()
+    public function stocks()
     {
-        return $this->hasOne(Inventory::class, 'variant_id');
+        return $this->hasMany(Stock::class, 'product_variant_id');
+    }
+    
+    public function getAvailableStockAttribute()
+    {
+        return $this->stocks->sum(function ($stock) {
+            return $stock->quantity - $stock->reserved_quantity;
+        });
     }
 }
