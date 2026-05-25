@@ -13,7 +13,7 @@ class HandleGuestCart
         $response = $next($request);
 
         // Skip if user is authenticated or already has cookie
-        if (auth()->check() || $request->hasCookie('guest_cart_token')) {
+        if (auth()->check('api') || $request->hasCookie('guest_cart_token')) {
             return $response;
         }
 

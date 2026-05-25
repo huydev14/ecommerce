@@ -25,7 +25,7 @@ class AuthController extends Controller
 
     protected function guard()
     {
-        return Auth::guard('api_customer');
+        return Auth::guard('api');
     }
 
     public function checkEmail(Request $request)

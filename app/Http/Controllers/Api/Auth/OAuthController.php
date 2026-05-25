@@ -74,7 +74,7 @@ class OAuthController extends Controller
         }
 
         if ($type === 'customer') {
-            $token = auth('api_customer')->login($user);
+            $token = auth('api')->login($user);
             $cookie = cookie('refresh_token', $token, config('jwt.refresh_ttl'));
             return response()
                 ->view('auth.callback', compact('token', 'user'))
@@ -85,7 +85,7 @@ class OAuthController extends Controller
 
     private function handleProviderCallback($provider, $type)
     {
-        if ($type === 'customer'){
+        if ($type === 'customer') {
             $oauth = Socialite::driver($provider)->stateless()->user();
         } else {
             $oauth = Socialite::driver($provider)->user();

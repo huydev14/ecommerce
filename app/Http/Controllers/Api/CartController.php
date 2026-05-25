@@ -170,7 +170,7 @@ class CartController extends Controller
 
     private function getCart(Request $request)
     {
-        if (auth()->check()) {
+        if (auth()->check('api')) {
             return Cart::where('user_id', auth()->id())->first();
         }
 
@@ -184,7 +184,7 @@ class CartController extends Controller
 
     private function getOrCreateCart(Request $request): Cart
     {
-        if (auth()->check()) {
+        if (auth()->check('api')) {
             return Cart::firstOrCreate(['user_id' => auth()->id()]);
         }
 
