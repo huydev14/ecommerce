@@ -1,16 +1,33 @@
 <script setup>
-import { ref } from 'vue';
+import { computed, onMounted, ref } from 'vue';
 import { useRouter } from 'vue-router';
 import { useAuthStore } from '../stores/auth';
+import { useCartStore } from '../stores/cart';
 
 const authStore = useAuthStore();
+const cartStore = useCartStore();
 const router = useRouter();
 const searchTerm = ref('fitness clothing');
+const cartPreviewItems = computed(() => cartStore.items.slice(0, 3));
 
 const submitSearch = () => {
     const query = searchTerm.value.trim() || 'fitness clothing';
     router.push({ name: 'ProductList', query: { q: query } });
 };
+
+const formatPrice = (price) => {
+    const numericPrice = Number(price || 0);
+
+    return new Intl.NumberFormat('vi-VN', {
+        style: 'currency',
+        currency: 'VND',
+        maximumFractionDigits: 0,
+    }).format(numericPrice);
+};
+
+onMounted(() => {
+    cartStore.fetchCart().catch(() => {});
+});
 </script>
 
 <template>
@@ -30,7 +47,9 @@ const submitSearch = () => {
             <div
                 class="tw-hidden tw-flex-none tw-cursor-pointer tw-flex-col tw-rounded-sm tw-border tw-border-transparent tw-px-2 tw-py-1 hover:tw-border-white lg:tw-flex"
             >
-                <span class="tw-pl-4 tw-text-[12px] tw-leading-3 tw-text-[#cccccc]">Giao đến {{ authStore.isLoggedIn && authStore.user ? authStore.user.name : 'Huy' }}</span>
+                <span class="tw-pl-4 tw-text-[12px] tw-leading-3 tw-text-[#cccccc]"
+                    >Giao đến {{ authStore.isLoggedIn && authStore.user ? authStore.user.name : 'Huy' }}</span
+                >
                 <div class="tw-flex tw-items-center">
                     <svg
                         xmlns="http://www.w3.org/2000/svg"
@@ -97,7 +116,9 @@ const submitSearch = () => {
                     :to="{ name: 'MyAccount' }"
                     class="tw-flex tw-h-full tw-cursor-pointer tw-flex-col tw-justify-center tw-rounded-sm tw-border tw-border-transparent tw-px-2 tw-py-1 hover:tw-border-white"
                 >
-                    <span class="tw-text-[12px] tw-leading-3 tw-text-white">Xin chào, {{ authStore.isLoggedIn && authStore.user ? authStore.user.name : 'Đăng nhập' }}</span>
+                    <span class="tw-text-[12px] tw-leading-3 tw-text-white"
+                        >Xin chào, {{ authStore.isLoggedIn && authStore.user ? authStore.user.name : 'Đăng nhập' }}</span
+                    >
                     <span class="tw-flex tw-items-center tw-text-[14px] tw-font-bold tw-leading-4 tw-text-white">
                         Tài khoản & Danh sách
                         <svg
@@ -120,13 +141,24 @@ const submitSearch = () => {
                     class="tw-invisible tw-absolute tw-right-0 tw-top-[48px] tw-z-[90] tw-w-[400px] tw-rounded-sm tw-bg-white tw-p-4 tw-text-black tw-opacity-0 tw-shadow-xl tw-transition-all tw-duration-200 group-hover:tw-visible group-hover:tw-opacity-100"
                 >
                     <!-- Triangle pointing up -->
-                    <div class="tw-absolute -tw-top-2 tw-right-6 tw-h-4 tw-w-4 tw-rotate-45 tw-bg-white tw-shadow-[-2px_-2px_2px_rgba(0,0,0,0.05)]"></div>
+                    <div
+                        class="tw-absolute -tw-top-2 tw-right-6 tw-h-4 tw-w-4 tw-rotate-45 tw-bg-white tw-shadow-[-2px_-2px_2px_rgba(0,0,0,0.05)]"
+                    ></div>
 
-                    <div v-if="!authStore.isLoggedIn" class="tw-mb-4 tw-flex tw-flex-col tw-items-center tw-border-b tw-border-gray-200 tw-pb-4">
-                        <router-link :to="{ name: 'Login' }" class="tw-mb-2 tw-w-48 tw-rounded-md  tw-py-1.5 tw-text-center a-button-primary">
+                    <div
+                        v-if="!authStore.isLoggedIn"
+                        class="tw-mb-4 tw-flex tw-flex-col tw-items-center tw-border-b tw-border-gray-200 tw-pb-4"
+                    >
+                        <router-link
+                            :to="{ name: 'Login' }"
+                            class="a-button-primary tw-mb-2 tw-w-48 tw-rounded-md tw-py-1.5 tw-text-center"
+                        >
                             Đăng nhập
                         </router-link>
-                        <div class="tw-text-[11px] tw-text-gray-600">Khách hàng mới? <a href="#" class="tw-text-blue-600 hover:tw-text-[#c45500] hover:tw-underline">Bắt đầu tại đây.</a></div>
+                        <div class="tw-text-[11px] tw-text-gray-600">
+                            Khách hàng mới?
+                            <a href="#" class="tw-text-blue-600 hover:tw-text-[#c45500] hover:tw-underline">Bắt đầu tại đây.</a>
+                        </div>
                     </div>
 
                     <div class="tw-flex tw-justify-between tw-text-[13px]">
@@ -142,15 +174,21 @@ const submitSearch = () => {
                             <h3 class="tw-mb-2 tw-text-[16px] tw-font-bold">Tài khoản của bạn</h3>
                             <ul class="tw-space-y-1 tw-text-gray-600">
                                 <li>
-                                    <router-link :to="{ name: 'MyAccount' }" class="hover:tw-text-[#c45500] hover:tw-underline">Tài khoản</router-link>
+                                    <router-link :to="{ name: 'MyAccount' }" class="hover:tw-text-[#c45500] hover:tw-underline"
+                                        >Tài khoản</router-link
+                                    >
                                 </li>
                                 <li>
-                                    <router-link :to="{ name: 'MyAccountOrders' }" class="hover:tw-text-[#c45500] hover:tw-underline">Đơn hàng</router-link>
+                                    <router-link :to="{ name: 'MyAccountOrders' }" class="hover:tw-text-[#c45500] hover:tw-underline"
+                                        >Đơn hàng</router-link
+                                    >
                                 </li>
                                 <li><a href="#" class="hover:tw-text-[#c45500] hover:tw-underline">Đề xuất của bạn</a></li>
                                 <li><a href="#" class="hover:tw-text-[#c45500] hover:tw-underline">Lịch sử duyệt web</a></li>
                                 <li v-if="authStore.isLoggedIn" class="tw-mt-2 tw-border-t tw-border-gray-100 tw-pt-2">
-                                    <button @click="authStore.logout()" class="hover:tw-text-[#c45500] hover:tw-underline">Đăng xuất</button>
+                                    <button @click="authStore.logout()" class="hover:tw-text-[#c45500] hover:tw-underline">
+                                        Đăng xuất
+                                    </button>
                                 </li>
                             </ul>
                         </div>
@@ -166,33 +204,101 @@ const submitSearch = () => {
                 <span class="tw-flex tw-items-center tw-text-[14px] tw-font-bold tw-leading-4 tw-text-white">& Đơn hàng</span>
             </router-link>
 
-            <a
-                href="#"
-                class="tw-flex tw-h-[50px] tw-cursor-pointer tw-items-end tw-rounded-sm tw-border tw-border-transparent tw-px-2 tw-py-1 hover:tw-border-white"
-            >
-                <div class="tw-relative tw-flex tw-items-end tw-pr-1">
-                    <span
-                        class="tw-absolute tw-left-[10px] tw-top-[-5px] tw-w-full tw-text-center tw-text-[16px] tw-font-bold tw-leading-none tw-text-[#f59e0b]"
-                    >
-                        0
-                    </span>
-                    <svg
-                        xmlns="http://www.w3.org/2000/svg"
-                        class="tw-h-8 tw-w-8 tw-text-white"
-                        fill="none"
-                        viewBox="0 0 24 24"
-                        stroke="currentColor"
-                    >
-                        <path
-                            stroke-linecap="round"
-                            stroke-linejoin="round"
-                            stroke-width="2"
-                            d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"
-                        />
-                    </svg>
+            <div class="tw-group tw-relative tw-h-[50px]">
+                <router-link
+                    :to="{ name: 'Cart' }"
+                    class="tw-flex tw-h-[50px] tw-cursor-pointer tw-items-end tw-rounded-sm tw-border tw-border-transparent tw-px-2 tw-py-1 hover:tw-border-white"
+                >
+                    <div class="tw-relative tw-flex tw-items-end tw-pr-1">
+                        <span
+                            class="tw-absolute tw-left-[10px] tw-top-[-5px] tw-w-full tw-text-center tw-text-[16px] tw-font-bold tw-leading-none tw-text-[#f59e0b]"
+                        >
+                            {{ cartStore.totalItems }}
+                        </span>
+                        <svg
+                            xmlns="http://www.w3.org/2000/svg"
+                            class="tw-h-8 tw-w-8 tw-text-white"
+                            fill="none"
+                            viewBox="0 0 24 24"
+                            stroke="currentColor"
+                        >
+                            <path
+                                stroke-linecap="round"
+                                stroke-linejoin="round"
+                                stroke-width="2"
+                                d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"
+                            />
+                        </svg>
+                    </div>
+                    <span class="tw-mb-1 tw-ml-1 tw-text-[14px] tw-font-bold tw-text-white">Cart</span>
+                </router-link>
+
+                <div
+                    class="tw-invisible tw-absolute tw-right-0 tw-top-[48px] tw-z-[90] tw-hidden tw-w-[360px] tw-rounded-sm tw-bg-white tw-p-4 tw-text-[#0f1111] tw-opacity-0 tw-shadow-xl tw-transition-all tw-duration-200 group-hover:tw-visible group-hover:tw-opacity-100 md:tw-block"
+                >
+                    <div
+                        class="tw-absolute -tw-top-2 tw-right-8 tw-h-4 tw-w-4 tw-rotate-45 tw-bg-white tw-shadow-[-2px_-2px_2px_rgba(0,0,0,0.05)]"
+                    ></div>
+
+                    <div class="tw-mb-3 tw-flex tw-items-center tw-justify-between tw-border-b tw-border-gray-200 tw-pb-3">
+                        <div>
+                            <h3 class="tw-m-0 tw-text-[18px] tw-font-bold">Giỏ hàng</h3>
+                            <p class="tw-m-0 tw-text-[12px] tw-text-gray-600">{{ cartStore.totalItems }} sản phẩm</p>
+                        </div>
+                        <div class="tw-text-right tw-text-[14px] tw-font-bold">{{ formatPrice(cartStore.subtotal) }}</div>
+                    </div>
+
+                    <div v-if="cartStore.isLoading" class="tw-py-8 tw-text-center tw-text-[13px] tw-text-gray-600">
+                        Đang tải giỏ hàng...
+                    </div>
+                    <div v-else-if="cartStore.isEmpty" class="tw-py-8 tw-text-center">
+                        <p class="tw-mb-3 tw-text-[14px] tw-text-gray-700">Giỏ hàng của bạn đang trống.</p>
+                        <router-link
+                            :to="{ name: 'ProductList' }"
+                            class="tw-rounded-full tw-bg-[#ffd814] tw-px-4 tw-py-2 tw-text-[13px] tw-text-[#0f1111] hover:tw-bg-[#f7ca00]"
+                        >
+                            Mua sắm ngay
+                        </router-link>
+                    </div>
+
+                    <template v-else>
+                        <div class="tw-grid tw-gap-3">
+                            <div
+                                v-for="item in cartPreviewItems"
+                                :key="item.product_variant_id"
+                                class="tw-grid tw-grid-cols-[64px_1fr] tw-gap-3"
+                            >
+                                <img
+                                    :src="item.thumbnail"
+                                    :alt="item.product_name"
+                                    class="tw-h-16 tw-w-16 tw-rounded tw-border tw-border-gray-200 tw-object-cover"
+                                />
+                                <div class="tw-min-w-0">
+                                    <router-link
+                                        :to="{ name: 'Cart' }"
+                                        class="tw-block tw-truncate tw-text-[13px] tw-font-semibold tw-text-[#0f1111] hover:tw-text-[#c45500]"
+                                    >
+                                        {{ item.product_name }}
+                                    </router-link>
+                                    <p class="tw-m-0 tw-text-[12px] tw-text-gray-600">SL: {{ item.quantity }}</p>
+                                    <p class="tw-m-0 tw-text-[13px] tw-font-bold">{{ formatPrice(item.line_total) }}</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <p v-if="cartStore.items.length > cartPreviewItems.length" class="tw-mt-3 tw-text-[12px] tw-text-gray-600">
+                            +{{ cartStore.items.length - cartPreviewItems.length }} sản phẩm khác trong giỏ hàng
+                        </p>
+
+                        <router-link
+                            :to="{ name: 'Cart' }"
+                            class="tw-mt-4 tw-block tw-w-full tw-rounded-full tw-bg-[#ffd814] tw-py-2 tw-text-center tw-text-[14px] tw-font-semibold tw-text-[#0f1111] hover:tw-bg-[#f7ca00]"
+                        >
+                            Xem giỏ hàng
+                        </router-link>
+                    </template>
                 </div>
-                <span class="tw-mb-1 tw-ml-1 tw-text-[14px] tw-font-bold tw-text-white">Cart</span>
-            </a>
+            </div>
         </div>
 
         <div class="tw-bg-[#131921] tw-px-2 tw-pb-2 md:tw-hidden">
@@ -200,7 +306,12 @@ const submitSearch = () => {
                 @submit.prevent="submitSearch"
                 class="tw-flex tw-h-[40px] tw-overflow-hidden tw-rounded-md tw-bg-white focus-within:tw-ring-2 focus-within:tw-ring-[#f3a847]"
             >
-                <input v-model="searchTerm" type="text" placeholder="Tìm kiếm sản phẩm..." class="tw-flex-grow tw-px-3 tw-text-black focus:tw-outline-none" />
+                <input
+                    v-model="searchTerm"
+                    type="text"
+                    placeholder="Tìm kiếm sản phẩm..."
+                    class="tw-flex-grow tw-px-3 tw-text-black focus:tw-outline-none"
+                />
                 <button type="submit" class="tw-flex tw-w-[45px] tw-items-center tw-justify-center tw-bg-[#febd69]">
                     <svg
                         xmlns="http://www.w3.org/2000/svg"

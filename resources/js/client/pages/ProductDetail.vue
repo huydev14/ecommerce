@@ -2,8 +2,10 @@
 import { computed, onMounted, ref, watch } from 'vue';
 import { useRoute } from 'vue-router';
 import api from '@/services/api';
+import { useCartStore } from '@/stores/cart';
 
 const route = useRoute();
+const cartStore = useCartStore();
 
 const product = ref(null);
 const isLoading = ref(false);
@@ -11,9 +13,14 @@ const errorMessage = ref('');
 const selectedImage = ref('');
 const selectedVariantId = ref(null);
 const quantity = ref(1);
+const isAddingToCart = ref(false);
+const cartMessage = ref('');
+const cartError = ref('');
 
 const variants = computed(() => product.value?.variants || []);
-const selectedVariant = computed(() => variants.value.find((variant) => variant.id === selectedVariantId.value) || variants.value[0] || null);
+const selectedVariant = computed(
+    () => variants.value.find((variant) => variant.id === selectedVariantId.value) || variants.value[0] || null,
+);
 const activePrice = computed(() => selectedVariant.value?.price || product.value?.price || 0);
 const brandName = computed(() => product.value?.brand?.name || 'WorkHub');
 const brandSlug = computed(() => product.value?.brand?.slug || '');
@@ -27,12 +34,7 @@ const productImages = computed(() => {
 const getVariantLabel = (variant, fallback = 'Mặc định') => {
     const attributes = variant?.attributes || {};
 
-    return attributes.variant_name
-        || attributes.name
-        || attributes.size
-        || attributes.color
-        || variant?.sku
-        || fallback;
+    return attributes.variant_name || attributes.name || attributes.size || attributes.color || variant?.sku || fallback;
 };
 
 const variantLabels = computed(() => {
@@ -97,12 +99,30 @@ const formatPrice = (price) => {
     }).format(numericPrice);
 };
 
+const addToCart = async () => {
+    cartMessage.value = '';
+    cartError.value = '';
+
+    if (!selectedVariant.value?.id) {
+        cartError.value = 'Vui lòng chọn phân loại sản phẩm.';
+        return;
+    }
+
+    isAddingToCart.value = true;
+
+    try {
+        await cartStore.addItem(selectedVariant.value.id, Number(quantity.value || 1));
+        cartMessage.value = 'Đã thêm sản phẩm vào giỏ hàng.';
+    } catch (error) {
+        cartError.value = error.response?.data?.message || 'Không thể thêm sản phẩm vào giỏ hàng.';
+    } finally {
+        isAddingToCart.value = false;
+    }
+};
+
 onMounted(fetchProduct);
 
-watch(
-    () => route.params.slug,
-    fetchProduct,
-);
+watch(() => route.params.slug, fetchProduct);
 </script>
 
 <template>
@@ -133,11 +153,7 @@ watch(
             </aside>
 
             <main class="pdp-details">
-                <RouterLink
-                    v-if="brandSlug"
-                    class="pdp-store"
-                    :to="{ name: 'ProductList', query: { brand: brandSlug } }"
-                >
+                <RouterLink v-if="brandSlug" class="pdp-store" :to="{ name: 'ProductList', query: { brand: brandSlug } }">
                     Visit the {{ brandName }} Store
                 </RouterLink>
                 <span v-else class="pdp-store">Visit the {{ brandName }} Store</span>
@@ -205,8 +221,13 @@ watch(
                     </select>
                 </label>
 
-                <button type="button" class="pdp-cart">Add to cart</button>
+                <button type="button" class="pdp-cart" :disabled="isAddingToCart" @click="addToCart">
+                    {{ isAddingToCart ? 'Adding...' : 'Add to cart' }}
+                </button>
                 <button type="button" class="pdp-buy">Buy Now</button>
+
+                <p v-if="cartMessage" class="pdp-cart-message">{{ cartMessage }}</p>
+                <p v-if="cartError" class="pdp-cart-message is-error">{{ cartError }}</p>
 
                 <dl class="pdp-seller">
                     <dt>Shipper / Seller</dt>
@@ -482,10 +503,26 @@ watch(
     background: #ffd814;
 }
 
+.pdp-cart:disabled {
+    cursor: not-allowed;
+    opacity: 0.7;
+}
+
 .pdp-buy {
     margin-top: 10px;
     border: 1px solid #ffa41c;
     background: #ffa41c;
+}
+
+.pdp-cart-message {
+    margin: 10px 0 0;
+    color: #007600;
+    font-size: 13px;
+    line-height: 1.4;
+}
+
+.pdp-cart-message.is-error {
+    color: #b42318;
 }
 
 .pdp-secondary {

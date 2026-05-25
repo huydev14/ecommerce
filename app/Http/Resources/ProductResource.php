@@ -25,6 +25,10 @@ class ProductResource extends JsonResource
             'price' => $this->whenLoaded('cheapestVariant', function () {
                 return $this->cheapestVariant->price;
             }, 0),
+
+            'product_variant_id' => $this->whenLoaded('cheapestVariant', function () {
+                return $this->cheapestVariant?->id;
+            }),
         ];
     }
 }

@@ -2,9 +2,11 @@
 import { computed, onMounted, ref, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import api from '@/services/api';
+import { useCartStore } from '@/stores/cart';
 
 const route = useRoute();
 const router = useRouter();
+const cartStore = useCartStore();
 
 const filters = [
     {
@@ -49,6 +51,8 @@ const meta = ref({
 });
 const isLoading = ref(false);
 const errorMessage = ref('');
+const addingProductIds = ref(new Set());
+const cartMessages = ref({});
 
 const categorySlug = computed(() => route.query.category || '');
 const searchQuery = computed(() => route.query.q || categorySlug.value || 'tất cả sản phẩm');
@@ -114,6 +118,39 @@ const formatPrice = (price) => {
     }).format(numericPrice);
 };
 
+const isAddingToCart = (product) => addingProductIds.value.has(product.id);
+
+const setCartMessage = (productId, message, type = 'success') => {
+    cartMessages.value = {
+        ...cartMessages.value,
+        [productId]: {
+            message,
+            type,
+        },
+    };
+};
+
+const addProductToCart = async (product) => {
+    if (!product.product_variant_id) {
+        setCartMessage(product.id, 'Sản phẩm chưa có phân loại để thêm vào giỏ.', 'error');
+        return;
+    }
+
+    addingProductIds.value = new Set(addingProductIds.value).add(product.id);
+    setCartMessage(product.id, '');
+
+    try {
+        await cartStore.addItem(product.product_variant_id, 1);
+        setCartMessage(product.id, 'Đã thêm vào giỏ hàng.');
+    } catch (error) {
+        setCartMessage(product.id, error.response?.data?.message || 'Không thể thêm vào giỏ hàng.', 'error');
+    } finally {
+        const nextAddingProductIds = new Set(addingProductIds.value);
+        nextAddingProductIds.delete(product.id);
+        addingProductIds.value = nextAddingProductIds;
+    }
+};
+
 const fetchProducts = async () => {
     isLoading.value = true;
     errorMessage.value = '';
@@ -150,10 +187,7 @@ const fetchProducts = async () => {
 
 onMounted(fetchProducts);
 
-watch(
-    () => [route.query.category, route.query.page, route.query.brand],
-    fetchProducts,
-);
+watch(() => [route.query.category, route.query.page, route.query.brand], fetchProducts);
 </script>
 
 <template>
@@ -178,11 +212,7 @@ watch(
 
                     <div v-if="brandOptions.length" class="filter-options">
                         <label v-for="brand in brandOptions" :key="brand.slug" class="filter-check">
-                            <input
-                                type="checkbox"
-                                :checked="selectedBrands.includes(brand.slug)"
-                                @change="toggleBrand(brand.slug)"
-                            />
+                            <input type="checkbox" :checked="selectedBrands.includes(brand.slug)" @change="toggleBrand(brand.slug)" />
                             <span>{{ brand.name }}</span>
                         </label>
                     </div>
@@ -229,9 +259,7 @@ watch(
             <main class="listing-results">
                 <header class="results-header">
                     <h1>Danh sách sản phẩm</h1>
-                    <p>
-                        Sản phẩm được lấy từ API và hiển thị theo danh mục nếu URL có tham số category.
-                    </p>
+                    <p>Sản phẩm được lấy từ API và hiển thị theo danh mục nếu URL có tham số category.</p>
                 </header>
 
                 <div v-if="isLoading" class="listing-state">Đang tải sản phẩm...</div>
@@ -254,7 +282,21 @@ watch(
                                 </div>
                                 <p class="product-bought">Sản phẩm đang bán trên WorkHub</p>
                                 <div class="product-price">{{ formatPrice(product.price) }}</div>
-                                <button type="button" class="cart-button">Thêm vào giỏ</button>
+                                <button
+                                    type="button"
+                                    class="cart-button"
+                                    :disabled="isAddingToCart(product)"
+                                    @click="addProductToCart(product)"
+                                >
+                                    {{ isAddingToCart(product) ? 'Đang thêm...' : 'Thêm vào giỏ' }}
+                                </button>
+                                <p
+                                    v-if="cartMessages[product.id]?.message"
+                                    class="cart-message"
+                                    :class="{ 'is-error': cartMessages[product.id]?.type === 'error' }"
+                                >
+                                    {{ cartMessages[product.id].message }}
+                                </p>
                             </div>
                         </article>
                     </div>
@@ -617,6 +659,22 @@ watch(
 .cart-button:hover {
     border-color: #f7ca00;
     background: #f7ca00;
+}
+
+.cart-button:disabled {
+    cursor: not-allowed;
+    opacity: 0.7;
+}
+
+.cart-message {
+    margin: 8px 0 0;
+    color: #007600;
+    font-size: 12px;
+    line-height: 1.35;
+}
+
+.cart-message.is-error {
+    color: #b42318;
 }
 
 .more-results {

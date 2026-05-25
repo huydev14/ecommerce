@@ -4,6 +4,7 @@ import { APP_CONFIG } from '@/config';
 
 const api = axios.create({
     baseURL: APP_CONFIG.apiUrl,
+    withCredentials: true,
     headers: {
         Accept: 'application/json',
     },
@@ -37,7 +38,7 @@ api.interceptors.response.use(
                 throw refreshError;
             }
         }
-       throw error;
+        throw error;
     },
 );
 export default api;

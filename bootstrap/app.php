@@ -15,12 +15,8 @@ return Application::configure(basePath: dirname(__DIR__))
     )
     ->withMiddleware(function (Middleware $middleware): void {
         $middleware->trustProxies(at: '*');
-        $middleware->web(append: [
-            SetLocale::class
-        ]);
-        $middleware->api(append: [
-            HandleGuestCart::class,
-        ]);
+        $middleware->web(append: [ SetLocale::class ]);
+        $middleware->api(append: [ HandleGuestCart::class ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         //
