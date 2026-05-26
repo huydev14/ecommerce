@@ -13,6 +13,18 @@ class CategorySeeder extends Seeder
      */
     public function run(): void
     {
+        Category::updateOrCreate(
+            ['slug' => 'other'],
+            [
+                'name' => 'Other',
+                'slug' => 'other',
+                'description' => 'Default category',
+                'parent_id' => null,
+                'is_active' => true,
+                'sort_order' => 0,
+            ]
+        );
+
         $categories = [
             'Điện tử' => ['Điện thoại', 'Laptop', 'Máy tính bảng', 'Máy ảnh', 'Phụ kiện'],
             'Thời trang' => ['Nam', 'Nữ', 'Trẻ em', 'Giày dép', 'Túi xách'],

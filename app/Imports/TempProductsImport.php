@@ -133,6 +133,10 @@ class TempProductsImport implements ToCollection, WithChunkReading, WithHeadingR
     private function normalizePayload($row, array $categoryData, array $brandsMap, array $unitsMap, array $taxesMap): array
     {
         $categoryName = trim($row[self::EXCEL_COL_CATEGORY] ?? '');
+        if ($categoryName === '') {
+            $categoryName = 'Other';
+        }
+
         $subCategoryName = trim($row[self::EXCEL_COL_SUB_CATEGORY] ?? '');
         $categoryKey = mb_strtolower($categoryName);
         $subCategoryKey = mb_strtolower($subCategoryName);
@@ -409,15 +413,7 @@ class TempProductsImport implements ToCollection, WithChunkReading, WithHeadingR
             return "{$parent}|{$child}";
         }
 
-        if ($parent !== '') {
-            return $parent;
-        }
-
-        if (!empty($payload['product']['category_name'])) {
-            return trim($payload['product']['category_name']);
-        }
-
-        return 'Other';
+        return $parent !== '' ? $parent : 'Other';
     }
 
     private function bulkCacheMissingMetadata(array $categories, array $brands, array $units, array $taxes): void
@@ -456,6 +452,7 @@ class TempProductsImport implements ToCollection, WithChunkReading, WithHeadingR
     {
         return [
             BeforeImport::class => function (BeforeImport $event) {
+                Redis::del("import_batch_{$this->batchId}_seen_skus");
 
                 $sheetRows = $event->getReader()->getTotalRows();
                 $totalRows = max(array_sum($sheetRows) - count($sheetRows), 0);
@@ -474,6 +471,7 @@ class TempProductsImport implements ToCollection, WithChunkReading, WithHeadingR
                 ]);
 
                 Cache::tags(["import_batch_{$this->batchId}"])->flush();
+                Redis::del("import_batch_{$this->batchId}_seen_skus");
             },
         ];
     }

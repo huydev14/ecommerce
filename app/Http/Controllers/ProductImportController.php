@@ -10,6 +10,7 @@ use App\Models\ImportProductRow;
 use App\Models\Warehouse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Redis;
 use Illuminate\Support\Facades\Storage;
 use Maatwebsite\Excel\Facades\Excel;
 
@@ -53,6 +54,8 @@ class ProductImportController extends Controller
             'status' => 'processing',
             'warehouse_id' => $request->warehouse_id,
         ]);
+
+        $this->clearImportRedisState((int) $batch->id);
 
         Excel::queueImport(new TempProductsImport($batch->id), $request->file('excel_file'));
 
@@ -158,6 +161,8 @@ class ProductImportController extends Controller
             $batch->delete();
         });
 
+        $this->clearImportRedisState((int) $batchId);
+
         return redirect()
             ->route('product-imports.index')
             ->with('success', __('product_import.cancel_success'));
@@ -230,5 +235,16 @@ class ProductImportController extends Controller
         $summary['total'] = $summary['categories'] + $summary['brands'] + $summary['units'] + $summary['taxes'];
 
         return $summary;
+    }
+
+    private function clearImportRedisState(int $batchId): void
+    {
+        Redis::del(
+            "import_batch_{$batchId}_seen_skus",
+            "import_batch_{$batchId}_missing_categories",
+            "import_batch_{$batchId}_missing_brands",
+            "import_batch_{$batchId}_missing_units",
+            "import_batch_{$batchId}_missing_taxes",
+        );
     }
 }

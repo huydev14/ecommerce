@@ -56,9 +56,11 @@ class Category extends Model
     {
         static::saved(function ($category) {
             Cache::forget('api_category_tree');
+            Cache::forget('category_map');
         });
         static::deleted(function ($category) {
             Cache::forget('api_category_tree');
+            Cache::forget('category_map');
         });
     }
 }

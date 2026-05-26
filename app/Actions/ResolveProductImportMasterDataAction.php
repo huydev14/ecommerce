@@ -24,6 +24,12 @@ class ResolveProductImportMasterDataAction
         $missingUnits = Redis::sMembers("import_batch_{$batchId}_missing_units") ?: [];
         $missingTaxes = Redis::sMembers("import_batch_{$batchId}_missing_taxes") ?: [];
 
+        $rowMissing = $this->missingMasterDataFromRows($batchId);
+        $missingCategories = $this->mergeMissingValues($missingCategories, $rowMissing['categories']);
+        $missingBrands = $this->mergeMissingValues($missingBrands, $rowMissing['brands']);
+        $missingUnits = $this->mergeMissingValues($missingUnits, $rowMissing['units']);
+        $missingTaxes = $this->mergeMissingValues($missingTaxes, $rowMissing['taxes']);
+
         $createdCategories = 0;
         $createdBrands = 0;
         $createdUnits = 0;
@@ -143,6 +149,77 @@ class ResolveProductImportMasterDataAction
             'percentage' => $this->resolutionPercentage($processedRows, $totalRowsToResolve),
             'status' => 'completed',
         ];
+    }
+
+    private function missingMasterDataFromRows(int $batchId): array
+    {
+        $missing = [
+            'categories' => [],
+            'brands' => [],
+            'units' => [],
+            'taxes' => [],
+        ];
+
+        ImportProductRow::where('import_batch_id', $batchId)
+            ->where('status', 'error')
+            ->orderBy('id')
+            ->chunkById(500, function ($rows) use (&$missing) {
+                foreach ($rows as $row) {
+                    $payload = is_array($row->data) ? $row->data : json_decode($row->data, true);
+                    if (!is_array($payload)) {
+                        continue;
+                    }
+
+                    $errorCodes = $payload['error_codes'] ?? [];
+
+                    if (in_array('missing_category', $errorCodes, true)) {
+                        $missing['categories'][] = $this->extractMissingCategory($payload);
+                    }
+
+                    if (in_array('missing_brand', $errorCodes, true)) {
+                        $missing['brands'][] = $payload['product']['brand_name'] ?? null;
+                    }
+
+                    if (in_array('missing_unit', $errorCodes, true)) {
+                        $missing['units'][] = $payload['variant']['unit_name'] ?? null;
+                    }
+
+                    if (in_array('missing_tax', $errorCodes, true)) {
+                        $missing['taxes'][] = $payload['variant']['tax'] ?? null;
+                    }
+                }
+            });
+
+        return $missing;
+    }
+
+    private function extractMissingCategory(array $payload): string
+    {
+        $parent = trim((string) ($payload['product']['parent_category_name'] ?? ''));
+        $child = trim((string) ($payload['product']['sub_category_name'] ?? ''));
+
+        if ($parent !== '' && $child !== '') {
+            return "{$parent}|{$child}";
+        }
+
+        if ($parent !== '') {
+            return $parent;
+        }
+
+        $categoryName = trim((string) ($payload['product']['category_name'] ?? ''));
+
+        return $categoryName !== '' ? $categoryName : 'Other';
+    }
+
+    private function mergeMissingValues(array ...$lists): array
+    {
+        return collect($lists)
+            ->flatten(1)
+            ->map(fn($value) => is_scalar($value) ? trim((string) $value) : null)
+            ->filter(fn($value) => $value !== null && $value !== '')
+            ->unique()
+            ->values()
+            ->all();
     }
 
     private function updateResolutionProgress(int $batchId, int $processedRows, int $totalRows): void
@@ -299,7 +376,8 @@ class ResolveProductImportMasterDataAction
             return 0;
         }
 
-        $created = $this->ensureParentCategories($parentNames);
+        $usedSlugs = [];
+        $created = $this->ensureParentCategories($parentNames, $usedSlugs);
 
         $parents = Category::query()
             ->whereNull('parent_id')
@@ -355,7 +433,7 @@ class ResolveProductImportMasterDataAction
 
         $createdChildren = Category::query()->insertOrIgnore($missingChildren->map(fn($item) => [
             'name' => $item['name'],
-            'slug' => $this->uniqueCategorySlug($item['name'], $item['parent_name']),
+            'slug' => $this->uniqueCategorySlug($item['name'], $item['parent_name'], $usedSlugs),
             'description' => null,
             'parent_id' => $item['parent_id'],
             'icon' => null,
@@ -369,7 +447,7 @@ class ResolveProductImportMasterDataAction
         return $created + $createdChildren;
     }
 
-    private function ensureParentCategories($parentNames): int
+    private function ensureParentCategories($parentNames, array &$usedSlugs = []): int
     {
         $existingModels = Category::query()
             ->whereNull('parent_id')
@@ -389,7 +467,7 @@ class ResolveProductImportMasterDataAction
 
         return Category::query()->insertOrIgnore($missing->map(fn($name) => [
             'name' => $name,
-            'slug' => $this->uniqueCategorySlug($name),
+            'slug' => $this->uniqueCategorySlug($name, null, $usedSlugs),
             'description' => null,
             'parent_id' => null,
             'icon' => null,
@@ -425,9 +503,20 @@ class ResolveProductImportMasterDataAction
         }
 
         if (empty($payload['product']['category_id'])) {
-            $categoryKey = $childName ? $parentName . '|' . $childName : ($parentName ?: $this->normalizeName('Khác'));
-            $payload['product']['category_id'] = $categoryMap[$categoryKey] ?? null;
-            $payload['product']['category_name'] = $payload['product']['category_name'] ?? $categoryKey;
+            if (!$parentName && !$childName) {
+                $parentName = $this->normalizeName('Other');
+                $payload['product']['category_name'] = 'Other';
+                $payload['product']['parent_category_name'] = 'Other';
+                $payload['product']['sub_category_name'] = null;
+            }
+
+            $categoryKey = $childName ? $parentName . '|' . $childName : $parentName;
+            $categoryId = $categoryMap[$categoryKey] ?? null;
+
+            if ($categoryId) {
+                $payload['product']['category_id'] = $categoryId;
+                $payload['product']['category_name'] = $payload['product']['category_name'] ?? $categoryKey;
+            }
         }
     }
 
@@ -478,6 +567,10 @@ class ResolveProductImportMasterDataAction
     private function normalizeName($name): ?string
     {
         $name = mb_strtolower(trim((string) $name));
+        $name = str_replace(['–', '—'], '-', $name);
+        $name = preg_replace('/\s+/u', ' ', $name);
+        $name = preg_replace('/\s*-\s*/u', '-', $name);
+        $name = preg_replace('/\s*\/\s*/u', '/', $name);
 
         return $name !== '' ? $name : null;
     }
