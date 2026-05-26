@@ -5,7 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Brand;
 use App\Models\Category;
 use App\Models\Product;
-use DragonCode\Support\Facades\Helpers\Str;
+use Illuminate\Support\Str;
 use Exception;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
