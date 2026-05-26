@@ -74,7 +74,7 @@ class ResolveProductImportMasterDataAction
         $categoryMap = $this->categoryMap();
 
         $resolvedRowsCount = 0;
-        $processedRows = 0
+        $processedRows = 0;
 
         ImportProductRow::where('import_batch_id', $batchId)
             ->where('status', 'error')
