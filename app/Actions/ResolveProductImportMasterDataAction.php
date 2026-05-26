@@ -11,24 +11,20 @@ use App\Models\Tax;
 use App\Models\Unit;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Redis;
 use Illuminate\Support\Str;
 
 class ResolveProductImportMasterDataAction
 {
     public function execute(int $batchId): array
     {
-        // Read missing metadata from cache
-        $missingCategories = Redis::sMembers("import_batch_{$batchId}_missing_categories") ?: [];
-        $missingBrands = Redis::sMembers("import_batch_{$batchId}_missing_brands") ?: [];
-        $missingUnits = Redis::sMembers("import_batch_{$batchId}_missing_units") ?: [];
-        $missingTaxes = Redis::sMembers("import_batch_{$batchId}_missing_taxes") ?: [];
+        $resolutionResult = ImportBatch::whereKey($batchId)->value('master_data_resolution_result') ?? [];
+        $resolutionResult = is_array($resolutionResult) ? $resolutionResult : json_decode($resolutionResult, true) ?? [];
+        $storedMissing = $resolutionResult['missing_master_data'] ?? [];
 
-        $rowMissing = $this->missingMasterDataFromRows($batchId);
-        $missingCategories = $this->mergeMissingValues($missingCategories, $rowMissing['categories']);
-        $missingBrands = $this->mergeMissingValues($missingBrands, $rowMissing['brands']);
-        $missingUnits = $this->mergeMissingValues($missingUnits, $rowMissing['units']);
-        $missingTaxes = $this->mergeMissingValues($missingTaxes, $rowMissing['taxes']);
+        $missingCategories = $this->mergeUnique($storedMissing['categories'] ?? []);
+        $missingBrands = $this->mergeUnique($storedMissing['brands'] ?? []);
+        $missingUnits = $this->mergeUnique($storedMissing['units'] ?? []);
+        $missingTaxes = $this->mergeUnique($storedMissing['taxes'] ?? []);
 
         $createdCategories = 0;
         $createdBrands = 0;
@@ -133,11 +129,6 @@ class ResolveProductImportMasterDataAction
                 $this->updateResolutionProgress($batchId, $processedRows, $totalRowsToResolve);
             });
 
-        Redis::del("import_batch_{$batchId}_missing_categories");
-        Redis::del("import_batch_{$batchId}_missing_brands");
-        Redis::del("import_batch_{$batchId}_missing_units");
-        Redis::del("import_batch_{$batchId}_missing_taxes");
-
         return [
             'units' => $createdUnits,
             'taxes' => $createdTaxes,
@@ -151,67 +142,7 @@ class ResolveProductImportMasterDataAction
         ];
     }
 
-    private function missingMasterDataFromRows(int $batchId): array
-    {
-        $missing = [
-            'categories' => [],
-            'brands' => [],
-            'units' => [],
-            'taxes' => [],
-        ];
-
-        ImportProductRow::where('import_batch_id', $batchId)
-            ->where('status', 'error')
-            ->orderBy('id')
-            ->chunkById(500, function ($rows) use (&$missing) {
-                foreach ($rows as $row) {
-                    $payload = is_array($row->data) ? $row->data : json_decode($row->data, true);
-                    if (!is_array($payload)) {
-                        continue;
-                    }
-
-                    $errorCodes = $payload['error_codes'] ?? [];
-
-                    if (in_array('missing_category', $errorCodes, true)) {
-                        $missing['categories'][] = $this->extractMissingCategory($payload);
-                    }
-
-                    if (in_array('missing_brand', $errorCodes, true)) {
-                        $missing['brands'][] = $payload['product']['brand_name'] ?? null;
-                    }
-
-                    if (in_array('missing_unit', $errorCodes, true)) {
-                        $missing['units'][] = $payload['variant']['unit_name'] ?? null;
-                    }
-
-                    if (in_array('missing_tax', $errorCodes, true)) {
-                        $missing['taxes'][] = $payload['variant']['tax'] ?? null;
-                    }
-                }
-            });
-
-        return $missing;
-    }
-
-    private function extractMissingCategory(array $payload): string
-    {
-        $parent = trim((string) ($payload['product']['parent_category_name'] ?? ''));
-        $child = trim((string) ($payload['product']['sub_category_name'] ?? ''));
-
-        if ($parent !== '' && $child !== '') {
-            return "{$parent}|{$child}";
-        }
-
-        if ($parent !== '') {
-            return $parent;
-        }
-
-        $categoryName = trim((string) ($payload['product']['category_name'] ?? ''));
-
-        return $categoryName !== '' ? $categoryName : 'Other';
-    }
-
-    private function mergeMissingValues(array ...$lists): array
+    private function mergeUnique(array ...$lists): array
     {
         return collect($lists)
             ->flatten(1)
@@ -504,10 +435,23 @@ class ResolveProductImportMasterDataAction
 
         if (empty($payload['product']['category_id'])) {
             if (!$parentName && !$childName) {
-                $parentName = $this->normalizeName('Other');
+                $otherCategory = Category::firstOrCreate(
+                    ['name' => 'Other', 'parent_id' => null],
+                    [
+                        'slug' => 'other',
+                        'description' => 'Default category',
+                        'icon' => null,
+                        'image' => null,
+                        'sort_order' => 0,
+                        'is_active' => true,
+                    ]
+                );
+
+                $payload['product']['category_id'] = $otherCategory->id;
                 $payload['product']['category_name'] = 'Other';
                 $payload['product']['parent_category_name'] = 'Other';
                 $payload['product']['sub_category_name'] = null;
+                return;
             }
 
             $categoryKey = $childName ? $parentName . '|' . $childName : $parentName;

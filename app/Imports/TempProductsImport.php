@@ -17,6 +17,7 @@ use Maatwebsite\Excel\Concerns\WithHeadingRow;
 
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Redis;
 use Maatwebsite\Excel\Concerns\WithEvents;
 use Maatwebsite\Excel\Events\AfterImport;
@@ -133,13 +134,9 @@ class TempProductsImport implements ToCollection, WithChunkReading, WithHeadingR
     private function normalizePayload($row, array $categoryData, array $brandsMap, array $unitsMap, array $taxesMap): array
     {
         $categoryName = trim($row[self::EXCEL_COL_CATEGORY] ?? '');
-        if ($categoryName === '') {
-            $categoryName = 'Other';
-        }
-
         $subCategoryName = trim($row[self::EXCEL_COL_SUB_CATEGORY] ?? '');
-        $categoryKey = mb_strtolower($categoryName);
-        $subCategoryKey = mb_strtolower($subCategoryName);
+        $categoryKey = $this->normalizeName($categoryName) ?: '';
+        $subCategoryKey = $this->normalizeName($subCategoryName) ?: '';
         $brandKey = mb_strtolower(trim($row[self::EXCEL_COL_BRAND] ?? ''));
         $unitKey = mb_strtolower(trim($row[self::EXCEL_COL_UNIT] ?? ''));
         $taxRaw = isset($row[self::EXCEL_COL_TAX]) ? trim($row[self::EXCEL_COL_TAX]) : null;
@@ -384,7 +381,10 @@ class TempProductsImport implements ToCollection, WithChunkReading, WithHeadingR
             $childrenMap = [];
 
             foreach ($categories as $category) {
-                $nameKey = mb_strtolower(trim($category->name));
+                $nameKey = $this->normalizeName($category->name);
+                if (!$nameKey) {
+                    continue;
+                }
 
                 if (empty($category->parent_id)) {
                     $parentsMap[$nameKey] = $category->id;
@@ -392,8 +392,9 @@ class TempProductsImport implements ToCollection, WithChunkReading, WithHeadingR
                 }
 
                 $parent = $categories->firstWhere('id', $category->parent_id);
-                if ($parent) {
-                    $childrenMap[mb_strtolower(trim($parent->name)) . '|' . $nameKey] = $category->id;
+                $parentKey = $parent ? $this->normalizeName($parent->name) : null;
+                if ($parentKey) {
+                    $childrenMap[$parentKey . '|' . $nameKey] = $category->id;
                 }
             }
 
@@ -404,43 +405,75 @@ class TempProductsImport implements ToCollection, WithChunkReading, WithHeadingR
         });
     }
 
-    private function extractMissingCategory(array $payload): string
+    private function extractMissingCategory(array $payload): ?string
     {
-        $parent = trim($payload['product']['parent_category_name'] ?? '');
-        $child = trim($payload['product']['sub_category_name'] ?? '');
+        $parent = $this->normalizeName($payload['product']['parent_category_name'] ?? '') ?: '';
+        $child = $this->normalizeName($payload['product']['sub_category_name'] ?? '') ?: '';
 
         if ($parent !== '' && $child !== '') {
             return "{$parent}|{$child}";
         }
 
-        return $parent !== '' ? $parent : 'Other';
+        return $parent !== '' ? $parent : null;
+    }
+
+    private function normalizeName($name): ?string
+    {
+        $name = mb_strtolower(trim((string) $name));
+        $name = str_replace(['–', '—'], '-', $name);
+        $name = preg_replace('/\s+/u', ' ', $name);
+        $name = preg_replace('/\s*-\s*/u', '-', $name);
+        $name = preg_replace('/\s*\/\s*/u', '/', $name);
+
+        return $name !== '' ? $name : null;
     }
 
     private function bulkCacheMissingMetadata(array $categories, array $brands, array $units, array $taxes): void
     {
-        $categories = array_unique($categories);
-        $brands = array_unique($brands);
-        $units = array_unique($units);
-        $taxes = array_unique($taxes);
+        $categories = array_values(array_unique(array_filter($categories, fn($item) => $item !== null && $item !== '')));
+        $brands = array_values(array_unique(array_filter($brands, fn($item) => $item !== null && $item !== '')));
+        $units = array_values(array_unique(array_filter($units, fn($item) => $item !== null && $item !== '')));
+        $taxes = array_values(array_unique(array_filter($taxes, fn($item) => $item !== null && $item !== '')));
 
         if (empty($categories) && empty($brands) && empty($units) && empty($taxes)) {
             return;
         }
 
-        Redis::pipeline(function ($pipe) use ($categories, $brands, $units, $taxes) {
-            foreach ($categories as $item) {
-                $pipe->sadd("import_batch_{$this->batchId}_missing_categories", $item);
+        $this->saveMissingMetadata($categories, $brands, $units, $taxes);
+
+    }
+
+    private function saveMissingMetadata(array $categories, array $brands, array $units, array $taxes): void
+    {
+        DB::transaction(function () use ($categories, $brands, $units, $taxes) {
+            $batch = ImportBatch::whereKey($this->batchId)->lockForUpdate()->first();
+            if (!$batch) {
+                return;
             }
-            foreach ($brands as $item) {
-                $pipe->sadd("import_batch_{$this->batchId}_missing_brands", $item);
-            }
-            foreach ($units as $item) {
-                $pipe->sadd("import_batch_{$this->batchId}_missing_units", $item);
-            }
-            foreach ($taxes as $item) {
-                $pipe->sadd("import_batch_{$this->batchId}_missing_taxes", $item);
-            }
+
+            $result = $batch->master_data_resolution_result ?? [];
+            $missing = $result['missing_master_data'] ?? [];
+
+            $result['missing_master_data'] = [
+                'categories' => $this->mergeUnique($missing['categories'] ?? [], $categories),
+                'brands' => $this->mergeUnique($missing['brands'] ?? [], $brands),
+                'units' => $this->mergeUnique($missing['units'] ?? [], $units),
+                'taxes' => $this->mergeUnique($missing['taxes'] ?? [], $taxes),
+            ];
+
+            $batch->update(['master_data_resolution_result' => $result]);
         });
+    }
+
+    private function mergeUnique(array ...$lists): array
+    {
+        return collect($lists)
+            ->flatten(1)
+            ->map(fn($value) => is_scalar($value) ? trim((string) $value) : null)
+            ->filter(fn($value) => $value !== null && $value !== '')
+            ->unique()
+            ->values()
+            ->all();
     }
 
     public function chunkSize(): int

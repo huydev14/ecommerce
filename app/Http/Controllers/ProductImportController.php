@@ -179,17 +179,18 @@ class ProductImportController extends Controller
         $errorRows = ImportProductRow::where('import_batch_id', $batchId)
             ->where('status', 'error')
             ->count();
+        $result = $batch->master_data_resolution_result ?? [];
 
         $batch->update([
             'status' => 'resolving_master_data',
-            'master_data_resolution_result' => [
+            'master_data_resolution_result' => array_merge($result, [
                 'status' => 'processing',
                 'previous_status' => $batch->status,
                 'processed_rows' => 0,
                 'total_rows' => $errorRows,
                 'percentage' => $errorRows > 0 ? 0 : 100,
                 'started_at' => now()->toDateTimeString(),
-            ],
+            ]),
         ]);
 
         ProcessResolveProductImportMasterDataJob::dispatch((int) $batch->id);
@@ -239,12 +240,6 @@ class ProductImportController extends Controller
 
     private function clearImportRedisState(int $batchId): void
     {
-        Redis::del(
-            "import_batch_{$batchId}_seen_skus",
-            "import_batch_{$batchId}_missing_categories",
-            "import_batch_{$batchId}_missing_brands",
-            "import_batch_{$batchId}_missing_units",
-            "import_batch_{$batchId}_missing_taxes",
-        );
+        Redis::del("import_batch_{$batchId}_seen_skus");
     }
 }
