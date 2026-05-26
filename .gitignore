@@ -29,5 +29,6 @@ Thumbs.db
 AGENTS.md
 CLAUDE.md
 .agents
-.github
+copilot-instructions.md 
+.github/hooks
 .rtk
