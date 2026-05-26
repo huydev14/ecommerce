@@ -1,7 +1,7 @@
 # ==========================================
 # STAGE 1: Base Image (Cài đặt PHP, Nginx, Supervisor và Extensions)
 # ==========================================
-FROM php:8.2-fpm-bookworm AS base
+FROM php:8.4-fpm-bookworm AS base
 
 # Thiết lập thư mục làm việc
 WORKDIR /var/www/html
@@ -70,18 +70,21 @@ WORKDIR /app
 # Sao chép file cấu hình trước để tối ưu hóa Docker Cache
 COPY composer.json composer.lock package.json package-lock.json artisan ./
 
-# Cài đặt dependencies PHP (chưa tối ưu hóa tự động tải để chuẩn bị build frontend)
-RUN composer install --no-interaction --no-scripts --no-progress
+# Cài đặt dependencies PHP (khoan tạo autoload để tránh lỗi thiếu file)
+RUN composer install --no-interaction --no-scripts --no-progress --no-autoloader
 
 # Sao chép toàn bộ mã nguồn của dự án
 COPY . .
+
+# TẠO BẢN ĐỒ AUTOLOAD NGAY LÚC NÀY (Để lệnh php artisan lang:js bên dưới có thể chạy được)
+RUN composer dump-autoload --optimize
 
 # Cài đặt thư viện JS và chạy build assets qua Vite
 # LƯU Ý: Dự án có lệnh `npm run lang:js` phụ thuộc vào `php artisan` nên bắt buộc chạy trong môi trường PHP
 RUN npm ci \
     && npm run build
 
-# Xóa thư mục node_modules và cài lại composer tối ưu cho production
+# Xóa thư mục node_modules và cài lại composer loại bỏ các package dev, chuẩn bị cho production
 RUN rm -rf node_modules \
     && composer install --no-interaction --no-dev --optimize-autoloader
 
