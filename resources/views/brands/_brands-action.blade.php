@@ -5,8 +5,7 @@
     </button>
 
     <button id="delete-brand-btn" type="button" title="{{ __('brand.action.delete') }}" class="user-action-btn tw-text-red-800"
-        data-delete-url="{{ route('brands.destroy', $brand->id) }}"
-        data-restore-url="{{ route('brands.restore', $brand->id) }}">
+        data-delete-url="{{ route('brands.destroy', $brand->id) }}">
         <x-icon-delete />
     </button>
 </div>

@@ -198,25 +198,4 @@ class BrandController extends Controller
         }
     }
 
-    public function restore($id)
-    {
-        try {
-            $brand = Brand::withTrashed()->findOrFail($id);
-            $brand->restore();
-
-            return response()->json([
-                'success' => true,
-                'msg' => __('brand.restore_success'),
-            ]);
-        } catch (Exception $e) {
-            Log::error('Restore brand failed: ' . $e->getMessage(), [
-                'trace' => $e->getTraceAsString(),
-            ]);
-
-            return response()->json([
-                'success' => false,
-                'msg' => __('brand.restore_error'),
-            ], 500);
-        }
-    }
 }

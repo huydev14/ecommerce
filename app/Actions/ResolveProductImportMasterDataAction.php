@@ -181,11 +181,9 @@ class ResolveProductImportMasterDataAction
             return 0;
         }
 
-        $existingModels = Brand::withTrashed()
+        $existingModels = Brand::query()
             ->whereIn('name', $names)
-            ->get(['id', 'name', 'deleted_at']);
-
-        $existingModels->whereNotNull('deleted_at')->each->restore();
+            ->get(['id', 'name']);
 
         $existing = $existingModels
             ->pluck('name')
@@ -303,13 +301,11 @@ class ResolveProductImportMasterDataAction
 
         $created = $this->ensureParentCategories($parentNames);
 
-        $parents = Category::withTrashed()
+        $parents = Category::query()
             ->whereNull('parent_id')
             ->whereIn('name', $parentNames)
-            ->get(['id', 'name', 'parent_id', 'deleted_at'])
+            ->get(['id', 'name', 'parent_id'])
             ->keyBy(fn($category) => $this->normalizeName($category->name));
-
-        $parents->whereNotNull('deleted_at')->each->restore();
 
         // 2. Extract children that need to be created
         $childrenToCreate = collect($categoryStrings)
@@ -340,12 +336,10 @@ class ResolveProductImportMasterDataAction
             return $created;
         }
 
-        $existingChildren = Category::withTrashed()
+        $existingChildren = Category::query()
             ->whereIn('parent_id', $childrenToCreate->pluck('parent_id')->unique()->all())
             ->whereIn('name', $childrenToCreate->pluck('name')->unique()->all())
-            ->get(['id', 'name', 'parent_id', 'deleted_at']);
-
-        $existingChildren->whereNotNull('deleted_at')->each->restore();
+            ->get(['id', 'name', 'parent_id']);
 
         $existingKeys = $existingChildren
             ->map(fn($category) => $category->parent_id . '|' . $this->normalizeName($category->name))
@@ -377,12 +371,10 @@ class ResolveProductImportMasterDataAction
 
     private function ensureParentCategories($parentNames): int
     {
-        $existingModels = Category::withTrashed()
+        $existingModels = Category::query()
             ->whereNull('parent_id')
             ->whereIn('name', $parentNames)
-            ->get(['id', 'name', 'parent_id', 'deleted_at']);
-
-        $existingModels->whereNotNull('deleted_at')->each->restore();
+            ->get(['id', 'name', 'parent_id']);
 
         $existing = $existingModels
             ->pluck('name')
@@ -499,17 +491,23 @@ class ResolveProductImportMasterDataAction
         return is_numeric($rate) ? number_format((float) $rate, 2, '.', '') : null;
     }
 
-    private function uniqueCategorySlug(string $name, ?string $scope = null): string
+    private function uniqueCategorySlug(string $name, ?string $scope = null, array &$usedSlugs = []): string
     {
         $base = Str::slug($scope ? $scope . '-' . $name : $name);
+
+        if (empty($base)) {
+            $base = 'category-' . substr(md5($name), 0, 6);
+        }
+
         $slug = $base;
         $index = 2;
 
-        while (Category::withTrashed()->where('slug', $slug)->exists()) {
+        while (in_array($slug, $usedSlugs) || Category::where('slug', $slug)->exists()) {
             $slug = $base . '-' . $index;
             $index++;
         }
 
+        $usedSlugs[] = $slug;
         return $slug;
     }
 
@@ -519,7 +517,7 @@ class ResolveProductImportMasterDataAction
         $slug = $base;
         $index = 2;
 
-        while (Brand::withTrashed()->where('slug', $slug)->exists()) {
+        while (Brand::where('slug', $slug)->exists()) {
             $slug = $base . '-' . $index;
             $index++;
         }

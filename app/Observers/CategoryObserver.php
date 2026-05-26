@@ -55,29 +55,4 @@ class CategoryObserver
         );
     }
 
-    /**
-     * Handle the Category "restored" event.
-     */
-    public function restored(Category $category): void
-    {
-        AuditLogService::log(
-            "Khôi phục danh mục: $category->name (ID: $category->id)",
-            $category,
-            'category',
-            Auth::user(),
-        );
-    }
-
-    /**
-     * Handle the Category "force deleted" event.
-     */
-    public function forceDeleted(Category $category): void
-    {
-        AuditLogService::log(
-            "Xóa vĩnh viễn danh mục: $category->name (ID: $category->id)",
-            $category,
-            'category',
-            Auth::user(),
-        );
-    }
 }

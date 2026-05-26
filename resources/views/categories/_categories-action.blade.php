@@ -5,8 +5,7 @@
     </button>
 
     <button id="delete-category-btn" type="button" title="{{ __('category.action.delete') }}" class="user-action-btn tw-text-red-800"
-        data-delete-url="{{ route('categories.destroy', $category->id) }}"
-        data-restore-url="{{ route('categories.restore', $category->id) }}">
+        data-delete-url="{{ route('categories.destroy', $category->id) }}">
         <x-icon-delete />
     </button>
 </div>

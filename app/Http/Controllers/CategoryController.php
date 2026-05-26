@@ -189,25 +189,4 @@ class CategoryController extends Controller
         }
     }
 
-    public function restore($id)
-    {
-        try {
-            $category = Category::withTrashed()->findOrFail($id);
-            $category->restore();
-
-            return response()->json([
-                'success' => true,
-                'msg' => __('category.restore_success'),
-            ]);
-        } catch (Exception $e) {
-            Log::error('Restore category failed: ' . $e->getMessage(), [
-                'trace' => $e->getTraceAsString(),
-            ]);
-
-            return response()->json([
-                'success' => false,
-                'msg' => __('category.restore_error'),
-            ], 500);
-        }
-    }
 }

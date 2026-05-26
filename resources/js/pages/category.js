@@ -88,33 +88,6 @@ $(function () {
         });
     }
 
-    function attemptRestoreCategory(restoreUrl) {
-        $.ajax({
-            type: 'POST',
-            url: restoreUrl,
-            success: function (res) {
-                categoryTable.ajax.reload(null, false);
-
-                fluentToast({
-                    type: 'success',
-                    title: Lang.get('category.undo_success_title'),
-                    description: res.msg || Lang.get('category.undo_success_description'),
-                    actionType: 'close',
-                });
-            },
-            error: function (xhr) {
-                fluentToast({
-                    type: 'error',
-                    title: Lang.get('category.restore_error_title'),
-                    description: xhr.responseJSON?.msg || Lang.get('category.restore_error_description'),
-                    subtitle: 'Code: ' + ' ' + xhr.status,
-                });
-                console.error('Load error:', xhr.status);
-                console.error('Load error:', xhr.responseText);
-            },
-        });
-    }
-
     globalThis.categoryTable = new DataTable('#categoryTable', {
         processing: true,
         serverSide: true,
@@ -203,7 +176,6 @@ $(function () {
     $(document).on('click', '#delete-category-btn', function () {
         let $btn = $(this);
         let deleteUrl = $btn.data('delete-url');
-        let restoreUrl = $btn.data('restore-url');
 
         if (!confirm(Lang.get('category.confirm_delete'))) {
             return;
@@ -222,14 +194,6 @@ $(function () {
                     description: Lang.get('category.delete_description'),
                     subtitle: res.status,
                     actionType: 'close',
-                    bottomActions: [
-                        {
-                            text: Lang.get('category.undo'),
-                            onClick: function () {
-                                attemptRestoreCategory(restoreUrl);
-                            },
-                        },
-                    ],
                 });
             },
             error: function (xhr) {

@@ -76,7 +76,6 @@ Route::prefix('admin')->middleware('auth')->group(function () {
     Route::prefix('brands')->name('brands.')->group(function () {
         Route::get('/data', [BrandController::class, 'data'])->name('data');
         Route::get('/filter-data', [BrandController::class, 'getFilterData'])->name('filter_data');
-        Route::post('/{id}/restore', [BrandController::class, 'restore'])->name('restore');
     });
     Route::resource('brands', BrandController::class);
 
@@ -84,7 +83,6 @@ Route::prefix('admin')->middleware('auth')->group(function () {
     Route::prefix('categories')->name('categories.')->group(function () {
         Route::get('/data', [CategoryController::class, 'data'])->name('data');
         Route::get('/filter-data', [CategoryController::class, 'getFilterData'])->name('filter_data');
-        Route::post('/{id}/restore', [CategoryController::class, 'restore'])->name('restore');
     });
     Route::resource('categories', CategoryController::class);
 

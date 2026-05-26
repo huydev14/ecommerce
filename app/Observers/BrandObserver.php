@@ -55,29 +55,4 @@ class BrandObserver
         );
     }
 
-    /**
-     * Handle the Brand "restored" event.
-     */
-    public function restored(Brand $brand): void
-    {
-        AuditLogService::log(
-            "Khôi phục thương hiệu: $brand->name (ID: $brand->id)",
-            $brand,
-            'brand',
-            Auth::user(),
-        );
-    }
-
-    /**
-     * Handle the Brand "force deleted" event.
-     */
-    public function forceDeleted(Brand $brand): void
-    {
-        AuditLogService::log(
-            "Xóa vĩnh viễn thương hiệu: $brand->name (ID: $brand->id)",
-            $brand,
-            'brand',
-            Auth::user(),
-        );
-    }
 }
