@@ -15,6 +15,17 @@ use Illuminate\Support\Str;
 
 class ResolveProductImportMasterDataAction
 {
+    /**
+     * Error codes that this action can clear.
+     */
+    private const RESOLVABLE_CODES = [
+        'missing_category',
+        'missing_brand',
+        'missing_unit',
+        'missing_tax',
+        'duplicate_sku_in_database',
+    ];
+
     public function execute(int $batchId): array
     {
         $resolutionResult = ImportBatch::whereKey($batchId)->value('master_data_resolution_result') ?? [];
@@ -33,20 +44,13 @@ class ResolveProductImportMasterDataAction
         $totalRowsToResolve = ImportProductRow::where('import_batch_id', $batchId)
             ->where('status', 'error')
             ->count();
-        $processedRows = 0;
 
-        $this->updateResolutionProgress($batchId, $processedRows, $totalRowsToResolve);
+        $this->updateResolutionProgress($batchId, 0, $totalRowsToResolve);
 
         // Bulk insert master data
         DB::transaction(function () use (
-            &$createdCategories,
-            &$createdBrands,
-            &$createdUnits,
-            &$createdTaxes,
-            $missingCategories,
-            $missingBrands,
-            $missingUnits,
-            $missingTaxes
+            &$createdCategories, &$createdBrands, &$createdUnits, &$createdTaxes,
+            $missingCategories, $missingBrands, $missingUnits, $missingTaxes
         ) {
             if (!empty($missingUnits)) {
                 $createdUnits = $this->resolveUnits($missingUnits);
@@ -64,57 +68,48 @@ class ResolveProductImportMasterDataAction
 
         Cache::forget('category_map');
 
-        // Update error batch rows
-        $resolvedRowsCount = 0;
-
-        $unitMap = $this->unitMap();
-        $taxMap = $this->taxMap();
-        $brandMap = $this->brandMap();
+        $unitMap     = $this->unitMap();
+        $taxMap      = $this->taxMap();
+        $brandMap    = $this->brandMap();
         $categoryMap = $this->categoryMap();
+
+        $resolvedRowsCount = 0;
+        $processedRows = 0
 
         ImportProductRow::where('import_batch_id', $batchId)
             ->where('status', 'error')
             ->orderBy('id')
             ->chunkById(500, function ($rows) use (
-                $batchId,
-                &$resolvedRowsCount,
-                &$processedRows,
-                $totalRowsToResolve,
-                $unitMap,
-                $taxMap,
-                $brandMap,
-                $categoryMap
+                &$resolvedRowsCount, &$processedRows,
+                $batchId, $totalRowsToResolve,
+                $unitMap, $taxMap, $brandMap, $categoryMap
             ) {
-
                 $updates = [];
 
                 foreach ($rows as $row) {
                     $payload = is_array($row->data) ? $row->data : json_decode($row->data, true);
 
-                    // Remove error codes
-                    $retainedErrorCodes = array_values(array_diff($payload['error_codes'] ?? [], [
-                        'missing_category',
-                        'missing_brand',
-                        'missing_unit',
-                        'missing_tax'
-                    ]));
+                    $retainedCodes = array_values(array_diff($payload['error_codes'] ?? [], self::RESOLVABLE_CODES));
 
                     $this->patchPayload($payload, $unitMap, $taxMap, $brandMap, $categoryMap);
 
-                    // Validate again
-                    [$errors, $errorCodes] = TempProductsImport::validatePayload($payload);
-                    $finalErrorCodes = array_values(array_unique(array_merge($errorCodes, $retainedErrorCodes)));
-                    $payload['error_codes'] = $finalErrorCodes;
+                    [$errors, $newCodes] = TempProductsImport::validatePayload($payload);
 
-                    $hasErrors = !empty($errors) || !empty($retainedErrorCodes);
+                    // Drop master-data codes that patchPayload already fixed
+                    $newCodes = array_values(array_diff($newCodes, self::RESOLVABLE_CODES));
+
+                    $finalCodes = array_values(array_unique(array_merge($newCodes, $retainedCodes)));
+                    $payload['error_codes'] = $finalCodes;
+
+                    $hasErrors = !empty($errors) || !empty($retainedCodes);
 
                     $updates[] = [
-                        'id' => $row->id,
-                        'import_batch_id' => $row->import_batch_id,
-                        'row_number' => $row->row_number,
-                        'data' => json_encode($payload),
-                        'status' => $hasErrors ? 'error' : 'valid',
-                        'error_message' => $hasErrors ? ($errors ? implode(' ', $errors) : $row->error_message) : null,
+                        'id'             => $row->id,
+                        'import_batch_id'=> $row->import_batch_id,
+                        'row_number'     => $row->row_number,
+                        'data'           => json_encode($payload),
+                        'status'         => $hasErrors ? 'error' : 'valid',
+                        'error_message'  => $hasErrors ? (implode(' ', $errors) ?: $row->error_message) : null,
                     ];
 
                     if (!$hasErrors) {
@@ -130,72 +125,106 @@ class ResolveProductImportMasterDataAction
             });
 
         return [
-            'units' => $createdUnits,
-            'taxes' => $createdTaxes,
-            'brands' => $createdBrands,
-            'categories' => $createdCategories,
-            'resolved_rows' => $resolvedRowsCount,
+            'units'          => $createdUnits,
+            'taxes'          => $createdTaxes,
+            'brands'         => $createdBrands,
+            'categories'     => $createdCategories,
+            'resolved_rows'  => $resolvedRowsCount,
             'processed_rows' => $processedRows,
-            'total_rows' => $totalRowsToResolve,
-            'percentage' => $this->resolutionPercentage($processedRows, $totalRowsToResolve),
-            'status' => 'completed',
+            'total_rows'     => $totalRowsToResolve,
+            'percentage'     => $this->resolutionPercentage($processedRows, $totalRowsToResolve),
+            'status'         => 'completed',
         ];
     }
 
-    private function mergeUnique(array ...$lists): array
-    {
-        return collect($lists)
-            ->flatten(1)
-            ->map(fn($value) => is_scalar($value) ? trim((string) $value) : null)
-            ->filter(fn($value) => $value !== null && $value !== '')
-            ->unique()
-            ->values()
-            ->all();
-    }
+    // -------------------------------------------------------------------------
+    // Master-data creators
+    // -------------------------------------------------------------------------
 
-    private function updateResolutionProgress(int $batchId, int $processedRows, int $totalRows): void
+    private function resolveCategories(array $categoryStrings): int
     {
-        $current = ImportBatch::whereKey($batchId)->value('master_data_resolution_result') ?? [];
-        $current = is_array($current) ? $current : json_decode($current, true) ?? [];
+        $allRoots     = Category::whereNull('parent_id')->get(['id', 'name', 'slug']);
+        $rootBySlug   = $allRoots->keyBy(fn($c) => Str::slug($this->normalizeName($c->name) ?? ''));
 
-        ImportBatch::whereKey($batchId)->update([
-            'master_data_resolution_result' => array_merge($current, [
-                'status' => 'processing',
-                'processed_rows' => $processedRows,
-                'total_rows' => $totalRows,
-                'percentage' => $this->resolutionPercentage($processedRows, $totalRows),
-            ]),
-        ]);
-    }
+        $parentNames = collect($categoryStrings)
+            ->map(fn($s) => $this->normalizeName(explode('|', $s)[0] ?? null))
+            ->filter()->unique()->values();
 
-    private function resolutionPercentage(int $processedRows, int $totalRows): int
-    {
-        if ($totalRows <= 0) {
-            return 100;
+        $created = 0;
+        $usedSlugs = $allRoots->pluck('slug')->all();
+
+        foreach ($parentNames as $parentName) {
+            $slug = Str::slug($parentName);
+            if (!$rootBySlug->has($slug)) {
+                $uniqueSlug = $this->makeUniqueSlug($slug, $usedSlugs);
+                Category::create([
+                    'name'        => $parentName,
+                    'slug'        => $uniqueSlug,
+                    'parent_id'   => null,
+                    'description' => null,
+                    'icon'        => null,
+                    'image'       => null,
+                    'sort_order'  => 0,
+                    'is_active'   => true,
+                ]);
+                $usedSlugs[] = $uniqueSlug;
+                $created++;
+                // Refresh map so children can find this parent
+                $rootBySlug->put($slug, Category::whereNull('parent_id')->where('slug', $uniqueSlug)->first());
+            }
         }
 
-        return min(100, (int) round(($processedRows / $totalRows) * 100));
+        // 2. Ensure every required child exists (match by parent-slug + child-slug)
+        $childStrings = collect($categoryStrings)->filter(fn($s) => str_contains($s, '|'));
+
+        foreach ($childStrings as $str) {
+            $parts      = explode('|', $str);
+            $parentNorm = $this->normalizeName($parts[0]);
+            $childNorm  = $this->normalizeName($parts[1]);
+            if (!$parentNorm || !$childNorm) { continue; }
+
+            $parentSlug = Str::slug($parentNorm);
+            $parent     = $rootBySlug->get($parentSlug);
+            if (!$parent) { continue; }
+
+            $childSlug = Str::slug($childNorm);
+
+            // Match existing children by slug so accent/dash variants don't create duplicates
+            $childExists = Category::where('parent_id', $parent->id)
+                ->get(['id', 'name', 'slug'])
+                ->first(fn($c) => Str::slug($this->normalizeName($c->name) ?? '') === $childSlug);
+
+            if (!$childExists) {
+                $uniqueChildSlug = $this->makeUniqueSlug(
+                    Str::slug($parentNorm . '-' . $childNorm),
+                    $usedSlugs
+                );
+                Category::create([
+                    'name'        => $childNorm,
+                    'slug'        => $uniqueChildSlug,
+                    'parent_id'   => $parent->id,
+                    'description' => null,
+                    'icon'        => null,
+                    'image'       => null,
+                    'sort_order'  => 0,
+                    'is_active'   => true,
+                ]);
+                $usedSlugs[] = $uniqueChildSlug;
+                $created++;
+            }
+        }
+
+        return $created;
     }
 
     private function resolveBrands(array $namesList): int
     {
-        $names = collect($namesList)
-            ->map(fn($name) => $this->normalizeName($name))
-            ->filter()
-            ->unique()
-            ->values();
+        $names = collect($namesList)->map(fn($n) => $this->normalizeName($n))->filter()->unique()->values();
+        if ($names->isEmpty()) { return 0; }
 
-        if ($names->isEmpty()) {
-            return 0;
-        }
-
-        $existingModels = Brand::query()
-            ->whereIn('name', $names)
-            ->get(['id', 'name']);
-
-        $existing = $existingModels
-            ->pluck('name')
-            ->map(fn($name) => $this->normalizeName($name))
+        $existingSlugs = Brand::pluck('slug')->all();
+        $existing = Brand::pluck('name')
+            ->map(fn($n) => $this->normalizeName($n))
             ->all();
 
         $missing = $names->diff($existing)->values();
@@ -204,12 +233,12 @@ class ResolveProductImportMasterDataAction
             return 0;
         }
 
-        return Brand::query()->insertOrIgnore($missing->map(fn($name) => [
-            'name' => $name,
-            'slug' => $this->uniqueBrandSlug($name),
-            'logo' => null,
-            'website' => null,
-            'is_active' => true,
+        return Brand::insertOrIgnore($missing->map(fn($name) => [
+            'name'       => $name,
+            'slug'       => $this->makeUniqueSlug(Str::slug($name), $existingSlugs),
+            'logo'       => null,
+            'website'    => null,
+            'is_active'  => true,
             'created_at' => now(),
             'updated_at' => now(),
         ])->all());
@@ -217,38 +246,22 @@ class ResolveProductImportMasterDataAction
 
     private function resolveUnits(array $namesList): int
     {
-        $names = collect($namesList)
-            ->map(fn($name) => $this->normalizeName($name))
-            ->filter()
-            ->unique()
-            ->values();
+        $names = collect($namesList)->map(fn($n) => $this->normalizeName($n))->filter()->unique()->values();
+        if ($names->isEmpty()) { return 0; }
 
-        if ($names->isEmpty()) {
-            return 0;
-        }
-
-        $existingModels = Unit::withTrashed()
-            ->whereIn('name', $names)
-            ->get(['id', 'name', 'deleted_at']);
+        $existingModels = Unit::withTrashed()->whereIn('name', $names)->get(['id', 'name', 'deleted_at']);
 
         $idsToRestore = $existingModels->whereNotNull('deleted_at')->pluck('id');
         if ($idsToRestore->isNotEmpty()) {
             Unit::whereIn('id', $idsToRestore)->restore();
         }
 
-        $existing = $existingModels
-            ->pluck('name')
-            ->map(fn($name) => $this->normalizeName($name))
-            ->all();
+        $existing = $existingModels->pluck('name')->map(fn($n) => $this->normalizeName($n))->all();
+        $missing  = $names->diff($existing)->values();
+        if ($missing->isEmpty()) { return 0; }
 
-        $missing = $names->diff($existing)->values();
-
-        if ($missing->isEmpty()) {
-            return 0;
-        }
-
-        return Unit::query()->insertOrIgnore($missing->map(fn($name) => [
-            'name' => $name,
+        return Unit::insertOrIgnore($missing->map(fn($name) => [
+            'name'       => $name,
             'created_at' => now(),
             'updated_at' => now(),
         ])->all());
@@ -256,212 +269,53 @@ class ResolveProductImportMasterDataAction
 
     private function resolveTaxes(array $ratesList): int
     {
-        $rates = collect($ratesList)
-            ->map(fn($rate) => $this->normalizeRate($rate))
-            ->filter()
-            ->unique()
-            ->values();
+        $rates = collect($ratesList)->map(fn($r) => $this->normalizeRate($r))->filter()->unique()->values();
+        if ($rates->isEmpty()) { return 0; }
 
-        if ($rates->isEmpty()) {
-            return 0;
-        }
-
-        $existingModels = Tax::withTrashed()
-            ->whereIn('rate', $rates)
-            ->get(['id', 'rate', 'deleted_at']);
-
+        $existingModels = Tax::withTrashed()->whereIn('rate', $rates)->get(['id', 'rate', 'deleted_at']);
         $existingModels->whereNotNull('deleted_at')->each->restore();
 
-        $existing = $existingModels
-            ->pluck('rate')
-            ->map(fn($rate) => $this->normalizeRate($rate))
-            ->all();
+        $existing = $existingModels->pluck('rate')->map(fn($r) => $this->normalizeRate($r))->all();
+        $missing  = $rates->diff($existing)->values();
+        if ($missing->isEmpty()) { return 0; }
 
-        $missing = $rates->diff($existing)->values();
-
-        if ($missing->isEmpty()) {
-            return 0;
-        }
-
-        return Tax::query()->insertOrIgnore($missing->map(fn($rate) => [
-            'name' => 'Thuế VAT ' . $rate . '%',
-            'rate' => $rate,
+        return Tax::insertOrIgnore($missing->map(fn($rate) => [
+            'name'       => 'Thuế VAT ' . $rate . '%',
+            'rate'       => $rate,
             'created_at' => now(),
             'updated_at' => now(),
         ])->all());
     }
 
-    private function resolveCategories(array $categoryStrings): int
+    // -------------------------------------------------------------------------
+    // Lookup maps
+    // -------------------------------------------------------------------------
+
+    /**
+     * Category map keyed by Str::slug so minor accent/dash differences
+     */
+    private function categoryMap(): array
     {
-        // 1. Extract all unique parent names from the strings
-        $parentNames = collect($categoryStrings)
-            ->map(function ($str) {
-                $parts = explode('|', $str);
-                return $this->normalizeName($parts[0] ?? null);
-            })
-            ->filter()
-            ->unique()
-            ->values();
+        $categories = Category::get(['id', 'name', 'parent_id'])->keyBy('id');
+        $map = [];
 
-        if ($parentNames->isEmpty()) {
-            return 0;
-        }
+        foreach ($categories as $cat) {
+            $normName = $this->normalizeName($cat->name);
+            $slugName = Str::slug($normName ?? '');
 
-        $usedSlugs = [];
-        $created = $this->ensureParentCategories($parentNames, $usedSlugs);
-
-        $parents = Category::query()
-            ->whereNull('parent_id')
-            ->whereIn('name', $parentNames)
-            ->get(['id', 'name', 'parent_id'])
-            ->keyBy(fn($category) => $this->normalizeName($category->name));
-
-        // 2. Extract children that need to be created
-        $childrenToCreate = collect($categoryStrings)
-            ->map(function ($str) use ($parents) {
-                $parts = explode('|', $str);
-                if (count($parts) < 2)
-                    return null; // It's just a parent
-    
-                $parentName = $this->normalizeName($parts[0]);
-                $childName = $this->normalizeName($parts[1]);
-
-                if (!$parentName || !$childName || !$parents->has($parentName)) {
-                    return null;
-                }
-
-                return [
-                    'parent_id' => $parents[$parentName]->id,
-                    'parent_name' => $parentName,
-                    'name' => $childName,
-                    'key' => $parentName . '|' . $childName,
-                ];
-            })
-            ->filter()
-            ->unique('key')
-            ->values();
-
-        if ($childrenToCreate->isEmpty()) {
-            return $created;
-        }
-
-        $existingChildren = Category::query()
-            ->whereIn('parent_id', $childrenToCreate->pluck('parent_id')->unique()->all())
-            ->whereIn('name', $childrenToCreate->pluck('name')->unique()->all())
-            ->get(['id', 'name', 'parent_id']);
-
-        $existingKeys = $existingChildren
-            ->map(fn($category) => $category->parent_id . '|' . $this->normalizeName($category->name))
-            ->all();
-
-        $missingChildren = $childrenToCreate
-            ->reject(fn($item) => in_array($item['parent_id'] . '|' . $item['name'], $existingKeys, true))
-            ->values();
-
-        if ($missingChildren->isEmpty()) {
-            return $created;
-        }
-
-        $createdChildren = Category::query()->insertOrIgnore($missingChildren->map(fn($item) => [
-            'name' => $item['name'],
-            'slug' => $this->uniqueCategorySlug($item['name'], $item['parent_name'], $usedSlugs),
-            'description' => null,
-            'parent_id' => $item['parent_id'],
-            'icon' => null,
-            'image' => null,
-            'sort_order' => 0,
-            'is_active' => true,
-            'created_at' => now(),
-            'updated_at' => now(),
-        ])->all());
-
-        return $created + $createdChildren;
-    }
-
-    private function ensureParentCategories($parentNames, array &$usedSlugs = []): int
-    {
-        $existingModels = Category::query()
-            ->whereNull('parent_id')
-            ->whereIn('name', $parentNames)
-            ->get(['id', 'name', 'parent_id']);
-
-        $existing = $existingModels
-            ->pluck('name')
-            ->map(fn($name) => $this->normalizeName($name))
-            ->all();
-
-        $missing = $parentNames->diff($existing)->values();
-
-        if ($missing->isEmpty()) {
-            return 0;
-        }
-
-        return Category::query()->insertOrIgnore($missing->map(fn($name) => [
-            'name' => $name,
-            'slug' => $this->uniqueCategorySlug($name, null, $usedSlugs),
-            'description' => null,
-            'parent_id' => null,
-            'icon' => null,
-            'image' => null,
-            'sort_order' => 0,
-            'is_active' => true,
-            'created_at' => now(),
-            'updated_at' => now(),
-        ])->all());
-    }
-
-    private function patchPayload(array &$payload, array $unitMap, array $taxMap, array $brandMap, array $categoryMap): void
-    {
-        $unitName = $this->normalizeName($payload['variant']['unit_name'] ?? null);
-        $taxRate = $this->normalizeRate($payload['variant']['tax'] ?? null);
-        $brandName = $this->normalizeName($payload['product']['brand_name'] ?? null);
-        $parentName = $this->normalizeName($payload['product']['parent_category_name'] ?? null);
-        $childName = $this->normalizeName($payload['product']['sub_category_name'] ?? null);
-
-        if (empty($payload['variant']['unit_id'])) {
-            $unitKey = $unitName ?: $this->normalizeName('khác');
-            $payload['variant']['unit_id'] = $unitMap[$unitKey] ?? null;
-            $payload['variant']['unit_name'] = $unitKey;
-        }
-
-        if ($taxRate && empty($payload['variant']['tax_id'])) {
-            $payload['variant']['tax_id'] = $taxMap[$taxRate] ?? null;
-            $payload['variant']['tax'] = $taxRate;
-        }
-
-        if ($brandName && empty($payload['product']['brand_id'])) {
-            $payload['product']['brand_id'] = $brandMap[$brandName] ?? null;
-        }
-
-        if (empty($payload['product']['category_id'])) {
-            if (!$parentName && !$childName) {
-                $otherCategory = Category::firstOrCreate(
-                    ['name' => 'Other', 'parent_id' => null],
-                    [
-                        'slug' => 'other',
-                        'description' => 'Default category',
-                        'icon' => null,
-                        'image' => null,
-                        'sort_order' => 0,
-                        'is_active' => true,
-                    ]
-                );
-
-                $payload['product']['category_id'] = $otherCategory->id;
-                $payload['product']['category_name'] = 'Other';
-                $payload['product']['parent_category_name'] = 'Other';
-                $payload['product']['sub_category_name'] = null;
-                return;
+            if (empty($cat->parent_id)) {
+                $map[$slugName] = $cat->id;
+                continue;
             }
 
-            $categoryKey = $childName ? $parentName . '|' . $childName : $parentName;
-            $categoryId = $categoryMap[$categoryKey] ?? null;
-
-            if ($categoryId) {
-                $payload['product']['category_id'] = $categoryId;
-                $payload['product']['category_name'] = $payload['product']['category_name'] ?? $categoryKey;
+            $parent = $categories->get($cat->parent_id);
+            if ($parent) {
+                $parentSlug = Str::slug($this->normalizeName($parent->name) ?? '');
+                $map[$parentSlug . '|' . $slugName] = $cat->id;
             }
         }
+
+        return $map;
     }
 
     private function unitMap(): array
@@ -485,27 +339,89 @@ class ResolveProductImportMasterDataAction
             ->toArray();
     }
 
-    private function categoryMap(): array
+    // -------------------------------------------------------------------------
+    // Payload patcher
+    // -------------------------------------------------------------------------
+
+    private function patchPayload(array &$payload, array $unitMap, array $taxMap, array $brandMap, array $categoryMap): void
     {
-        $categories = Category::get(['id', 'name', 'parent_id'])->keyBy('id');
-        $map = [];
+        $unitName   = $this->normalizeName($payload['variant']['unit_name'] ?? null);
+        $taxRate    = $this->normalizeRate($payload['variant']['tax']       ?? null);
+        $brandName  = $this->normalizeName($payload['product']['brand_name']          ?? null);
+        $parentName = $this->normalizeName($payload['product']['parent_category_name'] ?? null);
+        $childName  = $this->normalizeName($payload['product']['sub_category_name']    ?? null);
 
-        foreach ($categories as $category) {
-            $name = $this->normalizeName($category->name);
-
-            if (empty($category->parent_id)) {
-                $map[$name] = $category->id;
-                continue;
-            }
-
-            $parent = $categories->get($category->parent_id);
-            if ($parent) {
-                $parentName = $this->normalizeName($parent->name);
-                $map[$parentName . '|' . $name] = $category->id;
-            }
+        // Unit
+        if (empty($payload['variant']['unit_id'])) {
+            $key = $unitName ?: $this->normalizeName('khác');
+            $payload['variant']['unit_id']   = $unitMap[$key] ?? null;
+            $payload['variant']['unit_name'] = $key;
         }
 
-        return $map;
+        // Tax
+        if ($taxRate && empty($payload['variant']['tax_id'])) {
+            $payload['variant']['tax_id'] = $taxMap[$taxRate] ?? null;
+            $payload['variant']['tax']    = $taxRate;
+        }
+
+        // Brand
+        if ($brandName && empty($payload['product']['brand_id'])) {
+            $payload['product']['brand_id'] = $brandMap[$brandName] ?? null;
+        }
+
+        // Category
+        if (empty($payload['product']['category_id'])) {
+            if (!$parentName && !$childName) {
+                // Set default if no category
+                $other = Category::firstOrCreate(
+                    ['name' => 'Other', 'parent_id' => null],
+                    ['slug' => 'other', 'description' => 'Default category',
+                     'icon' => null, 'image' => null, 'sort_order' => 0, 'is_active' => true]
+                );
+                $payload['product']['category_id']          = $other->id;
+                $payload['product']['category_name']        = 'Other';
+                $payload['product']['parent_category_name'] = 'Other';
+                $payload['product']['sub_category_name']    = null;
+                return;
+            }
+            $parentSlug = Str::slug($parentName ?? '');
+            $slugKey    = $childName ? $parentSlug . '|' . Str::slug($childName) : $parentSlug;
+            $categoryId = $categoryMap[$slugKey] ?? null;
+
+            if ($categoryId) {
+                $payload['product']['category_id']   = $categoryId;
+                $payload['product']['category_name'] ??= ($childName ?? $parentName);
+            }
+        }
+    }
+
+    // -------------------------------------------------------------------------
+    // Utilities
+    // -------------------------------------------------------------------------
+
+    private function makeUniqueSlug(string $base, array &$usedSlugs): string
+    {
+        if (empty($base)) {
+            $base = 'item-' . substr(md5(uniqid()), 0, 6);
+        }
+
+        $slug  = $base;
+        $index = 2;
+        while (in_array($slug, $usedSlugs, true)) {
+            $slug = $base . '-' . $index++;
+        }
+
+        $usedSlugs[] = $slug;
+        return $slug;
+    }
+
+    private function mergeUnique(array ...$lists): array
+    {
+        return collect($lists)
+            ->flatten(1)
+            ->map(fn($v) => is_scalar($v) ? trim((string) $v) : null)
+            ->filter(fn($v) => $v !== null && $v !== '')
+            ->unique()->values()->all();
     }
 
     private function normalizeName($name): ?string
@@ -515,50 +431,33 @@ class ResolveProductImportMasterDataAction
         $name = preg_replace('/\s+/u', ' ', $name);
         $name = preg_replace('/\s*-\s*/u', '-', $name);
         $name = preg_replace('/\s*\/\s*/u', '/', $name);
-
         return $name !== '' ? $name : null;
     }
 
     private function normalizeRate($rate): ?string
     {
-        if ($rate === null || $rate === '') {
-            return null;
-        }
-
+        if ($rate === null || $rate === '') { return null; }
         return is_numeric($rate) ? number_format((float) $rate, 2, '.', '') : null;
     }
 
-    private function uniqueCategorySlug(string $name, ?string $scope = null, array &$usedSlugs = []): string
+    private function updateResolutionProgress(int $batchId, int $processedRows, int $totalRows): void
     {
-        $base = Str::slug($scope ? $scope . '-' . $name : $name);
+        $current = ImportBatch::whereKey($batchId)->value('master_data_resolution_result') ?? [];
+        $current = is_array($current) ? $current : json_decode($current, true) ?? [];
 
-        if (empty($base)) {
-            $base = 'category-' . substr(md5($name), 0, 6);
-        }
-
-        $slug = $base;
-        $index = 2;
-
-        while (in_array($slug, $usedSlugs) || Category::where('slug', $slug)->exists()) {
-            $slug = $base . '-' . $index;
-            $index++;
-        }
-
-        $usedSlugs[] = $slug;
-        return $slug;
+        ImportBatch::whereKey($batchId)->update([
+            'master_data_resolution_result' => array_merge($current, [
+                'status'         => 'processing',
+                'processed_rows' => $processedRows,
+                'total_rows'     => $totalRows,
+                'percentage'     => $this->resolutionPercentage($processedRows, $totalRows),
+            ]),
+        ]);
     }
 
-    private function uniqueBrandSlug(string $name): string
+    private function resolutionPercentage(int $processedRows, int $totalRows): int
     {
-        $base = Str::slug($name);
-        $slug = $base;
-        $index = 2;
-
-        while (Brand::where('slug', $slug)->exists()) {
-            $slug = $base . '-' . $index;
-            $index++;
-        }
-
-        return $slug;
+        if ($totalRows <= 0) { return 100; }
+        return min(100, (int) round(($processedRows / $totalRows) * 100));
     }
 }
