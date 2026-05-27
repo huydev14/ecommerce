@@ -8,6 +8,7 @@ return [
     'category' => 'Category',
     'brand' => 'Brand',
     'status' => 'Status',
+    'featured_status' => 'Featured',
     'placeholder' => 'Choose an option',
 
     'name' => 'Name',
@@ -19,6 +20,8 @@ return [
     'draft' => 'Draft',
     'published' => 'Published',
     'archived' => 'Archived',
+    'featured' => 'Featured',
+    'not_featured' => 'Regular',
 
     'edit' => 'Edit',
     'delete' => 'Delete product',
@@ -36,6 +39,8 @@ return [
     'description_placeholder' => 'Enter product description',
     'category_placeholder' => 'Select category',
     'brand_placeholder' => 'Select brand',
+    'featured_label' => 'Mark as featured',
+    'featured_hint' => 'Featured products can be promoted in storefront sections.',
 
     'name_required' => 'Please enter a product name.',
     'name_unique' => 'This product name already exists in the system.',

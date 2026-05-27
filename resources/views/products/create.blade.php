@@ -69,6 +69,15 @@
                     <option value="archived">{{ __('product.archived') }}</option>
                 </select>
             </div>
+
+            <div class="tw-flex tw-items-start tw-gap-3 tw-rounded-md tw-border tw-border-gray-200 tw-bg-gray-50 tw-px-3 tw-py-3">
+                <input type="checkbox" name="is_featured" id="is_featured" value="1"
+                    class="tw-mt-1 tw-rounded tw-border-gray-300 tw-text-[#0078D4] focus:tw-ring-[#0078D4]">
+                <div>
+                    <label for="is_featured" class="tw-text-sm tw-font-medium tw-text-gray-800">{{ __('product.featured_label') }}</label>
+                    <p class="tw-text-xs tw-text-gray-500 tw-mt-0.5">{{ __('product.featured_hint') }}</p>
+                </div>
+            </div>
         </div>
     </div>
 </form>

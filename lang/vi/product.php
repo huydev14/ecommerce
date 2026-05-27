@@ -8,6 +8,7 @@ return [
     'category' => 'Danh mục',
     'brand' => 'Thương hiệu',
     'status' => 'Trạng thái',
+    'featured_status' => 'Nổi bật',
     'placeholder' => 'Chọn một giá trị',
 
     'name' => 'Tên',
@@ -19,6 +20,8 @@ return [
     'draft' => 'Bản nháp',
     'published' => 'Đang bán',
     'archived' => 'Lưu trữ',
+    'featured' => 'Nổi bật',
+    'not_featured' => 'Thường',
 
     'edit' => 'Sửa thông tin',
     'delete' => 'Xóa sản phẩm',
@@ -36,6 +39,8 @@ return [
     'description_placeholder' => 'Nhập mô tả sản phẩm',
     'category_placeholder' => 'Chọn danh mục',
     'brand_placeholder' => 'Chọn thương hiệu',
+    'featured_label' => 'Đánh dấu sản phẩm nổi bật',
+    'featured_hint' => 'Sản phẩm nổi bật có thể được ưu tiên hiển thị ngoài trang bán hàng.',
 
     'name_required' => 'Vui lòng nhập tên sản phẩm.',
     'name_unique' => 'Tên sản phẩm này đã tồn tại trên hệ thống.',

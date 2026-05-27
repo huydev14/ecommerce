@@ -67,6 +67,43 @@ class ProductController extends Controller
         ]);
     }
 
+    public function featuredProducts()
+    {
+        $cacheKey = 'featured_products';
+
+        $products = Cache::remember($cacheKey, 3600, function () {
+            return Product::query()
+                ->where('status', 'published')
+                ->where('is_featured', true)
+                ->with([
+                    'category:id,name,slug',
+                    'cheapestVariant'
+                ])
+                ->select(['id', 'category_id', 'name', 'slug', 'thumbnail', 'created_at'])
+                ->latest()
+                ->take(8)
+                ->get()
+                ->map(function ($product) {
+                    return [
+                        'id' => $product->id,
+                        'name' => $product->name,
+                        'slug' => $product->slug,
+                        'thumbnail' => $product->thumbnail,
+                        'category' => $product->category,
+
+                        'price' => $product->cheapestVariant ? $product->cheapestVariant->price : 0,
+                        'compare_at_price' => $product->cheapestVariant ? $product->cheapestVariant->compare_at_price : null,
+                    ];
+                });
+        });
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Lấy danh sách sản phẩm nổi bật thành công.',
+            'data' => $products
+        ], 200);
+    }
+
     public function show(string $slug)
     {
         $product = Product::query()

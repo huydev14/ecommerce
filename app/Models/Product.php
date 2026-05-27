@@ -21,6 +21,11 @@ class Product extends Model
         'category_id',
         'brand_id',
         'status',
+        'is_featured',
+    ];
+
+    protected $casts = [
+        'is_featured' => 'boolean',
     ];
 
     public function category(): BelongsTo

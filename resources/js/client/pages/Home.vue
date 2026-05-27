@@ -46,19 +46,7 @@ const bestSellers = [
     { icon: '💡', name: 'Đèn bàn LED', discount: '-15%', rating: '★★★★★ 588', price: '₫399.000' },
 ];
 
-const featuredProducts = [
-    { icon: '💻', name: 'WorkPro 14 i7 2026', price: '₫18.990.000', tag: 'Best choice' },
-    { icon: '🎧', name: 'Noise Cancel Pro', price: '₫1.290.000', tag: 'Limited deal' },
-    { icon: '🪑', name: 'ErgoChair Flex', price: '₫2.690.000', tag: 'Top rated' },
-    { icon: '⌚', name: 'Smartwatch Active', price: '₫1.790.000', tag: 'Prime deal' },
-    { icon: '🖨', name: 'Laser Wi-Fi Printer', price: '₫3.190.000', tag: 'Office pick' },
-    { icon: '📷', name: 'OfficeCam 2K', price: '₫990.000', tag: 'Hot' },
-    { icon: '💡', name: 'LED Desk Lamp', price: '₫399.000', tag: 'Save 15%' },
-    { icon: '🧴', name: 'Home Care Combo', price: '₫259.000', tag: 'Daily deal' },
-    { icon: '⌨', name: 'Mechanical Keyboard', price: '₫1.090.000', tag: 'New' },
-    { icon: '🖱', name: 'Wireless Mouse Pro', price: '₫459.000', tag: 'WorkHub pick' },
-];
-
+const featuredProducts = ref([]);
 const newProducts = ref([]);
 
 const recommendationRows = [
@@ -116,6 +104,18 @@ const formatPrice = (price) => {
     }).format(amount);
 };
 
+const productImageUrl = (thumbnail) => {
+    if (!thumbnail) {
+        return '/img/default-image.jpg';
+    }
+
+    if (/^https?:\/\//i.test(thumbnail) || thumbnail.startsWith('/')) {
+        return thumbnail;
+    }
+
+    return `/storage/${thumbnail}`;
+};
+
 const newProductRows = computed(() => {
     const chunkSize = 4;
     const rows = [];
@@ -126,6 +126,18 @@ const newProductRows = computed(() => {
 
     return rows;
 });
+
+const fetchFeaturedProducts = async () => {
+    try {
+        const response = await api.get('/products/featured-products');
+
+        if (response.data?.success) {
+            featuredProducts.value = normalizeProducts(response.data);
+        }
+    } catch (error) {
+        console.error('Lỗi khi lấy sản phẩm nổi bật:', error);
+    }
+};
 
 const fetchNewArrivals = async () => {
     try {
@@ -147,6 +159,7 @@ const scrollFeatured = (direction) => {
 };
 
 onMounted(() => {
+    fetchFeaturedProducts();
     fetchNewArrivals();
 });
 </script>
@@ -227,13 +240,17 @@ onMounted(() => {
                 </div>
 
                 <div ref="featuredSlider" class="amazon-featured-slider">
-                    <article v-for="product in featuredProducts" :key="product.name" class="amazon-featured-card">
-                        <span class="amazon-featured-card__tag">{{ product.tag }}</span>
-                        <a href="#" class="amazon-featured-card__image">{{ product.icon }}</a>
-                        <a href="#" class="amazon-featured-card__name">{{ product.name }}</a>
-                        <span class="amazon-featured-card__price">{{ product.price }}</span>
+                    <article v-for="product in featuredProducts" :key="product.id || product.slug || product.name" class="amazon-featured-card">
+                        <span class="amazon-featured-card__tag">{{ product.category?.name || 'Nổi bật' }}</span>
+                        <router-link :to="{ name: 'ProductDetail', params: { slug: product.slug } }" class="amazon-featured-card__image">
+                            <img :src="productImageUrl(product.thumbnail)" :alt="product.name" loading="lazy" />
+                        </router-link>
+                        <router-link :to="{ name: 'ProductDetail', params: { slug: product.slug } }" class="amazon-featured-card__name">{{ product.name }}</router-link>
+                        <span class="amazon-featured-card__price">{{ formatPrice(product.price) }}</span>
                     </article>
                 </div>
+
+                <p v-if="featuredProducts.length === 0" class="amazon-featured-products__empty">Chưa có sản phẩm nổi bật.</p>
             </section>
 
             <section class="amazon-rail amazon-new-products" aria-label="New products">
@@ -257,15 +274,6 @@ onMounted(() => {
 
                     <p v-if="newProductRows.length === 0" class="amazon-new-products__empty">Chưa có sản phẩm mới.</p>
                 </div>
-            </section>
-
-            <section class="amazon-feature-band" aria-label="Prime delivery">
-                <div>
-                    <span class="amazon-feature-band__eyebrow">Prime giao nhanh</span>
-                    <h2>Giao hàng ngày mai cho hàng nghìn sản phẩm</h2>
-                    <p>Ưu tiên các sản phẩm còn hàng, freeship và đổi trả dễ dàng ngay trong tài khoản WorkHub.</p>
-                </div>
-                <a href="#" class="amazon-outline-button">Khám phá Prime</a>
             </section>
 
             <section v-for="row in recommendationRows" :key="row.title" class="amazon-rail amazon-rail--compact" :aria-label="row.title">
@@ -666,6 +674,12 @@ onMounted(() => {
     text-decoration: none;
 }
 
+.amazon-featured-card__image img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+}
+
 .amazon-featured-card__name,
 .amazon-new-product__name {
     display: block;
@@ -686,6 +700,13 @@ onMounted(() => {
     margin-top: 8px;
     font-size: 20px;
     line-height: 24px;
+}
+
+.amazon-featured-products__empty {
+    margin: 10px 0 0;
+    color: #565959;
+    font-size: 14px;
+    line-height: 20px;
 }
 
 .amazon-new-products__rows {

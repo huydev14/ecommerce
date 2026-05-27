@@ -14,6 +14,7 @@ use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Foundation\Queue\Queueable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 
 class ProcessImportBatchJob implements ShouldQueue
@@ -165,6 +166,8 @@ class ProcessImportBatchJob implements ShouldQueue
                             StockMovement::insert($movementsToInsert);
                         }
                     });
+
+                    Cache::forget('api_new_arrivals');
 
                     ImportProductRow::whereIn('id', $rowIds)->update(['status' => 'completed']);
                 } catch (\Throwable $exception) {

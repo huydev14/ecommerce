@@ -39,6 +39,7 @@ Route::prefix('v1')->group(function () {
     // ----- Products API -------------------------
     Route::get('/products', [ProductController::class, 'index']);
     Route::get('/products/new-arrivals', [ProductController::class, 'newArrivals']);
+    Route::get('/products/featured-products', [ProductController::class, 'featuredProducts']);
     Route::get('/products/{slug}', [ProductController::class, 'show']);
 
     // ----- Cart API -------------------------

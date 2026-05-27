@@ -127,6 +127,7 @@ $(function () {
                 d.category_id = $('#f_category').val() || '';
                 d.brand_id = $('#f_brand').val() || '';
                 d.status = $('#f_status').val() || '';
+                d.is_featured = $('#f_isFeatured').val() || '';
             },
         },
         columns: [
@@ -153,6 +154,10 @@ $(function () {
             {
                 data: 'status',
                 name: 'status',
+            },
+            {
+                data: 'is_featured',
+                name: 'is_featured',
             },
             {
                 data: 'created_at',
@@ -186,7 +191,7 @@ $(function () {
     $('#toggle-filter-btn').on('click', function () {
         $('#filter-panel').slideToggle('fast');
 
-        $('#f_productName, #f_category, #f_brand, #f_status').val('').trigger('change.select2');
+        $('#f_productName, #f_category, #f_brand, #f_status, #f_isFeatured').val('').trigger('change.select2');
         productTable.ajax.reload();
     });
 
@@ -200,6 +205,7 @@ $(function () {
             renderOptions('#f_category', res.categories);
             renderOptions('#f_brand', res.brands);
             renderOptions('#f_status', res.status);
+            renderOptions('#f_isFeatured', res.featured_statuses);
         })
         .fail(function (xhr) {
             console.error('Load error:', xhr.status);

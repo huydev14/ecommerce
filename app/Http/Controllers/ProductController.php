@@ -8,6 +8,7 @@ use App\Models\Product;
 use Illuminate\Support\Str;
 use Exception;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 use Yajra\DataTables\DataTables;
@@ -40,6 +41,10 @@ class ProductController extends Controller
                 $products->where('products.status', $request->status);
             }
 
+            if ($request->filled('is_featured')) {
+                $products->where('products.is_featured', $request->boolean('is_featured'));
+            }
+
             return DataTables::of($products)
                 ->addColumn('category_name', function ($product) {
                     return $product->category?->name ?? '<span class="tw-text-gray-400 tw-italic tw-text-sm">---</span>';
@@ -54,6 +59,11 @@ class ProductController extends Controller
                         default => '<span class="tw-px-2 tw-py-1 tw-bg-yellow-100 tw-text-yellow-700 tw-text-xs tw-font-medium tw-rounded-full">' . __('product.draft') . '</span>',
                     };
                 })
+                ->editColumn('is_featured', function ($product) {
+                    return $product->is_featured
+                        ? '<span class="tw-px-2 tw-py-1 tw-bg-blue-100 tw-text-blue-700 tw-text-xs tw-font-medium tw-rounded-full">' . __('product.featured') . '</span>'
+                        : '<span class="tw-px-2 tw-py-1 tw-bg-gray-100 tw-text-gray-600 tw-text-xs tw-font-medium tw-rounded-full">' . __('product.not_featured') . '</span>';
+                })
                 ->editColumn('created_at', function ($product) {
                     return $product->created_at ? $product->created_at->format('d/m/Y') : '';
                 })
@@ -63,7 +73,7 @@ class ProductController extends Controller
                 ->editColumn('action', function ($product) {
                     return view('products._products-action', compact('product'))->render();
                 })
-                ->rawColumns(['category_name', 'brand_name', 'status', 'action'])
+                ->rawColumns(['category_name', 'brand_name', 'status', 'is_featured', 'action'])
                 ->make(true);
         }
     }
@@ -76,6 +86,11 @@ class ProductController extends Controller
             ['id' => 'archived', 'text' => __('product.archived')],
         ]);
 
+        $featuredStatuses = collect([
+            ['id' => 1, 'text' => __('product.featured')],
+            ['id' => 0, 'text' => __('product.not_featured')],
+        ]);
+
         $products = Product::select('id', 'name as text')->orderBy('name')->get();
         $categories = Category::select('id', 'name as text')->orderBy('name')->get();
         $brands = Brand::select('id', 'name as text')->orderBy('name')->get();
@@ -85,6 +100,7 @@ class ProductController extends Controller
             'products' => $products,
             'categories' => $categories,
             'brands' => $brands,
+            'featured_statuses' => $featuredStatuses,
         ]);
     }
 
@@ -105,6 +121,7 @@ class ProductController extends Controller
             'category_id' => 'required|exists:categories,id',
             'brand_id' => 'nullable|exists:brands,id',
             'status' => 'required|in:draft,published,archived',
+            'is_featured' => 'nullable|boolean',
         ], [
             'name.required' => __('product.name_required'),
             'name.unique' => __('product.name_unique'),
@@ -119,9 +136,11 @@ class ProductController extends Controller
 
         $data['slug'] = Str::slug($request->name);
         $data['thumbnail'] = $path;
+        $data['is_featured'] = $request->boolean('is_featured');
 
         try {
             Product::create($data);
+            $this->clearProductApiCaches();
 
             if ($request->ajax() || $request->wantsJson()) {
                 return response()->json([
@@ -165,6 +184,7 @@ class ProductController extends Controller
             'category_id' => 'required|exists:categories,id',
             'brand_id' => 'nullable|exists:brands,id',
             'status' => 'required|in:draft,published,archived',
+            'is_featured' => 'nullable|boolean',
         ], [
             'name.required' => __('product.name_required'),
             'name.unique' => __('product.name_unique'),
@@ -183,9 +203,11 @@ class ProductController extends Controller
 
         $data['slug'] = Str::slug($request->name);
         $data['thumbnail'] = $path;
+        $data['is_featured'] = $request->boolean('is_featured');
 
         try {
             $product->update($data);
+            $this->clearProductApiCaches();
 
             return response()->json([
                 'success' => true,
@@ -207,6 +229,7 @@ class ProductController extends Controller
     {
         try {
             $product->delete();
+            $this->clearProductApiCaches();
 
             return response()->json([
                 'success' => true,
@@ -230,6 +253,7 @@ class ProductController extends Controller
         try {
             $product = Product::withTrashed()->findOrFail($id);
             $product->restore();
+            $this->clearProductApiCaches();
 
             return response()->json([
                 'success' => true,
@@ -245,5 +269,11 @@ class ProductController extends Controller
                 'msg' => __('product.restore_error'),
             ], 500);
         }
+    }
+
+    private function clearProductApiCaches(): void
+    {
+        Cache::forget('api_new_arrivals');
+        Cache::forget('featured_products');
     }
 }
