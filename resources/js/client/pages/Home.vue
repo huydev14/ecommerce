@@ -1,39 +1,11 @@
 <script setup>
 import { computed, onMounted, ref } from 'vue';
+import { Swiper, SwiperSlide } from 'swiper/vue';
+import { Autoplay, Navigation, Pagination } from 'swiper/modules';
 import api from '../services/api';
-
-const categoryCards = [
-    {
-        title: 'Trang trí nhà cửa',
-        link: 'Khám phá thêm',
-        items: [
-            { icon: '🛋', label: 'Sofa & phòng khách' },
-            { icon: '💡', label: 'Đèn trang trí' },
-            { icon: '🪴', label: 'Cây & kệ' },
-            { icon: '🖼', label: 'Khung ảnh' },
-        ],
-    },
-    {
-        title: 'Thiết bị điện tử',
-        link: 'Mua ngay',
-        items: [
-            { icon: '📱', label: 'Điện thoại' },
-            { icon: '💻', label: 'Laptop' },
-            { icon: '🎧', label: 'Âm thanh' },
-            { icon: '⌚', label: 'Wearables' },
-        ],
-    },
-    {
-        title: 'Ưu đãi mỗi ngày',
-        link: 'Xem tất cả deals',
-        items: [
-            { icon: '🔥', label: 'Flash sale' },
-            { icon: '🎁', label: 'Voucher' },
-            { icon: '🚚', label: 'Freeship' },
-            { icon: '⭐', label: 'Top rated' },
-        ],
-    },
-];
+import 'swiper/css';
+import 'swiper/css/navigation';
+import 'swiper/css/pagination';
 
 const bestSellers = [
     { icon: '💻', name: 'Laptop WorkPro 14 inch', discount: '-18%', rating: '★★★★★ 2,143', price: '₫18.990.000' },
@@ -46,8 +18,10 @@ const bestSellers = [
     { icon: '💡', name: 'Đèn bàn LED', discount: '-15%', rating: '★★★★★ 588', price: '₫399.000' },
 ];
 
+const banners = ref([]);
 const featuredProducts = ref([]);
 const newProducts = ref([]);
+const swiperModules = [Autoplay, Pagination, Navigation];
 
 const recommendationRows = [
     {
@@ -116,6 +90,30 @@ const productImageUrl = (thumbnail) => {
     return `/storage/${thumbnail}`;
 };
 
+const bannerImageUrl = (imageUrl) => {
+    if (!imageUrl) {
+        return '/img/default-image.jpg';
+    }
+
+    if (/^https?:\/\//i.test(imageUrl) || imageUrl.startsWith('/')) {
+        return imageUrl;
+    }
+
+    return `/storage/${imageUrl}`;
+};
+
+const fetchHomeData = async () => {
+    try {
+        const response = await api.get('/home');
+
+        if (response.data?.success) {
+            banners.value = Array.isArray(response.data.data?.banners) ? response.data.data.banners : [];
+        }
+    } catch (error) {
+        console.error('Lỗi khi lấy dữ liệu trang chủ:', error);
+    }
+};
+
 const newProductRows = computed(() => {
     const chunkSize = 4;
     const rows = [];
@@ -159,6 +157,7 @@ const scrollFeatured = (direction) => {
 };
 
 onMounted(() => {
+    fetchHomeData();
     fetchFeaturedProducts();
     fetchNewArrivals();
 });
@@ -166,46 +165,35 @@ onMounted(() => {
 
 <template>
     <div class="amazon-home">
-        <section class="home-hero" aria-label="WorkHub deals">
-            <div class="home-hero__copy">
-                <h1>Mua sắm mọi thứ cho nhà và công việc</h1>
-                <p>Deals mỗi ngày, giao nhanh, trải nghiệm WorkHub theo phong cách marketplace giống Amazon.</p>
-                <a href="#" class="amazon-pill-button">Xem ưu đãi hôm nay</a>
+        <section class="home-banner-slider" aria-label="Banner trang chủ">
+            <swiper
+                v-if="banners.length > 0"
+                :spaceBetween="0"
+                :centeredSlides="true"
+                :autoplay="{
+                    delay: 2500,
+                    disableOnInteraction: false,
+                }"
+                :pagination="{
+                    clickable: true,
+                }"
+                :navigation="true"
+                :modules="swiperModules"
+                class="home-banner-swiper"
+            >
+                <swiper-slide v-for="banner in banners" :key="banner.id">
+                    <a :href="banner.link || '#'" class="home-banner-slide">
+                        <img :src="bannerImageUrl(banner.image_url)" alt="WorkHub banner" />
+                    </a>
+                </swiper-slide>
+            </swiper>
+
+            <div v-else class="home-banner-empty">
+                <span>WorkHub</span>
             </div>
         </section>
 
         <div class="amazon-home__content">
-            <section class="amazon-card-grid" aria-label="Danh mục nổi bật">
-                <article v-for="category in categoryCards" :key="category.title" class="amazon-card">
-                    <h2>{{ category.title }}</h2>
-
-                    <div class="amazon-card__tiles">
-                        <a v-for="item in category.items" :key="item.label" href="#" class="amazon-tile">
-                            <span class="amazon-tile__visual">{{ item.icon }}</span>
-                            <span>{{ item.label }}</span>
-                        </a>
-                    </div>
-
-                    <a href="#" class="amazon-link">{{ category.link }}</a>
-                </article>
-
-                <aside class="amazon-signin-card" aria-label="Đăng nhập">
-                    <div class="amazon-card amazon-card--compact">
-                        <h2>Đăng nhập để có trải nghiệm tốt nhất</h2>
-                        <router-link :to="{ name: 'Login'}" class="amazon-signin-card__button a-button-primary">
-                            Đăng nhập
-                        </router-link>
-
-                        <router-link :to="{ name: 'Register'}" class="amazon-link">Tạo tài khoản mới </router-link>
-
-                    </div>
-
-                    <div class="amazon-ad-card">
-                        <span>SALE</span>
-                    </div>
-                </aside>
-            </section>
-
             <section class="amazon-rail" aria-label="Sản phẩm bán chạy nhất">
                 <div class="amazon-section-heading">
                     <h2>Sản phẩm bán chạy nhất</h2>
@@ -301,47 +289,57 @@ onMounted(() => {
     font-family: Arial, Helvetica, sans-serif;
 }
 
-.home-hero {
+.home-banner-slider {
     position: relative;
-    min-height: 410px;
     overflow: hidden;
-    background: linear-gradient(100deg, #f5d39e 0%, #e9eef2 45%, #b7d8e8 100%);
-    padding: 0 50px;
-    display: flex;
-    justify-content: center;
+    background: #111827;
 }
 
-.home-hero::after {
-    position: absolute;
-    right: 0;
-    bottom: 0;
-    left: 0;
-    height: 210px;
-    background: linear-gradient(to bottom, rgba(227, 230, 230, 0), #e3e6e6);
-    content: '';
-}
-
-.home-hero__copy {
-    max-width: 1500px;
+.home-banner-swiper {
     width: 100%;
-    position: relative;
-    z-index: 1;
-    padding: 58px 20px;
+    height: min(420px, 42vw);
+    min-height: 220px;
 }
 
-.home-hero__copy h1 {
-    margin: 0 0 14px;
-    font-size: clamp(30px, 4vw, 42px);
+.home-banner-slide {
+    display: block;
+    width: 100%;
+    height: 100%;
+    background: #f3f3f3;
+}
+
+.home-banner-slide img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.home-banner-empty {
+    display: grid;
+    min-height: 300px;
+    place-items: center;
+    background: linear-gradient(100deg, #f5d39e 0%, #e9eef2 45%, #b7d8e8 100%);
+    color: #0f1111;
+    font-size: 42px;
     font-weight: 700;
-    line-height: 1.14;
-    letter-spacing: 0;
 }
 
-.home-hero__copy p {
-    margin: 0 0 20px;
-    color: #27323a;
-    font-size: 18px;
-    line-height: 26px;
+.home-banner-slider :deep(.swiper-button-next),
+.home-banner-slider :deep(.swiper-button-prev) {
+    width: 44px;
+    height: 70px;
+    background: rgba(255, 255, 255, 0.82);
+    color: #0f1111;
+}
+
+.home-banner-slider :deep(.swiper-button-next::after),
+.home-banner-slider :deep(.swiper-button-prev::after) {
+    font-size: 24px;
+    font-weight: 700;
+}
+
+.home-banner-slider :deep(.swiper-pagination-bullet-active) {
+    background: #f0c14b;
 }
 
 .amazon-pill-button,
@@ -385,37 +383,12 @@ onMounted(() => {
     box-shadow: 0 1px 2px rgba(15, 17, 17, 0.12);
 }
 
-.home-hero__products {
-    position: absolute;
-    top: 42px;
-    right: 6%;
-    z-index: 1;
-    display: grid;
-    grid-template-columns: repeat(3, 150px);
-    gap: 18px;
-}
-
-.home-hero__product {
-    display: grid;
-    height: 220px;
-    place-items: center;
-    background: rgba(255, 255, 255, 0.86);
-    box-shadow: 0 6px 18px rgba(15, 17, 17, 0.12);
-    font-size: 62px;
-}
-
 .amazon-home__content {
     position: relative;
     z-index: 2;
     max-width: 1500px;
-    margin: -8% auto 0;
+    margin: -34px auto 0;
     padding: 0 20px 38px;
-}
-
-.amazon-card-grid {
-    display: grid;
-    grid-template-columns: repeat(4, minmax(0, 1fr));
-    gap: 20px;
 }
 
 .amazon-card,
@@ -830,15 +803,6 @@ onMounted(() => {
 }
 
 @media (max-width: 1280px) {
-    .home-hero__products {
-        right: 4%;
-        grid-template-columns: repeat(3, 128px);
-    }
-
-    .amazon-card-grid {
-        grid-template-columns: repeat(2, minmax(0, 1fr));
-    }
-
     .amazon-product-row {
         grid-template-columns: repeat(4, minmax(150px, 1fr));
     }
@@ -853,46 +817,19 @@ onMounted(() => {
 }
 
 @media (max-width: 768px) {
-    .home-hero {
-        min-height: 430px;
-    }
-
-    .home-hero__copy {
-        padding: 36px 20px 0;
-    }
-
-    .home-hero__copy p {
-        font-size: 16px;
-        line-height: 24px;
-    }
-
-    .home-hero__products {
-        right: 20px;
-        bottom: 92px;
-        top: auto;
-        left: 20px;
-        grid-template-columns: repeat(3, minmax(0, 1fr));
-    }
-
-    .home-hero__product {
-        height: 104px;
-        font-size: 38px;
+    .home-banner-swiper {
+        height: 260px;
     }
 
     .amazon-home__content {
-        margin-top: -76px;
+        margin-top: -24px;
         padding: 0 12px 28px;
     }
 
-    .amazon-card-grid,
     .amazon-product-row,
     .amazon-new-products__row,
     .amazon-category-row {
         grid-template-columns: 1fr;
-    }
-
-    .amazon-card {
-        min-height: auto;
     }
 
     .amazon-product-row,

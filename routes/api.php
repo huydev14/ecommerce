@@ -5,6 +5,7 @@ use App\Http\Controllers\Api\Auth\OAuthController;
 
 use App\Http\Controllers\Api\CartController;
 use App\Http\Controllers\Api\CategoryController;
+use App\Http\Controllers\Api\HomeController;
 use App\Http\Controllers\Api\ProductController;
 use Illuminate\Support\Facades\Route;
 
@@ -35,6 +36,9 @@ Route::prefix('v1')->group(function () {
 
     // ----- Categories API -----------------------
     Route::get('/categories/tree', [CategoryController::class, 'tree']);
+
+    // ----- Homepage API -------------------------
+    Route::get('/home', [HomeController::class, 'index']);
 
     // ----- Products API -------------------------
     Route::get('/products', [ProductController::class, 'index']);

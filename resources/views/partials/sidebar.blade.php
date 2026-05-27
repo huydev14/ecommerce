@@ -43,6 +43,11 @@
                     </a>
                 </li>
                 <li class="nav-item">
+                    <a href="{{ route('banners.index') }}" class="nav-link {{ request()->routeIs('banners.*') ? 'active' : '' }}">
+                        <p>Quản lý banner</p>
+                    </a>
+                </li>
+                <li class="nav-item">
                     <a href="{{ route('taxes.index') }}" class="nav-link {{ request()->routeIs('taxes.index') ? 'active' : '' }}">
                         <p>{{ __('tax.management_title') }}</p>
                     </a>
