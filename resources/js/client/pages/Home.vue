@@ -19,6 +19,7 @@ const bestSellers = [
 ];
 
 const banners = ref([]);
+const categories = ref([]);
 const featuredProducts = ref([]);
 const newProducts = ref([]);
 const swiperModules = [Autoplay, Pagination, Navigation];
@@ -64,6 +65,44 @@ const normalizeProducts = (payload) => {
     return [];
 };
 
+const getCategoryItems = (payload) => {
+    if (Array.isArray(payload?.data?.data)) {
+        return payload.data.data;
+    }
+
+    if (Array.isArray(payload?.data)) {
+        return payload.data;
+    }
+
+    return [];
+};
+
+const hasChildren = (category) => Array.isArray(category.children) && category.children.length > 0;
+
+const menuCategories = computed(() => {
+    const categoriesWithChildren = categories.value.filter(hasChildren);
+    const categoriesWithoutChildren = categories.value.filter((category) => !hasChildren(category));
+
+    return [...categoriesWithChildren, ...categoriesWithoutChildren];
+});
+
+const sortedBanners = computed(() => {
+    return [...banners.value].sort((firstBanner, secondBanner) => {
+        const firstOrder = Number(firstBanner.sort_order ?? 0);
+        const secondOrder = Number(secondBanner.sort_order ?? 0);
+
+        if (firstOrder === secondOrder) {
+            return Number(firstBanner.id ?? 0) - Number(secondBanner.id ?? 0);
+        }
+
+        return firstOrder - secondOrder;
+    });
+});
+
+const sliderBanners = computed(() => sortedBanners.value.filter((banner) => Number(banner.sort_order) >= 1 && Number(banner.sort_order) <= 3));
+
+const staticGridBanners = computed(() => sortedBanners.value.filter((banner) => Number(banner.sort_order) >= 4).slice(0, 5));
+
 const formatPrice = (price) => {
     const amount = Number(price);
 
@@ -102,6 +141,27 @@ const bannerImageUrl = (imageUrl) => {
     return `/storage/${imageUrl}`;
 };
 
+const categoryIconUrl = (icon) => {
+    if (!icon) {
+        return null;
+    }
+
+    if (/^https?:\/\//i.test(icon) || icon.startsWith('/')) {
+        return icon;
+    }
+
+    if (/\.(svg|png|jpe?g|webp|gif)$/i.test(icon)) {
+        return `/storage/${icon}`;
+    }
+
+    return null;
+};
+
+const categoryRoute = (category) => ({
+    name: 'ProductList',
+    query: category.slug ? { category: category.slug } : {},
+});
+
 const fetchHomeData = async () => {
     try {
         const response = await api.get('/home');
@@ -111,6 +171,18 @@ const fetchHomeData = async () => {
         }
     } catch (error) {
         console.error('Lỗi khi lấy dữ liệu trang chủ:', error);
+    }
+};
+
+const fetchCategories = async () => {
+    try {
+        const response = await api.get('/categories/tree');
+
+        if (response.data?.success) {
+            categories.value = getCategoryItems(response.data);
+        }
+    } catch (error) {
+        console.error('Lỗi khi lấy danh mục:', error);
     }
 };
 
@@ -158,6 +230,7 @@ const scrollFeatured = (direction) => {
 
 onMounted(() => {
     fetchHomeData();
+    fetchCategories();
     fetchFeaturedProducts();
     fetchNewArrivals();
 });
@@ -165,31 +238,102 @@ onMounted(() => {
 
 <template>
     <div class="amazon-home">
-        <section class="home-banner-slider" aria-label="Banner trang chủ">
-            <swiper
-                v-if="banners.length > 0"
-                :spaceBetween="0"
-                :centeredSlides="true"
-                :autoplay="{
-                    delay: 2500,
-                    disableOnInteraction: false,
-                }"
-                :pagination="{
-                    clickable: true,
-                }"
-                :navigation="true"
-                :modules="swiperModules"
-                class="home-banner-swiper"
-            >
-                <swiper-slide v-for="banner in banners" :key="banner.id">
-                    <a :href="banner.link || '#'" class="home-banner-slide">
-                        <img :src="bannerImageUrl(banner.image_url)" alt="WorkHub banner" />
-                    </a>
-                </swiper-slide>
-            </swiper>
+        <section class="home-hero" aria-label="Danh mục và banner trang chủ">
+            <aside class="home-category-menu" aria-label="Danh mục sản phẩm">
+                <ul v-if="menuCategories.length > 0" class="home-category-menu__list">
+                    <li v-for="category in menuCategories" :key="category.id" class="home-category-menu__item" :class="{ 'home-category-menu__item--has-children': hasChildren(category) }">
+                        <router-link :to="categoryRoute(category)" class="home-category-menu__link">
+                            <span class="home-category-menu__icon" aria-hidden="true">
+                                <img v-if="categoryIconUrl(category.icon)" :src="categoryIconUrl(category.icon)" :alt="category.name" />
+                                <svg v-else viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                                    <path
+                                        stroke-linecap="round"
+                                        stroke-linejoin="round"
+                                        stroke-width="2"
+                                        d="M4 6a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2v2a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6ZM14 6a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2v2a2 2 0 0 1-2 2h-2a2 2 0 0 1-2-2V6ZM4 16a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2v2a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2v-2ZM14 16a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2v2a2 2 0 0 1-2 2h-2a2 2 0 0 1-2-2v-2Z"
+                                    />
+                                </svg>
+                            </span>
+                            <span class="home-category-menu__name">{{ category.name }}</span>
+                            <svg class="home-category-menu__arrow" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                                <path
+                                    fill-rule="evenodd"
+                                    d="M7.293 14.707a1 1 0 0 1 0-1.414L10.586 10 7.293 6.707a1 1 0 1 1 1.414-1.414l4 4a1 1 0 0 1 0 1.414l-4 4a1 1 0 0 1-1.414 0Z"
+                                    clip-rule="evenodd"
+                                />
+                            </svg>
+                        </router-link>
 
-            <div v-else class="home-banner-empty">
-                <span>WorkHub</span>
+                        <div v-if="hasChildren(category)" class="home-category-flyout" role="menu" :aria-label="`Danh mục con của ${category.name}`">
+                            <router-link :to="categoryRoute(category)" class="home-category-flyout__heading">
+                                {{ category.name }}
+                            </router-link>
+
+                            <div class="home-category-flyout__grid">
+                                <div v-for="child in category.children" :key="child.id" class="home-category-flyout__group">
+                                    <router-link :to="categoryRoute(child)" class="home-category-flyout__parent" role="menuitem">
+                                        {{ child.name }}
+                                    </router-link>
+
+                                    <router-link
+                                        v-for="grandchild in child.children || []"
+                                        :key="grandchild.id"
+                                        :to="categoryRoute(grandchild)"
+                                        class="home-category-flyout__child"
+                                        role="menuitem"
+                                    >
+                                        {{ grandchild.name }}
+                                    </router-link>
+                                </div>
+                            </div>
+                        </div>
+                    </li>
+                </ul>
+
+                <div v-else class="home-category-menu__empty">Chưa có danh mục.</div>
+            </aside>
+
+            <div class="home-banner-grid" aria-label="Banner khuyến mãi">
+                <div class="home-banner-slider">
+                    <swiper
+                        v-if="sliderBanners.length > 0"
+                        :space-between="0"
+                        :autoplay="{
+                            delay: 4000,
+                            disableOnInteraction: false,
+                        }"
+                        :pagination="{
+                            clickable: true,
+                        }"
+                        :navigation="sliderBanners.length > 1"
+                        :modules="swiperModules"
+                        :loop="sliderBanners.length > 1"
+                        class="home-banner-swiper"
+                    >
+                        <swiper-slide v-for="banner in sliderBanners" :key="banner.id">
+                            <a v-if="banner.link" :href="banner.link" class="home-banner-slide">
+                                <img :src="bannerImageUrl(banner.image_url)" :alt="banner.title || 'WorkHub banner'" />
+                            </a>
+                            <div v-else class="home-banner-slide">
+                                <img :src="bannerImageUrl(banner.image_url)" :alt="banner.title || 'WorkHub banner'" />
+                            </div>
+                        </swiper-slide>
+                    </swiper>
+
+                    <div v-else class="home-banner-empty">
+                        <span>Ecommerce</span>
+                    </div>
+                </div>
+
+                <a
+                    v-for="banner in staticGridBanners"
+                    :key="banner.id"
+                    :href="banner.link || '#'"
+                    class="home-banner-tile"
+                    :aria-label="banner.title || 'Banner khuyến mãi'"
+                >
+                    <img :src="bannerImageUrl(banner.image_url)" :alt="banner.title || 'WorkHub banner'" loading="lazy" />
+                </a>
             </div>
         </section>
 
@@ -289,34 +433,258 @@ onMounted(() => {
     font-family: Arial, Helvetica, sans-serif;
 }
 
+.home-hero {
+    display: grid;
+    grid-template-columns: 250px minmax(0, 1fr);
+    gap: 12px;
+    max-width: 1500px;
+    margin: 0 auto;
+    padding: 14px 20px 0;
+}
+
+.home-category-menu {
+    position: relative; /* ĐÂY CHÍNH LÀ ĐIỂM NEO MỚI CHO FLYOUT */
+    z-index: 5;
+    align-self: start;
+    height: 600px;
+    border: 1px solid #e5e7eb;
+    border-radius: 8px;
+    background: #fff;
+    box-shadow: 0 1px 2px rgba(15, 17, 17, 0.08);
+}
+
+.home-category-menu__list {
+    display: grid;
+    margin: 0;
+    padding: 8px 0;
+    list-style: none;
+}
+
+/* ĐÃ XÓA position: relative; Ở ĐÂY ĐỂ TRÁNH LỖI ĐIỂM NEO */
+.home-category-menu__item {
+    position: static; 
+}
+
+.home-category-menu__link {
+    display: grid;
+    grid-template-columns: 24px minmax(0, 1fr) 16px;
+    gap: 10px;
+    align-items: center;
+    min-height: 36px;
+    padding: 7px 16px; /* Tăng padding 2 bên một chút cho thoáng */
+    color: #111827;
+    font-size: 14px;
+    line-height: 18px;
+    text-decoration: none;
+    transition: background 0.2s ease, color 0.2s ease;
+}
+
+.home-category-menu__link:hover,
+.home-category-menu__item:focus-within > .home-category-menu__link {
+    background: #f3f4f6;
+    color: #0f62fe;
+}
+
+.home-category-menu__icon {
+    display: grid;
+    width: 24px;
+    height: 24px;
+    place-items: center;
+    color: #4b5563;
+}
+
+.home-category-menu__icon svg,
+.home-category-menu__icon img {
+    width: 18px; /* Thu nhỏ icon lại một chút cho thanh lịch */
+    height: 18px;
+    object-fit: contain;
+}
+
+.home-category-menu__name {
+    overflow: hidden;
+    font-weight: 500;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    text-transform: capitalize; /* TỰ ĐỘNG VIẾT HOA CHỮ CÁI ĐẦU */
+}
+
+.home-category-menu__arrow {
+    width: 16px;
+    height: 16px;
+    color: #6b7280;
+    opacity: 0;
+    transition: transform 0.2s ease; /* Thêm hiệu ứng di chuyển mũi tên */
+}
+
+.home-category-menu__item--has-children .home-category-menu__arrow {
+    opacity: 1;
+}
+
+.home-category-menu__item--has-children:hover .home-category-menu__arrow {
+    transform: translateX(3px); /* Hover vào mũi tên nhích sang phải 1 chút */
+}
+
+/* KHỐI FLYOUT (MEGA MENU) */
+.home-category-flyout {
+    position: absolute;
+    top: 0; /* Neo chặt vào mép trên của menu chính */
+    left: 100%; /* Nằm sát mép phải */
+    z-index: 20;
+    margin-left: 2px; /* Tạo khe hở siêu nhỏ */
+    
+    width: min(650px, calc(100vw - 300px)); /* Cho to ra một chút */
+    min-height: 100%; /* Bằng luôn chiều cao menu cha (600px) để nhìn cân đối */
+    max-height: 100%; 
+    overflow-y: auto;
+    
+    border: 1px solid #e5e7eb;
+    border-radius: 8px;
+    background: #fff;
+    box-shadow: 10px 10px 30px rgba(15, 23, 42, 0.1);
+    padding: 24px;
+    
+    /* ANIMATION THAY CHO DISPLAY: NONE */
+    visibility: hidden;
+    opacity: 0;
+    transform: translateX(-10px);
+    transition: opacity 0.25s ease, transform 0.25s ease, visibility 0.25s ease;
+}
+
+/* BẬT FLYOUT KHI HOVER */
+.home-category-menu__item--has-children:hover > .home-category-flyout,
+.home-category-menu__item--has-children:focus-within > .home-category-flyout {
+    visibility: visible;
+    opacity: 1;
+    transform: translateX(0);
+}
+
+/* CẦU NỐI TÀNG HÌNH (TRÁNH LỖI MẤT HOVER KHI RẼ CHUỘT) */
+.home-category-flyout::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -15px; 
+    width: 15px;
+    height: 100%;
+    background: transparent;
+}
+
+/* TÙY CHỈNH THANH CUỘN (SCROLLBAR) CHO FLYOUT ĐỂ NHÌN XỊN HƠN */
+.home-category-flyout::-webkit-scrollbar {
+    width: 6px;
+}
+.home-category-flyout::-webkit-scrollbar-track {
+    background: transparent;
+}
+.home-category-flyout::-webkit-scrollbar-thumb {
+    background-color: #d1d5db;
+    border-radius: 10px;
+}
+
+/* TYPOGRAPHY BÊN TRONG FLYOUT */
+.home-category-flyout__heading {
+    display: block;
+    margin-bottom: 16px;
+    color: #111827;
+    font-size: 16px;
+    font-weight: 700;
+    line-height: 22px;
+    text-decoration: none;
+    text-transform: capitalize;
+    border-bottom: 1px solid #f3f4f6; /* Thêm đường gạch chân nhẹ */
+    padding-bottom: 8px;
+}
+
+.home-category-flyout__grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr)); /* Có thể đổi thành repeat(3, ...) nếu nhiều mục con */
+    gap: 24px;
+}
+
+.home-category-flyout__parent {
+    margin-bottom: 8px;
+    color: #111827;
+    font-size: 14px;
+    font-weight: 700;
+    line-height: 20px;
+    text-transform: capitalize;
+    transition: color 0.15s ease;
+}
+
+.home-category-flyout__child {
+    margin-top: 6px;
+    color: #4b5563;
+    font-size: 14px; /* Tăng từ 13px lên 14px cho dễ đọc */
+    line-height: 20px;
+    text-transform: capitalize;
+    transition: color 0.15s ease;
+}
+
+.home-category-flyout__heading:hover,
+.home-category-flyout__parent:hover,
+.home-category-flyout__child:hover {
+    color: #0f62fe;
+}
+
+.home-banner-grid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    grid-template-rows: repeat(3, minmax(0, 1fr));
+    grid-auto-flow: row dense;
+    gap: 10px;
+    min-width: 0;
+    height: 600px;
+}
+
 .home-banner-slider {
     position: relative;
+    grid-column: span 2;
+    grid-row: span 2;
     overflow: hidden;
+    border-radius: 8px;
     background: #111827;
+    box-shadow: 0 1px 2px rgba(15, 17, 17, 0.08);
 }
 
 .home-banner-swiper {
     width: 100%;
-    height: min(420px, 42vw);
-    min-height: 220px;
+    height: 100%;
 }
 
-.home-banner-slide {
+.home-banner-slide,
+.home-banner-tile {
     display: block;
     width: 100%;
     height: 100%;
+    overflow: hidden;
     background: #f3f3f3;
 }
 
-.home-banner-slide img {
+.home-banner-slide img,
+.home-banner-tile img {
     width: 100%;
     height: 100%;
     object-fit: cover;
 }
 
+.home-banner-tile {
+    border: 1px solid #e5e7eb;
+    border-radius: 8px;
+    box-shadow: 0 1px 2px rgba(15, 17, 17, 0.08);
+}
+
+.home-banner-tile img {
+    transition: transform 0.25s ease;
+}
+
+.home-banner-tile:hover img {
+    transform: scale(1.04);
+}
+
 .home-banner-empty {
     display: grid;
-    min-height: 300px;
+    height: 100%;
+    min-height: 0;
     place-items: center;
     background: linear-gradient(100deg, #f5d39e 0%, #e9eef2 45%, #b7d8e8 100%);
     color: #0f1111;
@@ -328,8 +696,7 @@ onMounted(() => {
 .home-banner-slider :deep(.swiper-button-prev) {
     width: 44px;
     height: 70px;
-    background: rgba(255, 255, 255, 0.82);
-    color: #0f1111;
+    color: #e9e9e954;
 }
 
 .home-banner-slider :deep(.swiper-button-next::after),
@@ -387,7 +754,7 @@ onMounted(() => {
     position: relative;
     z-index: 2;
     max-width: 1500px;
-    margin: -34px auto 0;
+    margin: 0 auto;
     padding: 0 20px 38px;
 }
 
@@ -817,12 +1184,54 @@ onMounted(() => {
 }
 
 @media (max-width: 768px) {
-    .home-banner-swiper {
+    .home-hero {
+        grid-template-columns: 1fr;
+        gap: 10px;
+        padding: 12px 12px 0;
+    }
+
+    .home-category-menu__list {
+        grid-auto-flow: column;
+        grid-auto-columns: minmax(170px, 1fr);
+        overflow-x: auto;
+        padding: 8px;
+        scroll-snap-type: x proximity;
+    }
+
+    .home-category-menu {
+        height: auto;
+        overflow: hidden;
+    }
+
+    .home-category-menu__item {
+        scroll-snap-align: start;
+    }
+
+    .home-category-menu__link {
+        border: 1px solid #e5e7eb;
+        border-radius: 8px;
+    }
+
+    .home-category-flyout,
+    .home-category-menu__item--has-children:hover > .home-category-flyout,
+    .home-category-menu__item--has-children:focus-within > .home-category-flyout {
+        display: none;
+    }
+
+    .home-banner-grid {
+        grid-template-columns: 1fr;
+        grid-template-rows: none;
+        grid-auto-rows: 130px;
+        height: auto;
+    }
+
+    .home-banner-slider {
+        grid-column: auto;
+        grid-row: auto;
         height: 260px;
     }
 
     .amazon-home__content {
-        margin-top: -24px;
         padding: 0 12px 28px;
     }
 

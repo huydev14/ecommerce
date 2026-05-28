@@ -14,7 +14,7 @@ class HomeController extends Controller
             return [
                 'banners' => Banner::where('is_active', true)
                     ->orderBy('sort_order', 'asc')
-                    ->get(['id', 'image_url', 'link']),
+                    ->get(['id', 'title', 'image_url', 'link', 'sort_order']),
             ];
         });
 
