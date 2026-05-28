@@ -25,6 +25,8 @@
         "vite": "^7.0.7"
     },
     "dependencies": {
+        "@cloudinary/url-gen": "^1.22.0",
+        "@cloudinary/vue": "^1.13.4",
         "@fortawesome/fontawesome-free": "^7.2.0",
         "@popperjs/core": "^2.11.8",
         "bootstrap": "^5.3.8",

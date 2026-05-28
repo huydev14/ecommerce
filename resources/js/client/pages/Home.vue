@@ -24,33 +24,6 @@ const featuredProducts = ref([]);
 const newProducts = ref([]);
 const swiperModules = [Autoplay, Pagination, Navigation];
 
-const recommendationRows = [
-    {
-        title: 'Tiếp tục mua sắm theo danh mục',
-        link: 'Xem thêm',
-        products: [
-            { icon: '🧳', name: 'Du lịch & vali' },
-            { icon: '👕', name: 'Thời trang nam' },
-            { icon: '🍳', name: 'Nhà bếp' },
-            { icon: '📚', name: 'Sách & học tập' },
-            { icon: '🧸', name: 'Đồ chơi' },
-            { icon: '🛠', name: 'Dụng cụ' },
-        ],
-    },
-    {
-        title: 'Gợi ý cho văn phòng của bạn',
-        link: 'Xem tất cả',
-        products: [
-            { icon: '🖥', name: 'Màn hình' },
-            { icon: '⌨', name: 'Bàn phím' },
-            { icon: '🖱', name: 'Chuột' },
-            { icon: '📓', name: 'Sổ tay' },
-            { icon: '☕', name: 'Ly giữ nhiệt' },
-            { icon: '🗄', name: 'Tủ tài liệu' },
-        ],
-    },
-];
-
 const featuredSlider = ref(null);
 
 const normalizeProducts = (payload) => {
@@ -405,20 +378,6 @@ onMounted(() => {
                     </div>
 
                     <p v-if="newProductRows.length === 0" class="amazon-new-products__empty">Chưa có sản phẩm mới.</p>
-                </div>
-            </section>
-
-            <section v-for="row in recommendationRows" :key="row.title" class="amazon-rail amazon-rail--compact" :aria-label="row.title">
-                <div class="amazon-section-heading">
-                    <h2>{{ row.title }}</h2>
-                    <a href="#" class="amazon-link">{{ row.link }}</a>
-                </div>
-
-                <div class="amazon-category-row">
-                    <a v-for="product in row.products" :key="product.name" href="#" class="amazon-category-product">
-                        <span>{{ product.icon }}</span>
-                        <b>{{ product.name }}</b>
-                    </a>
                 </div>
             </section>
         </div>

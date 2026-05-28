@@ -4,7 +4,7 @@ use App\Http\Controllers\Api\Auth\OAuthController;
 use App\Http\Controllers\AuditLogController;
 use App\Http\Controllers\BrandController;
 use App\Http\Controllers\CategoryController;
-use App\Http\Controllers\HomeController;
+use App\Http\Controllers\BannerController;
 use App\Http\Controllers\ProductController;
 use App\Http\Controllers\ProductImportController;
 use App\Http\Controllers\ProductVariantController;
@@ -74,8 +74,8 @@ Route::prefix('admin')->middleware('auth')->group(function () {
     });
 
     // --- Banners -------------------------------------
-    Route::get('/banners/data', [HomeController::class, 'data'])->name('banners.data');
-    Route::resource('banners', HomeController::class)->except(['show']);
+    Route::get('/banners/data', [BannerController::class, 'data'])->name('banners.data');
+    Route::resource('banners', BannerController::class)->except(['show']);
 
     // --- Brands -----------------------------------
     Route::prefix('brands')->name('brands.')->group(function () {

@@ -54,7 +54,7 @@
             <div>
                 <label for="sort_order" class="tw-block tw-text-sm tw-font-medium tw-text-gray-700 tw-mb-1.5">Thứ tự
                     hiển thị</label>
-                <input type="number" name="sort_order" id="sort_order" value="0" min="0"
+                <input type="number" name="sort_order" id="sort_order" min="0" placeholder="0"
                     class="tw-w-full tw-rounded-md tw-border-gray-300 tw-shadow-sm focus:tw-border-[#0078D4] focus:tw-ring-[#0078D4] tw-text-sm tw-px-3 tw-py-2 tw-transition-colors tw-outline-none">
             </div>
 

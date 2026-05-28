@@ -55,6 +55,14 @@
         </div>
 
         <div>
+            <label for="image_public_id" class="tw-block tw-text-sm tw-font-medium tw-text-gray-700 tw-mb-1.5">Image Public ID</label>
+            <input type="text" name="image_public_id" id="image_public_id" value="{{ $banner->image_public_id }}"
+                placeholder=""
+                readonly
+                class="tw-w-full tw-rounded-md tw-border-gray-300 tw-bg-gray-50 tw-text-sm tw-px-3 tw-py-2 tw-transition-colors tw-outline-none">
+        </div>
+
+        <div>
             <label for="link" class="tw-block tw-text-sm tw-font-medium tw-text-gray-700 tw-mb-1.5">Liên kết</label>
             <input type="url" name="link" id="link" value="{{ $banner->link }}"
                 placeholder="https://example.com"
@@ -65,7 +73,7 @@
             <div>
                 <label for="sort_order" class="tw-block tw-text-sm tw-font-medium tw-text-gray-700 tw-mb-1.5">Thứ tự
                     hiển thị</label>
-                <input type="number" name="sort_order" id="sort_order" value="{{ $banner->sort_order }}" min="0"
+                <input type="number" name="sort_order" id="sort_order" min="0" placeholder="0" value="{{ $banner->sort_order }}"
                     class="tw-w-full tw-rounded-md tw-border-gray-300 tw-shadow-sm focus:tw-border-[#0078D4] focus:tw-ring-[#0078D4] tw-text-sm tw-px-3 tw-py-2 tw-transition-colors tw-outline-none">
             </div>
 

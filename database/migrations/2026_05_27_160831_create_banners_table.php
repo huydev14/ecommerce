@@ -14,7 +14,8 @@ return new class extends Migration
         Schema::create('banners', function (Blueprint $table) {
             $table->id();
             $table->string('title')->nullable();
-            $table->string('image_url');
+            $table->string('image_url')->nullable();
+            $table->string('image_public_id')->nullable();
             $table->string('link')->nullable();
             $table->integer('sort_order')->default(0);
             $table->boolean('is_active')->default(true);
