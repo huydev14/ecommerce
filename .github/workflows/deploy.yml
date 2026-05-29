@@ -15,6 +15,10 @@ jobs:
           username: trgiahuy_usr
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           script: |
+            set -e
+
             cd /var/www/trgiahuy_usr/data/www/ecommerce.giahuy.tech
             git pull origin main
+            
+            chmod +x ./deploy.sh
             ./deploy.sh
