@@ -6,12 +6,19 @@ use App\Http\Controllers\Api\Auth\OAuthController;
 use App\Http\Controllers\Api\CartController;
 use App\Http\Controllers\Api\CategoryController;
 use App\Http\Controllers\Api\HomeController;
+use App\Http\Controllers\Api\LocationController;
 use App\Http\Controllers\Api\ProductController;
 use Illuminate\Support\Facades\Route;
 
 Route::prefix('v1')->group(function () {
     Route::get('/test', function () {
         return response()->json(['message' => 'Gọi API thành công']);
+    });
+
+    Route::prefix('locations')->group(function () {
+        Route::get('/provinces', [LocationController::class, 'getProvinces']);
+        Route::get('/districts', [LocationController::class, 'getDistricts']);
+        Route::get('/wards', [LocationController::class, 'getWards']);
     });
 
     Route::middleware('throttle:5,1')->group(function () {

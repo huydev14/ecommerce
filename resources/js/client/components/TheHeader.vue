@@ -3,12 +3,17 @@ import { computed, onMounted, ref } from 'vue';
 import { useRouter } from 'vue-router';
 import { useAuthStore } from '../stores/auth';
 import { useCartStore } from '../stores/cart';
+import { useLocationStore } from '@/stores/location';
+import LocationModal from '@/components/Modals/LocationModal.vue';
 
 const authStore = useAuthStore();
 const cartStore = useCartStore();
+const locationStore = useLocationStore();
 const router = useRouter();
 const searchTerm = ref('fitness clothing');
+const isLocationModalOpen = ref(false);
 const cartPreviewItems = computed(() => cartStore.items.slice(0, 3));
+const currentLocationName = computed(() => locationStore.currentLocationName);
 
 const submitSearch = () => {
     const query = searchTerm.value.trim() || 'fitness clothing';
@@ -45,7 +50,12 @@ onMounted(() => {
             </router-link>
 
             <div
+                role="button"
+                tabindex="0"
                 class="tw-hidden tw-flex-none tw-cursor-pointer tw-flex-col tw-rounded-sm tw-border tw-border-transparent tw-px-2 tw-py-1 hover:tw-border-white lg:tw-flex"
+                @click="isLocationModalOpen = true"
+                @keydown.enter.prevent="isLocationModalOpen = true"
+                @keydown.space.prevent="isLocationModalOpen = true"
             >
                 <span class="tw-pl-4 tw-text-[12px] tw-leading-3 tw-text-[#cccccc]"
                     >Giao đến {{ authStore.isLoggedIn && authStore.user ? authStore.user.name : 'Huy' }}</span
@@ -66,7 +76,7 @@ onMounted(() => {
                         />
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
                     </svg>
-                    <span class="tw-text-[14px] tw-font-bold tw-leading-4 tw-text-white">TP. Hồ Chí Minh</span>
+                    <span class="tw-text-[14px] tw-font-bold tw-leading-4 tw-text-white">{{ currentLocationName }}</span>
                 </div>
             </div>
 
@@ -331,4 +341,6 @@ onMounted(() => {
             </form>
         </div>
     </div>
+
+    <LocationModal v-if="isLocationModalOpen" @close="isLocationModalOpen = false" />
 </template>

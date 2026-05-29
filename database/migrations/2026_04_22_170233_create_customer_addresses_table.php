@@ -4,8 +4,7 @@ use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
-return new class extends Migration
-{
+return new class extends Migration {
     /**
      * Run the migrations.
      */
@@ -13,19 +12,23 @@ return new class extends Migration
     {
         Schema::create('customer_addresses', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('customer_id')->constrained()->cascadeOnDelete();
+            $table->foreignId('customer_id')->constrained()->onDelete('cascade');
 
-            $table->string('receiver_name');
-            $table->string('receiver_phone');
+            $table->string('receiver_name', 255);
+            $table->string('receiver_phone', 20);
 
-            $table->string('address_line');
-            $table->string('ward_id')->nullable();
-            $table->string('district_id')->nullable();
-            $table->string('province_id')->nullable();
+            $table->string('specific_address', 255);
 
-            $table->string('label')->default('Home');
-            $table->boolean('is_default')->default(0);
+            $table->string('ward_code', 30);
+            $table->string('ward_name', 100);
 
+            $table->integer('district_id');
+            $table->string('district_name', 100);
+
+            $table->integer('province_id');
+            $table->string('province_name', 100);
+
+            $table->boolean('is_default')->default(false);
             $table->timestamps();
         });
     }
