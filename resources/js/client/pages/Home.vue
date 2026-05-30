@@ -3,9 +3,13 @@ import { computed, onMounted, ref } from 'vue';
 import { Swiper, SwiperSlide } from 'swiper/vue';
 import { Autoplay, Navigation, Pagination } from 'swiper/modules';
 import api from '../services/api';
+import { APP_CONFIG } from '@/config';
+import { useCartStore } from '@/stores/cart';
 import 'swiper/css';
 import 'swiper/css/navigation';
 import 'swiper/css/pagination';
+
+const cartStore = useCartStore();
 
 const bestSellers = [
     { icon: '💻', name: 'Laptop WorkPro 14 inch', discount: '-18%', rating: '★★★★★ 2,143', price: '₫18.990.000' },
@@ -22,6 +26,7 @@ const banners = ref([]);
 const categories = ref([]);
 const featuredProducts = ref([]);
 const newProducts = ref([]);
+const addingProductIds = ref(new Set());
 const swiperModules = [Autoplay, Pagination, Navigation];
 
 const featuredSlider = ref(null);
@@ -72,22 +77,65 @@ const sortedBanners = computed(() => {
     });
 });
 
-const sliderBanners = computed(() => sortedBanners.value.filter((banner) => Number(banner.sort_order) >= 1 && Number(banner.sort_order) <= 3));
+const sliderBanners = computed(() =>
+    sortedBanners.value.filter((banner) => Number(banner.sort_order) >= 1 && Number(banner.sort_order) <= 3),
+);
 
 const staticGridBanners = computed(() => sortedBanners.value.filter((banner) => Number(banner.sort_order) >= 4).slice(0, 5));
 
-const formatPrice = (price) => {
+const formatCardPrice = (price) => {
     const amount = Number(price);
 
     if (!Number.isFinite(amount) || amount <= 0) {
-        return 'Liên hệ';
+        return 'Contact';
     }
 
-    return new Intl.NumberFormat('vi-VN', {
-        style: 'currency',
-        currency: 'VND',
+    return new Intl.NumberFormat('en-US', {
         maximumFractionDigits: 0,
     }).format(amount);
+};
+
+const getProductBrand = (product) => product.brand?.name || product.category?.name || APP_CONFIG.appName;
+
+const getProductRating = (product) => Number(product.rating || product.average_rating || 4.6).toFixed(1);
+
+const getProductReviewCount = (product) => {
+    const count = Number(product.reviews_count || product.review_count || product.total_reviews || 5500);
+    return count >= 1000 ? `${(count / 1000).toFixed(1)}K` : String(count);
+};
+
+const getProductBoughtCount = (product) => {
+    const count = Number(product.sold_count || product.orders_count || product.total_sold || 500);
+    return `${count}+ bought in past month`;
+};
+
+const getProductVariantId = (product) =>
+    product.product_variant_id || product.default_variant_id || product.variant_id || product.variants?.[0]?.id;
+
+const getProductKey = (product) => product.id || product.slug || product.name;
+
+const isAddingToCart = (product) => addingProductIds.value.has(getProductKey(product));
+
+const addProductToCart = async (product) => {
+    const variantId = getProductVariantId(product);
+
+    if (!variantId) {
+        return;
+    }
+
+    const productKey = getProductKey(product);
+
+    addingProductIds.value = new Set(addingProductIds.value).add(productKey);
+
+    try {
+        await cartStore.addItem(variantId, 1);
+    } catch (error) {
+        console.error('Unable to add product to cart:', error);
+    } finally {
+        const nextAddingProductIds = new Set(addingProductIds.value);
+        nextAddingProductIds.delete(productKey);
+        addingProductIds.value = nextAddingProductIds;
+    }
 };
 
 const productImageUrl = (thumbnail) => {
@@ -160,7 +208,7 @@ const fetchCategories = async () => {
 };
 
 const newProductRows = computed(() => {
-    const chunkSize = 4;
+    const chunkSize = 5;
     const rows = [];
 
     for (let index = 0; index < newProducts.value.length; index += chunkSize) {
@@ -210,11 +258,16 @@ onMounted(() => {
 </script>
 
 <template>
-    <div class="amazon-home">
+    <div class="home">
         <section class="home-hero" aria-label="Danh mục và banner trang chủ">
             <aside class="home-category-menu" aria-label="Danh mục sản phẩm">
                 <ul v-if="menuCategories.length > 0" class="home-category-menu__list">
-                    <li v-for="category in menuCategories" :key="category.id" class="home-category-menu__item" :class="{ 'home-category-menu__item--has-children': hasChildren(category) }">
+                    <li
+                        v-for="category in menuCategories"
+                        :key="category.id"
+                        class="home-category-menu__item"
+                        :class="{ 'home-category-menu__item--has-children': hasChildren(category) }"
+                    >
                         <router-link :to="categoryRoute(category)" class="home-category-menu__link">
                             <span class="home-category-menu__icon" aria-hidden="true">
                                 <img v-if="categoryIconUrl(category.icon)" :src="categoryIconUrl(category.icon)" :alt="category.name" />
@@ -237,7 +290,12 @@ onMounted(() => {
                             </svg>
                         </router-link>
 
-                        <div v-if="hasChildren(category)" class="home-category-flyout" role="menu" :aria-label="`Danh mục con của ${category.name}`">
+                        <div
+                            v-if="hasChildren(category)"
+                            class="home-category-flyout"
+                            role="menu"
+                            :aria-label="`Danh mục con của ${category.name}`"
+                        >
                             <router-link :to="categoryRoute(category)" class="home-category-flyout__heading">
                                 {{ category.name }}
                             </router-link>
@@ -285,10 +343,10 @@ onMounted(() => {
                     >
                         <swiper-slide v-for="banner in sliderBanners" :key="banner.id">
                             <a v-if="banner.link" :href="banner.link" class="home-banner-slide">
-                                <img :src="bannerImageUrl(banner.image_url)" :alt="banner.title || 'WorkHub banner'" />
+                                <img :src="bannerImageUrl(banner.image_url)" :alt="banner.title || `${APP_CONFIG.appName} banner`" />
                             </a>
                             <div v-else class="home-banner-slide">
-                                <img :src="bannerImageUrl(banner.image_url)" :alt="banner.title || 'WorkHub banner'" />
+                                <img :src="bannerImageUrl(banner.image_url)" :alt="banner.title || `${APP_CONFIG.appName} banner`" />
                             </div>
                         </swiper-slide>
                     </swiper>
@@ -305,79 +363,126 @@ onMounted(() => {
                     class="home-banner-tile"
                     :aria-label="banner.title || 'Banner khuyến mãi'"
                 >
-                    <img :src="bannerImageUrl(banner.image_url)" :alt="banner.title || 'WorkHub banner'" loading="lazy" />
+                    <img :src="bannerImageUrl(banner.image_url)" :alt="banner.title || `${APP_CONFIG.appName} banner`" loading="lazy" />
                 </a>
             </div>
         </section>
 
-        <div class="amazon-home__content">
-            <section class="amazon-rail" aria-label="Sản phẩm bán chạy nhất">
-                <div class="amazon-section-heading">
+        <div class="home__content">
+            <section class="rail" aria-label="Sản phẩm bán chạy nhất">
+                <div class="section-heading">
                     <h2>Sản phẩm bán chạy nhất</h2>
-                    <a href="#" class="amazon-link">Xem thêm</a>
+                    <a href="#" class="link">Xem thêm</a>
                 </div>
 
-                <div class="amazon-product-row">
-                    <article v-for="product in bestSellers" :key="product.name" class="amazon-product">
-                        <a href="#" class="amazon-product__image">{{ product.icon }}</a>
-                        <div class="amazon-product__deal">
+                <div class="product-row">
+                    <article v-for="product in bestSellers" :key="product.name" class="product">
+                        <a href="#" class="product__image">{{ product.icon }}</a>
+                        <div class="product__deal">
                             <span>{{ product.discount }}</span>
                             <b>Deal</b>
                         </div>
-                        <a href="#" class="amazon-product__name">{{ product.name }}</a>
-                        <div class="amazon-product__rating">{{ product.rating }}</div>
-                        <div class="amazon-product__price">{{ product.price }}</div>
+                        <a href="#" class="product__name">{{ product.name }}</a>
+                        <div class="product__rating">{{ product.rating }}</div>
+                        <div class="product__price">{{ product.price }}</div>
                     </article>
                 </div>
             </section>
 
-            <section class="amazon-rail amazon-featured-products" aria-label="Featured products">
-                <div class="amazon-section-heading">
+            <section class="rail featured-products" aria-label="Featured products">
+                <div class="section-heading">
                     <div>
-                        <span class="amazon-featured-products__eyebrow">Featured products</span>
+                        <span class="featured-products__eyebrow">Featured products</span>
                         <h2>Sản phẩm nổi bật</h2>
                     </div>
 
-                    <div class="amazon-slider-controls" aria-label="Điều hướng sản phẩm nổi bật">
+                    <div class="slider-controls" aria-label="Điều hướng sản phẩm nổi bật">
                         <button type="button" aria-label="Cuộn sang trái" @click="scrollFeatured(-1)">‹</button>
                         <button type="button" aria-label="Cuộn sang phải" @click="scrollFeatured(1)">›</button>
                     </div>
                 </div>
 
-                <div ref="featuredSlider" class="amazon-featured-slider">
-                    <article v-for="product in featuredProducts" :key="product.id || product.slug || product.name" class="amazon-featured-card">
-                        <span class="amazon-featured-card__tag">{{ product.category?.name || 'Nổi bật' }}</span>
-                        <router-link :to="{ name: 'ProductDetail', params: { slug: product.slug } }" class="amazon-featured-card__image">
+                <div ref="featuredSlider" class="featured-slider">
+                    <article v-for="product in featuredProducts" :key="product.id || product.slug || product.name" class="product-card">
+                        <router-link :to="{ name: 'ProductDetail', params: { slug: product.slug } }" class="product-card__image">
                             <img :src="productImageUrl(product.thumbnail)" :alt="product.name" loading="lazy" />
                         </router-link>
-                        <router-link :to="{ name: 'ProductDetail', params: { slug: product.slug } }" class="amazon-featured-card__name">{{ product.name }}</router-link>
-                        <span class="amazon-featured-card__price">{{ formatPrice(product.price) }}</span>
+                        <div class="product-card__body">
+                            <div class="product-card__brand">{{ getProductBrand(product) }}</div>
+                            <router-link :to="{ name: 'ProductDetail', params: { slug: product.slug } }" class="product-card__name">{{
+                                product.name
+                            }}</router-link>
+                            <div class="product-card__rating">
+                                <span>{{ getProductRating(product) }}</span>
+                                <span class="product-card__stars">★★★★★</span>
+                                <span class="product-card__chevron">⌄</span>
+                                <span class="product-card__reviews">({{ getProductReviewCount(product) }})</span>
+                            </div>
+                            <div class="product-card__meta">{{ getProductBoughtCount(product) }}</div>
+                            <div class="product-card__price">
+                                <span>VND</span>
+                                <strong>{{ formatCardPrice(product.price) }}</strong>
+                            </div>
+                            <div class="product-card__delivery"><span>VND 0 delivery</span> <strong>Tue, Jun 30</strong></div>
+                            <div class="product-card__ship">Ships to Vietnam</div>
+                            <button
+                                type="button"
+                                class="product-card__cart"
+                                :disabled="!getProductVariantId(product) || isAddingToCart(product)"
+                                @click="addProductToCart(product)"
+                            >
+                                {{ isAddingToCart(product) ? 'Adding...' : 'Add to cart' }}
+                            </button>
+                        </div>
                     </article>
                 </div>
 
-                <p v-if="featuredProducts.length === 0" class="amazon-featured-products__empty">Chưa có sản phẩm nổi bật.</p>
+                <p v-if="featuredProducts.length === 0" class="featured-products__empty">Chưa có sản phẩm nổi bật.</p>
             </section>
 
-            <section class="amazon-rail amazon-new-products" aria-label="New products">
-                <div class="amazon-section-heading">
+            <section class="rail new-products" aria-label="New products">
+                <div class="section-heading">
                     <h2>Sản phẩm mới</h2>
-                    <a href="#" class="amazon-link">Xem hàng mới về</a>
+                    <a href="#" class="link">Xem hàng mới về</a>
                 </div>
 
-                <div class="amazon-new-products__rows">
-                    <div v-for="(row, rowIndex) in newProductRows" :key="rowIndex" class="amazon-new-products__row">
-                        <article v-for="product in row" :key="product.id || product.slug || product.name" class="amazon-new-product">
-                            <router-link :to="{ name: 'ProductDetail', params: { slug: product.slug } }" class="amazon-new-product__image">
-                                <img :src="product.thumbnail" :alt="product.name" loading="lazy" />
+                <div class="new-products__rows">
+                    <div v-for="(row, rowIndex) in newProductRows" :key="rowIndex" class="new-products__row">
+                        <article v-for="product in row" :key="product.id || product.slug || product.name" class="product-card">
+                            <router-link :to="{ name: 'ProductDetail', params: { slug: product.slug } }" class="product-card__image">
+                                <img :src="productImageUrl(product.thumbnail)" :alt="product.name" loading="lazy" />
                             </router-link>
-                            <div>
-                                <router-link :to="{ name: 'ProductDetail', params: { slug: product.slug } }" class="amazon-new-product__name">{{ product.name }}</router-link>
-                                <span>{{ formatPrice(product.price) }}</span>
+                            <div class="product-card__body">
+                                <div class="product-card__brand">{{ getProductBrand(product) }}</div>
+                                <router-link :to="{ name: 'ProductDetail', params: { slug: product.slug } }" class="product-card__name">{{
+                                    product.name
+                                }}</router-link>
+                                <div class="product-card__rating">
+                                    <span>{{ getProductRating(product) }}</span>
+                                    <span class="product-card__stars">★★★★★</span>
+                                    <span class="product-card__chevron">⌄</span>
+                                    <span class="product-card__reviews">({{ getProductReviewCount(product) }})</span>
+                                </div>
+                                <div class="product-card__meta">{{ getProductBoughtCount(product) }}</div>
+                                <div class="product-card__price">
+                                    <span>VND</span>
+                                    <strong>{{ formatCardPrice(product.price) }}</strong>
+                                </div>
+                                <div class="product-card__delivery"><span>VND 0 delivery</span> <strong>Tue, Jun 30</strong></div>
+                                <div class="product-card__ship">Ships to Vietnam</div>
+                                <button
+                                    type="button"
+                                    class="product-card__cart"
+                                    :disabled="!getProductVariantId(product) || isAddingToCart(product)"
+                                    @click="addProductToCart(product)"
+                                >
+                                    {{ isAddingToCart(product) ? 'Adding...' : 'Add to cart' }}
+                                </button>
                             </div>
                         </article>
                     </div>
 
-                    <p v-if="newProductRows.length === 0" class="amazon-new-products__empty">Chưa có sản phẩm mới.</p>
+                    <p v-if="newProductRows.length === 0" class="new-products__empty">Chưa có sản phẩm mới.</p>
                 </div>
             </section>
         </div>
@@ -385,7 +490,7 @@ onMounted(() => {
 </template>
 
 <style scoped>
-.amazon-home {
+.home {
     min-height: 100%;
     background: #e3e6e6;
     color: #0f1111;
@@ -421,7 +526,7 @@ onMounted(() => {
 
 /* ĐÃ XÓA position: relative; Ở ĐÂY ĐỂ TRÁNH LỖI ĐIỂM NEO */
 .home-category-menu__item {
-    position: static; 
+    position: static;
 }
 
 .home-category-menu__link {
@@ -435,7 +540,9 @@ onMounted(() => {
     font-size: 14px;
     line-height: 18px;
     text-decoration: none;
-    transition: background 0.2s ease, color 0.2s ease;
+    transition:
+        background 0.2s ease,
+        color 0.2s ease;
 }
 
 .home-category-menu__link:hover,
@@ -490,23 +597,26 @@ onMounted(() => {
     left: 100%; /* Nằm sát mép phải */
     z-index: 20;
     margin-left: 2px; /* Tạo khe hở siêu nhỏ */
-    
+
     width: min(650px, calc(100vw - 300px)); /* Cho to ra một chút */
     min-height: 100%; /* Bằng luôn chiều cao menu cha (600px) để nhìn cân đối */
-    max-height: 100%; 
+    max-height: 100%;
     overflow-y: auto;
-    
+
     border: 1px solid #e5e7eb;
     border-radius: 8px;
     background: #fff;
     box-shadow: 10px 10px 30px rgba(15, 23, 42, 0.1);
     padding: 24px;
-    
+
     /* ANIMATION THAY CHO DISPLAY: NONE */
     visibility: hidden;
     opacity: 0;
     transform: translateX(-10px);
-    transition: opacity 0.25s ease, transform 0.25s ease, visibility 0.25s ease;
+    transition:
+        opacity 0.25s ease,
+        transform 0.25s ease,
+        visibility 0.25s ease;
 }
 
 /* BẬT FLYOUT KHI HOVER */
@@ -522,7 +632,7 @@ onMounted(() => {
     content: '';
     position: absolute;
     top: 0;
-    left: -15px; 
+    left: -15px;
     width: 15px;
     height: 100%;
     background: transparent;
@@ -668,9 +778,9 @@ onMounted(() => {
     background: #f0c14b;
 }
 
-.amazon-pill-button,
-.amazon-signin-card__button,
-.amazon-outline-button,
+.pill-button,
+.signin-card__button,
+.outline-button,
 .a-button-primary {
     display: inline-flex;
     align-items: center;
@@ -687,8 +797,8 @@ onMounted(() => {
     transition: background 0.2s;
 }
 
-.amazon-pill-button,
-.amazon-signin-card__button,
+.pill-button,
+.signin-card__button,
 .a-button-primary {
     background: #f0c14b;
     border-color: #a88734 #9c7e31 #846a29;
@@ -696,20 +806,20 @@ onMounted(() => {
     box-shadow: 0 1px 0 rgba(255, 255, 255, 0.4) inset;
 }
 
-.amazon-pill-button:hover,
-.amazon-signin-card__button:hover,
+.pill-button:hover,
+.signin-card__button:hover,
 .a-button-primary:hover {
     background: #f4d078;
 }
 
-.amazon-outline-button {
+.outline-button {
     border: 1px solid #d5d9d9;
     background: #fff;
     color: #0f1111;
     box-shadow: 0 1px 2px rgba(15, 17, 17, 0.12);
 }
 
-.amazon-home__content {
+.home__content {
     position: relative;
     z-index: 2;
     max-width: 1500px;
@@ -717,27 +827,27 @@ onMounted(() => {
     padding: 0 20px 38px;
 }
 
-.amazon-card,
-.amazon-rail,
-.amazon-feature-band {
+.card,
+.rail,
+.feature-band {
     background: #fff;
     box-shadow: 0 1px 2px rgba(15, 17, 17, 0.08);
 }
 
-.amazon-card {
+.card {
     display: flex;
     min-height: 420px;
     flex-direction: column;
     padding: 20px;
 }
 
-.amazon-card--compact {
+.card--compact {
     min-height: 150px;
 }
 
-.amazon-card h2,
-.amazon-section-heading h2,
-.amazon-feature-band h2 {
+.card h2,
+.section-heading h2,
+.feature-band h2 {
     margin: 0;
     color: #0f1111;
     font-size: 21px;
@@ -746,14 +856,14 @@ onMounted(() => {
     letter-spacing: 0;
 }
 
-.amazon-card__tiles {
+.card__tiles {
     display: grid;
     grid-template-columns: repeat(2, minmax(0, 1fr));
     gap: 14px;
     margin-top: 16px;
 }
 
-.amazon-tile {
+.tile {
     display: flex;
     min-height: 128px;
     flex-direction: column;
@@ -766,7 +876,7 @@ onMounted(() => {
     text-decoration: none;
 }
 
-.amazon-tile__visual {
+.tile__visual {
     display: grid;
     flex: 1;
     place-items: center;
@@ -775,7 +885,7 @@ onMounted(() => {
     font-size: 42px;
 }
 
-.amazon-link {
+.link {
     display: inline-flex;
     width: fit-content;
     margin-top: auto;
@@ -785,25 +895,25 @@ onMounted(() => {
     text-decoration: none;
 }
 
-.amazon-link:hover,
-.amazon-product__name:hover,
-.amazon-category-product:hover b {
+.link:hover,
+.product__name:hover,
+.category-product:hover b {
     color: #c7511f;
     text-decoration: underline;
 }
 
-.amazon-signin-card {
+.signin-card {
     display: grid;
     grid-template-rows: auto 1fr;
     gap: 20px;
 }
 
-.amazon-signin-card__button {
+.signin-card__button {
     width: 100%;
     margin: 10px 0 14px;
 }
 
-.amazon-ad-card {
+.ad-card {
     display: grid;
     min-height: 250px;
     place-items: center;
@@ -813,12 +923,12 @@ onMounted(() => {
     letter-spacing: 0;
 }
 
-.amazon-rail {
+.rail {
     margin-top: 20px;
     padding: 18px 20px;
 }
 
-.amazon-section-heading {
+.section-heading {
     display: flex;
     align-items: baseline;
     gap: 14px;
@@ -826,21 +936,21 @@ onMounted(() => {
     margin-bottom: 14px;
 }
 
-.amazon-section-heading .amazon-link {
+.section-heading .link {
     margin-top: 0;
 }
 
-.amazon-product-row {
+.product-row {
     display: grid;
     grid-template-columns: repeat(8, minmax(140px, 1fr));
     gap: 18px;
 }
 
-.amazon-product {
+.product {
     min-width: 0;
 }
 
-.amazon-product__image {
+.product__image {
     display: grid;
     height: 150px;
     place-items: center;
@@ -850,7 +960,7 @@ onMounted(() => {
     text-decoration: none;
 }
 
-.amazon-product__deal {
+.product__deal {
     display: flex;
     align-items: center;
     gap: 6px;
@@ -860,7 +970,7 @@ onMounted(() => {
     font-weight: 700;
 }
 
-.amazon-product__deal span {
+.product__deal span {
     display: inline-flex;
     align-items: center;
     min-height: 22px;
@@ -869,7 +979,7 @@ onMounted(() => {
     color: #fff;
 }
 
-.amazon-product__name {
+.product__name {
     display: block;
     margin: 8px 0 4px;
     color: #0f1111;
@@ -878,19 +988,19 @@ onMounted(() => {
     text-decoration: none;
 }
 
-.amazon-product__rating {
+.product__rating {
     color: #ffa41c;
     font-size: 13px;
     line-height: 18px;
 }
 
-.amazon-product__price {
+.product__price {
     margin-top: 4px;
     font-size: 20px;
     line-height: 24px;
 }
 
-.amazon-featured-products__eyebrow {
+.featured-products__eyebrow {
     display: block;
     margin-bottom: 3px;
     color: #cc0c39;
@@ -899,13 +1009,13 @@ onMounted(() => {
     line-height: 18px;
 }
 
-.amazon-slider-controls {
+.slider-controls {
     display: flex;
     flex: none;
     gap: 8px;
 }
 
-.amazon-slider-controls button {
+.slider-controls button {
     display: grid;
     width: 38px;
     height: 38px;
@@ -920,13 +1030,13 @@ onMounted(() => {
     line-height: 1;
 }
 
-.amazon-slider-controls button:hover {
+.slider-controls button:hover {
     background: #f7fafa;
 }
 
-.amazon-featured-slider {
+.featured-slider {
     display: grid;
-    grid-auto-columns: 220px;
+    grid-auto-columns: 320px;
     grid-auto-flow: column;
     gap: 16px;
     overflow-x: auto;
@@ -935,135 +1045,264 @@ onMounted(() => {
     padding: 2px 2px 12px;
 }
 
-.amazon-featured-slider::-webkit-scrollbar {
+.featured-slider::-webkit-scrollbar {
     height: 8px;
 }
 
-.amazon-featured-slider::-webkit-scrollbar-thumb {
+.featured-slider::-webkit-scrollbar-thumb {
     border-radius: 999px;
     background: #c7c7c7;
 }
 
-.amazon-featured-card {
+.product-card {
+    display: flex;
     scroll-snap-align: start;
-    min-height: 300px;
-    border: 1px solid #e3e6e6;
+    min-width: 0;
+    flex-direction: column;
+    overflow: hidden;
     background: #fff;
-    padding: 14px;
 }
 
-.amazon-featured-card__tag {
-    display: inline-flex;
-    min-height: 22px;
-    align-items: center;
-    padding: 3px 7px;
-    background: #cc0c39;
-    color: #fff;
-    font-size: 12px;
-    font-weight: 700;
-}
-
-.amazon-featured-card__image {
+.product-card__image {
     display: grid;
-    height: 156px;
+    width: 100%;
+    aspect-ratio: 1 / 1.05;
     place-items: center;
-    margin: 12px 0;
-    background: #f7fafa;
-    font-size: 54px;
+    overflow: hidden;
+    background: #f7f7f7;
     text-decoration: none;
 }
 
-.amazon-featured-card__image img {
+.product-card__image img {
     width: 100%;
     height: 100%;
     object-fit: contain;
 }
 
-.amazon-featured-card__name,
-.amazon-new-product__name {
-    display: block;
-    color: #0f1111;
-    font-size: 14px;
-    line-height: 19px;
-    text-decoration: none;
+.product-card__body {
+    display: flex;
+    min-height: 330px;
+    flex: 1;
+    flex-direction: column;
+    padding: 18px 14px 16px;
 }
 
-.amazon-featured-card__name:hover,
-.amazon-new-product__name:hover {
+.product-card__brand {
+    margin-bottom: 4px;
+    color: #0f1111;
+    font-size: 16px;
+    font-weight: 700;
+    line-height: 20px;
+}
+
+.product-card__name {
+    display: -webkit-box;
+    overflow: hidden;
+    color: #0f1111;
+    font-size: 16px;
+    line-height: 22px;
+    text-decoration: none;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 4;
+}
+
+.product-card__name:hover {
     color: #c7511f;
     text-decoration: underline;
 }
 
-.amazon-featured-card__price {
-    display: block;
-    margin-top: 8px;
-    font-size: 20px;
-    line-height: 24px;
+.product-card__rating {
+    display: flex;
+    align-items: center;
+    gap: 3px;
+    margin-top: 12px;
+    color: #0f1111;
+    font-size: 13px;
+    line-height: 18px;
 }
 
-.amazon-featured-products__empty {
+.product-card__stars {
+    color: #ff8f00;
+    font-size: 15px;
+    letter-spacing: 0;
+}
+
+.product-card__chevron {
+    color: #007185;
+    font-size: 16px;
+    line-height: 1;
+}
+
+.product-card__reviews {
+    color: #007185;
+}
+
+.product-card__meta,
+.product-card__ship {
+    color: #565959;
+    font-size: 14px;
+    line-height: 20px;
+}
+
+.product-card__price {
+    display: flex;
+    align-items: flex-start;
+    gap: 3px;
+    margin-top: 18px;
+    color: #0f1111;
+}
+
+.product-card__price span {
+    padding-top: 6px;
+    font-size: 13px;
+    line-height: 16px;
+}
+
+.product-card__price strong {
+    font-size: 34px;
+    font-weight: 400;
+    line-height: 36px;
+}
+
+.product-card__delivery {
+    margin-top: 14px;
+    color: #0f1111;
+    font-size: 14px;
+    line-height: 20px;
+}
+
+.product-card__delivery strong {
+    font-weight: 700;
+}
+
+.product-card__cart {
+    width: 100%;
+    min-height: 46px;
+    margin-top: auto;
+    border: 0;
+    border-radius: 999px;
+    background: #ffd814;
+    color: #0f1111;
+    cursor: pointer;
+    font-size: 16px;
+    line-height: 20px;
+}
+
+.product-card__cart:hover:not(:disabled) {
+    background: #f7ca00;
+}
+
+.product-card__cart:disabled {
+    cursor: not-allowed;
+    opacity: 0.55;
+}
+
+.featured-products__empty {
     margin: 10px 0 0;
     color: #565959;
     font-size: 14px;
     line-height: 20px;
 }
 
-.amazon-new-products__rows {
+.new-products__rows {
     display: grid;
-    gap: 12px;
+    gap: 14px;
 }
 
-.amazon-new-products__row {
+.new-products__row {
     display: grid;
-    grid-template-columns: repeat(4, minmax(0, 1fr));
-    gap: 12px;
+    grid-template-columns: repeat(5, minmax(170px, 1fr));
+    gap: 14px;
 }
 
-.amazon-new-product {
-    display: grid;
-    grid-template-columns: 92px 1fr;
-    gap: 12px;
-    min-width: 0;
-    align-items: center;
-    border: 1px solid #e3e6e6;
-    background: #fff;
-    padding: 10px;
+.new-products {
+    padding: 18px 18px 20px;
 }
 
-.amazon-new-product__image {
-    display: grid;
-    place-items: center;
-    background: #f7fafa;
-    font-size: 34px;
-    text-decoration: none;
-
-    width: 100%;
-    aspect-ratio: 1 / 1;
-    overflow: hidden;
+.new-products .product-card {
+    border: 1px solid #f0f2f2;
+    border-radius: 2px;
 }
 
-.amazon-new-product__image img {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-    object-position: center;
+.new-products .product-card__image {
+    height: 190px;
+    aspect-ratio: auto;
+    padding: 14px;
 }
 
-.amazon-new-product span {
-    display: block;
-    margin-top: 6px;
-    font-size: 16px;
+.new-products .product-card__body {
+    min-height: 236px;
+    padding: 12px 12px 14px;
+}
+
+.new-products .product-card__brand {
+    margin-bottom: 3px;
+    font-size: 14px;
+    line-height: 18px;
+}
+
+.new-products .product-card__name {
+    min-height: 40px;
+    font-size: 14px;
     line-height: 20px;
+    -webkit-line-clamp: 2;
 }
 
-.amazon-new-products__empty {
+.new-products .product-card__rating {
+    margin-top: 8px;
+    font-size: 12px;
+    line-height: 16px;
+}
+
+.new-products .product-card__stars {
+    font-size: 13px;
+}
+
+.new-products .product-card__chevron {
+    font-size: 14px;
+}
+
+.new-products .product-card__meta,
+.new-products .product-card__ship {
+    font-size: 13px;
+    line-height: 18px;
+}
+
+.new-products .product-card__price {
+    margin-top: 10px;
+}
+
+.new-products .product-card__price span {
+    padding-top: 4px;
+    font-size: 12px;
+    line-height: 14px;
+}
+
+.new-products .product-card__price strong {
+    font-size: 26px;
+    line-height: 30px;
+}
+
+.new-products .product-card__delivery {
+    margin-top: 8px;
+    font-size: 13px;
+    line-height: 18px;
+}
+
+.new-products .product-card__cart {
+    min-height: 38px;
+    font-size: 14px;
+    line-height: 18px;
+}
+
+.new-products__empty {
     margin: 0;
     color: #566;
     font-size: 14px;
     line-height: 20px;
 }
 
-.amazon-feature-band {
+.feature-band {
     display: flex;
     align-items: center;
     justify-content: space-between;
@@ -1073,7 +1312,7 @@ onMounted(() => {
     border-top: 4px solid #ff9900;
 }
 
-.amazon-feature-band__eyebrow {
+.feature-band__eyebrow {
     display: block;
     margin-bottom: 6px;
     color: #007185;
@@ -1081,7 +1320,7 @@ onMounted(() => {
     font-weight: 700;
 }
 
-.amazon-feature-band p {
+.feature-band p {
     max-width: 720px;
     margin: 8px 0 0;
     color: #27323a;
@@ -1089,7 +1328,7 @@ onMounted(() => {
     line-height: 22px;
 }
 
-.amazon-outline-button {
+.outline-button {
     flex: none;
     border: 1px solid #d5d9d9;
     background: #fff;
@@ -1097,17 +1336,17 @@ onMounted(() => {
     box-shadow: 0 1px 2px rgba(15, 17, 17, 0.12);
 }
 
-.amazon-rail--compact {
+.rail--compact {
     padding-bottom: 20px;
 }
 
-.amazon-category-row {
+.category-row {
     display: grid;
     grid-template-columns: repeat(6, minmax(140px, 1fr));
     gap: 16px;
 }
 
-.amazon-category-product {
+.category-product {
     display: grid;
     min-height: 140px;
     place-items: center;
@@ -1118,26 +1357,32 @@ onMounted(() => {
     text-decoration: none;
 }
 
-.amazon-category-product span {
+.category-product span {
     font-size: 44px;
 }
 
-.amazon-category-product b {
+.category-product b {
     margin-top: 8px;
     font-size: 14px;
     line-height: 18px;
 }
 
 @media (max-width: 1280px) {
-    .amazon-product-row {
+    .product-row {
         grid-template-columns: repeat(4, minmax(150px, 1fr));
     }
 
-    .amazon-category-row {
+    .category-row {
         grid-template-columns: repeat(3, minmax(150px, 1fr));
     }
 
-    .amazon-new-products__row {
+    .new-products__row {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+}
+
+@media (max-width: 1024px) {
+    .new-products__row {
         grid-template-columns: repeat(2, minmax(0, 1fr));
     }
 }
@@ -1190,54 +1435,58 @@ onMounted(() => {
         height: 260px;
     }
 
-    .amazon-home__content {
+    .home__content {
         padding: 0 12px 28px;
     }
 
-    .amazon-product-row,
-    .amazon-new-products__row,
-    .amazon-category-row {
+    .product-row,
+    .new-products__row,
+    .category-row {
         grid-template-columns: 1fr;
     }
 
-    .amazon-product-row,
-    .amazon-category-row {
+    .product-row,
+    .category-row {
         gap: 12px;
     }
 
-    .amazon-product {
+    .product {
         display: grid;
         grid-template-columns: 120px 1fr;
         column-gap: 14px;
         align-items: start;
     }
 
-    .amazon-product__image {
+    .product__image {
         grid-row: span 4;
         height: 120px;
         margin-bottom: 0;
     }
 
-    .amazon-slider-controls button {
+    .slider-controls button {
         width: 34px;
         height: 34px;
     }
 
-    .amazon-featured-slider {
+    .featured-slider {
         grid-auto-columns: 76%;
     }
 
-    .amazon-new-product {
-        grid-template-columns: 86px 1fr;
+    .new-products .product-card__image {
+        height: 180px;
     }
 
-    .amazon-feature-band {
+    .new-products .product-card__body {
+        min-height: auto;
+    }
+
+    .feature-band {
         align-items: stretch;
         flex-direction: column;
         padding: 20px;
     }
 
-    .amazon-outline-button {
+    .outline-button {
         width: 100%;
     }
 }

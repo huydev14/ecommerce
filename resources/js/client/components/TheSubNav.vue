@@ -60,7 +60,9 @@ onBeforeUnmount(() => {
 
 <template>
     <div class="tw-relative tw-border-b tw-border-[#3a4553] tw-bg-[#232f3e] tw-text-white">
-        <div class="tw-flex tw-h-[39px] tw-items-center tw-gap-1 tw-overflow-x-auto tw-px-3 tw-text-[14px] tw-font-medium md:tw-gap-2 md:tw-px-4">
+        <div
+            class="tw-flex tw-h-[39px] tw-items-center tw-gap-1 tw-overflow-x-auto tw-px-3 tw-text-[14px] tw-font-medium md:tw-gap-2 md:tw-px-4"
+        >
             <button
                 type="button"
                 @click="openMenu"
@@ -127,11 +129,7 @@ onBeforeUnmount(() => {
                     <div v-if="!authStore.isLoggedIn" class="tw-flex tw-items-center tw-gap-3">
                         <div class="tw-grid tw-h-8 tw-w-8 tw-place-items-center tw-rounded-full tw-bg-white/15">
                             <svg xmlns="http://www.w3.org/2000/svg" class="tw-h-5 tw-w-5" viewBox="0 0 20 20" fill="currentColor">
-                                <path
-                                    fill-rule="evenodd"
-                                    d="M10 10a4 4 0 100-8 4 4 0 000 8zm-7 8a7 7 0 1114 0H3z"
-                                    clip-rule="evenodd"
-                                />
+                                <path fill-rule="evenodd" d="M10 10a4 4 0 100-8 4 4 0 000 8zm-7 8a7 7 0 1114 0H3z" clip-rule="evenodd" />
                             </svg>
                         </div>
                         <div>
@@ -146,7 +144,10 @@ onBeforeUnmount(() => {
                             :alt="userName"
                             class="tw-h-9 tw-w-9 tw-flex-none tw-rounded-full tw-bg-white/15 tw-object-cover"
                         />
-                        <div v-else class="tw-grid tw-h-9 tw-w-9 tw-flex-none tw-place-items-center tw-rounded-full tw-bg-white/15 tw-text-sm tw-font-bold">
+                        <div
+                            v-else
+                            class="tw-grid tw-h-9 tw-w-9 tw-flex-none tw-place-items-center tw-rounded-full tw-bg-white/15 tw-text-sm tw-font-bold"
+                        >
                             {{ userInitial }}
                         </div>
                         <div class="tw-min-w-0">
@@ -154,7 +155,11 @@ onBeforeUnmount(() => {
                         </div>
                     </div>
 
-                    <button type="button" class="tw-grid tw-h-8 tw-w-8 tw-place-items-center tw-rounded-full hover:tw-bg-white/10" @click="closeMenu">
+                    <button
+                        type="button"
+                        class="tw-grid tw-h-8 tw-w-8 tw-place-items-center tw-rounded-full hover:tw-bg-white/10"
+                        @click="closeMenu"
+                    >
                         <svg xmlns="http://www.w3.org/2000/svg" class="tw-h-5 tw-w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
                         </svg>
@@ -163,19 +168,17 @@ onBeforeUnmount(() => {
 
                 <div class="tw-divide-y tw-divide-gray-200 tw-bg-white">
                     <section v-for="category in categories" :key="category.id" class="tw-px-0 tw-py-2">
-                        <h3 class="tw-capitalize tw-truncate tw-px-5 tw-py-3 tw-text-[17px] tw-font-bold tw-text-[#111827]">{{ category.name }}</h3>
+                        <h3 class="tw-truncate tw-px-5 tw-py-3 tw-text-[17px] tw-font-bold tw-capitalize tw-text-[#111827]">
+                            {{ category.name }}
+                        </h3>
 
                         <div class="tw-space-y-1 tw-pb-2">
-                            <div
-                                v-for="child in category.children"
-                                :key="child.id"
-                                class="tw-text-[#111827]"
-                            >
+                            <div v-for="child in category.children" :key="child.id" class="tw-text-[#111827]">
                                 <a
                                     :href="categoryUrl(child)"
                                     class="tw-flex tw-items-center tw-justify-between tw-px-5 tw-py-2 tw-text-[14px] hover:tw-bg-gray-50"
                                 >
-                                    <span class="tw-capitalize tw-truncate">{{ child.name }}</span>
+                                    <span class="tw-truncate tw-capitalize">{{ child.name }}</span>
                                     <svg
                                         xmlns="http://www.w3.org/2000/svg"
                                         class="tw-h-4 tw-w-4 tw-text-gray-400"
@@ -195,12 +198,58 @@ onBeforeUnmount(() => {
                                         v-for="grandchild in child.children"
                                         :key="grandchild.id"
                                         :href="categoryUrl(grandchild)"
-                                        class="tw-capitalize tw-truncate tw-block tw-py-1.5 tw-pl-8 tw-pr-5 tw-text-[13px] tw-text-gray-600 hover:tw-bg-gray-100 hover:tw-text-[#111827]"
+                                        class="tw-block tw-truncate tw-py-1.5 tw-pl-8 tw-pr-5 tw-text-[13px] tw-capitalize tw-text-gray-600 hover:tw-bg-gray-100 hover:tw-text-[#111827]"
                                     >
                                         {{ grandchild.name }}
                                     </a>
                                 </div>
                             </div>
+                        </div>
+                    </section>
+
+                    <section class="tw-px-0 tw-py-4">
+                        <h3 class="tw-px-5 tw-pb-4 tw-pt-1 tw-text-[17px] tw-font-bold tw-text-[#111827]">Help & Settings</h3>
+
+                        <div class="tw-space-y-1 tw-pb-2">
+                            <router-link
+                                :to="{ name: 'MyAccount' }"
+                                class="tw-block tw-px-5 tw-py-2.5 tw-text-[14px] tw-font-medium tw-text-[#111827] hover:tw-bg-gray-50"
+                                @click="closeMenu"
+                            >
+                                Your Account
+                            </router-link>
+
+                            <a
+                                href="#"
+                                class="tw-flex tw-items-center tw-gap-4 tw-px-5 tw-py-2.5 tw-text-[14px] tw-font-medium tw-text-[#111827] hover:tw-bg-gray-50"
+                            >
+                                <span class="tw-grid tw-h-5 tw-w-5 tw-place-items-center tw-text-[16px]" aria-hidden="true">🌐</span>
+                                <span>English</span>
+                            </a>
+
+                            <a
+                                href="#"
+                                class="tw-flex tw-items-center tw-gap-4 tw-px-5 tw-py-2.5 tw-text-[14px] tw-font-medium tw-text-[#111827] hover:tw-bg-gray-50"
+                            >
+                                <span class="tw-grid tw-h-5 tw-w-5 tw-place-items-center tw-text-[16px]" aria-hidden="true">🇺🇸</span>
+                                <span>United States</span>
+                            </a>
+
+                            <a
+                                href="#"
+                                class="tw-block tw-px-5 tw-py-2.5 tw-text-[14px] tw-font-medium tw-text-[#111827] hover:tw-bg-gray-50"
+                            >
+                                Customer Service
+                            </a>
+
+                            <router-link
+                                v-if="!authStore.isLoggedIn"
+                                :to="{ name: 'Login' }"
+                                class="tw-block tw-px-5 tw-py-2.5 tw-text-[14px] tw-font-medium tw-text-[#111827] hover:tw-bg-gray-50"
+                                @click="closeMenu"
+                            >
+                                Sign in
+                            </router-link>
                         </div>
                     </section>
                 </div>

@@ -2,6 +2,7 @@
 import { computed, onMounted, ref, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import api from '@/services/api';
+import { APP_CONFIG } from '@/config';
 import { useCartStore } from '@/stores/cart';
 
 const route = useRoute();
@@ -280,7 +281,7 @@ watch(() => [route.query.category, route.query.page, route.query.brand], fetchPr
                                     <span class="stars">★★★★★</span>
                                     <span>5.0</span>
                                 </div>
-                                <p class="product-bought">Sản phẩm đang bán trên WorkHub</p>
+                                <p class="product-bought">Sản phẩm đang bán trên {{ APP_CONFIG.appName }}</p>
                                 <div class="product-price">{{ formatPrice(product.price) }}</div>
                                 <button
                                     type="button"

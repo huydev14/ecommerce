@@ -1,9 +1,10 @@
 <script setup>
-import { computed, onMounted, ref } from 'vue';
+import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue';
 import { useRouter } from 'vue-router';
 import { useAuthStore } from '../stores/auth';
 import { useCartStore } from '../stores/cart';
 import { useLocationStore } from '@/stores/location';
+import { APP_CONFIG } from '@/config';
 import LocationModal from '@/components/Modals/LocationModal.vue';
 
 const authStore = useAuthStore();
@@ -14,6 +15,8 @@ const searchTerm = ref('fitness clothing');
 const isLocationModalOpen = ref(false);
 const cartPreviewItems = computed(() => cartStore.items.slice(0, 3));
 const currentLocationName = computed(() => locationStore.currentLocationName);
+let originalBodyOverflow = '';
+let isBodyScrollLockedByLocationModal = false;
 
 const submitSearch = () => {
     const query = searchTerm.value.trim() || 'fitness clothing';
@@ -33,6 +36,37 @@ const formatPrice = (price) => {
 onMounted(() => {
     cartStore.fetchCart().catch(() => {});
 });
+
+const lockBodyScroll = () => {
+    if (isBodyScrollLockedByLocationModal) {
+        return;
+    }
+
+    originalBodyOverflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    isBodyScrollLockedByLocationModal = true;
+};
+
+const unlockBodyScroll = () => {
+    if (!isBodyScrollLockedByLocationModal) {
+        return;
+    }
+
+    document.body.style.overflow = originalBodyOverflow;
+    originalBodyOverflow = '';
+    isBodyScrollLockedByLocationModal = false;
+};
+
+watch(isLocationModalOpen, (isOpen) => {
+    if (isOpen) {
+        lockBodyScroll();
+        return;
+    }
+
+    unlockBodyScroll();
+});
+
+onBeforeUnmount(unlockBodyScroll);
 </script>
 
 <template>
@@ -44,7 +78,7 @@ onMounted(() => {
             >
                 <img
                     src="https://upload.wikimedia.org/wikipedia/commons/a/a9/Amazon_logo.svg"
-                    alt="WorkHub Logo"
+                    :alt="`${APP_CONFIG.appName} Logo`"
                     class="tw-mt-2 tw-h-7 tw-object-contain tw-invert tw-filter md:tw-h-8"
                 />
             </router-link>
@@ -130,7 +164,7 @@ onMounted(() => {
                         >Xin chào, {{ authStore.isLoggedIn && authStore.user ? authStore.user.name : 'Đăng nhập' }}</span
                     >
                     <span class="tw-flex tw-items-center tw-text-[14px] tw-font-bold tw-leading-4 tw-text-white">
-                        Tài khoản & Danh sách
+                        Tài khoản
                         <svg
                             xmlns="http://www.w3.org/2000/svg"
                             class="tw-ml-1 tw-h-3 tw-w-3 tw-text-gray-400"
@@ -146,63 +180,109 @@ onMounted(() => {
                     </span>
                 </router-link>
 
-                <!-- Dropdown menu -->
                 <div
-                    class="tw-invisible tw-absolute tw-right-0 tw-top-[48px] tw-z-[90] tw-w-[400px] tw-rounded-sm tw-bg-white tw-p-4 tw-text-black tw-opacity-0 tw-shadow-xl tw-transition-all tw-duration-200 group-hover:tw-visible group-hover:tw-opacity-100"
+                    class="tw-invisible tw-absolute tw-right-0 tw-top-[48px] tw-z-[90] tw-w-[280px] tw-rounded-md tw-border tw-border-gray-200 tw-bg-white tw-p-2 tw-text-[#111827] tw-opacity-0 tw-shadow-2xl tw-transition-all tw-duration-200 group-hover:tw-visible group-hover:tw-opacity-100"
                 >
-                    <!-- Triangle pointing up -->
                     <div
-                        class="tw-absolute -tw-top-2 tw-right-6 tw-h-4 tw-w-4 tw-rotate-45 tw-bg-white tw-shadow-[-2px_-2px_2px_rgba(0,0,0,0.05)]"
+                        class="tw-absolute -tw-top-2 tw-right-7 tw-h-4 tw-w-4 tw-rotate-45 tw-border-l tw-border-t tw-border-gray-200 tw-bg-white"
                     ></div>
 
-                    <div
-                        v-if="!authStore.isLoggedIn"
-                        class="tw-mb-4 tw-flex tw-flex-col tw-items-center tw-border-b tw-border-gray-200 tw-pb-4"
-                    >
+                    <div v-if="!authStore.isLoggedIn" class="tw-border-b tw-border-gray-100 tw-px-3 tw-py-3">
                         <router-link
                             :to="{ name: 'Login' }"
-                            class="a-button-primary tw-mb-2 tw-w-48 tw-rounded-md tw-py-1.5 tw-text-center"
+                            class="tw-flex tw-h-9 tw-w-full tw-items-center tw-justify-center tw-rounded-full tw-bg-[#ffd814] tw-text-[14px] tw-font-medium tw-text-[#111827] hover:tw-bg-[#f7ca00]"
                         >
                             Đăng nhập
                         </router-link>
-                        <div class="tw-text-[11px] tw-text-gray-600">
-                            Khách hàng mới?
-                            <a href="#" class="tw-text-blue-600 hover:tw-text-[#c45500] hover:tw-underline">Bắt đầu tại đây.</a>
-                        </div>
                     </div>
 
-                    <div class="tw-flex tw-justify-between tw-text-[13px]">
-                        <div class="tw-w-1/2 tw-pr-4">
-                            <h3 class="tw-mb-2 tw-text-[16px] tw-font-bold">Danh sách của bạn</h3>
-                            <ul class="tw-space-y-1 tw-text-gray-600">
-                                <li><a href="#" class="hover:tw-text-[#c45500] hover:tw-underline">Tạo danh sách</a></li>
-                                <li><a href="#" class="hover:tw-text-[#c45500] hover:tw-underline">Tìm danh sách</a></li>
-                                <li><a href="#" class="hover:tw-text-[#c45500] hover:tw-underline">Danh sách mong muốn</a></li>
-                            </ul>
-                        </div>
-                        <div class="tw-w-1/2 tw-border-l tw-border-gray-200 tw-pl-4">
-                            <h3 class="tw-mb-2 tw-text-[16px] tw-font-bold">Tài khoản của bạn</h3>
-                            <ul class="tw-space-y-1 tw-text-gray-600">
-                                <li>
-                                    <router-link :to="{ name: 'MyAccount' }" class="hover:tw-text-[#c45500] hover:tw-underline"
-                                        >Tài khoản</router-link
-                                    >
-                                </li>
-                                <li>
-                                    <router-link :to="{ name: 'MyAccountOrders' }" class="hover:tw-text-[#c45500] hover:tw-underline"
-                                        >Đơn hàng</router-link
-                                    >
-                                </li>
-                                <li><a href="#" class="hover:tw-text-[#c45500] hover:tw-underline">Đề xuất của bạn</a></li>
-                                <li><a href="#" class="hover:tw-text-[#c45500] hover:tw-underline">Lịch sử duyệt web</a></li>
-                                <li v-if="authStore.isLoggedIn" class="tw-mt-2 tw-border-t tw-border-gray-100 tw-pt-2">
-                                    <button @click="authStore.logout()" class="hover:tw-text-[#c45500] hover:tw-underline">
-                                        Đăng xuất
-                                    </button>
-                                </li>
-                            </ul>
-                        </div>
-                    </div>
+                    <nav class="tw-py-1 tw-text-[14px]" aria-label="Tài khoản">
+                        <router-link
+                            :to="{ name: 'MyAccount' }"
+                            class="tw-flex tw-items-center tw-gap-3 tw-rounded-md tw-px-3 tw-py-2.5 hover:tw-bg-gray-50 hover:tw-text-[#c45500]"
+                        >
+                            <svg
+                                xmlns="http://www.w3.org/2000/svg"
+                                class="tw-h-5 tw-w-5 tw-text-gray-500"
+                                fill="none"
+                                viewBox="0 0 24 24"
+                                stroke="currentColor"
+                            >
+                                <path
+                                    stroke-linecap="round"
+                                    stroke-linejoin="round"
+                                    stroke-width="2"
+                                    d="M5.121 17.804A8.966 8.966 0 0112 15c2.21 0 4.235.8 5.879 2.129M15 11a3 3 0 11-6 0 3 3 0 016 0zm6 1a9 9 0 11-18 0 9 9 0 0118 0z"
+                                />
+                            </svg>
+                            <span>Tài khoản</span>
+                        </router-link>
+
+                        <router-link
+                            :to="{ name: 'MyAccountOrders' }"
+                            class="tw-flex tw-items-center tw-gap-3 tw-rounded-md tw-px-3 tw-py-2.5 hover:tw-bg-gray-50 hover:tw-text-[#c45500]"
+                        >
+                            <svg
+                                xmlns="http://www.w3.org/2000/svg"
+                                class="tw-h-5 tw-w-5 tw-text-gray-500"
+                                fill="none"
+                                viewBox="0 0 24 24"
+                                stroke="currentColor"
+                            >
+                                <path
+                                    stroke-linecap="round"
+                                    stroke-linejoin="round"
+                                    stroke-width="2"
+                                    d="M9 5h6m-8 4h10m-10 4h10M7 3h10a2 2 0 012 2v14l-4-2-3 2-3-2-4 2V5a2 2 0 012-2z"
+                                />
+                            </svg>
+                            <span>Đơn hàng</span>
+                        </router-link>
+
+                        <a
+                            href="#"
+                            class="tw-flex tw-items-center tw-gap-3 tw-rounded-md tw-px-3 tw-py-2.5 hover:tw-bg-gray-50 hover:tw-text-[#c45500]"
+                        >
+                            <svg
+                                xmlns="http://www.w3.org/2000/svg"
+                                class="tw-h-5 tw-w-5 tw-text-gray-500"
+                                fill="none"
+                                viewBox="0 0 24 24"
+                                stroke="currentColor"
+                            >
+                                <path
+                                    stroke-linecap="round"
+                                    stroke-linejoin="round"
+                                    stroke-width="2"
+                                    d="M4.318 6.318a4.5 4.5 0 016.364 0L12 7.636l1.318-1.318a4.5 4.5 0 116.364 6.364L12 20.364l-7.682-7.682a4.5 4.5 0 010-6.364z"
+                                />
+                            </svg>
+                            <span>Yêu thích</span>
+                        </a>
+
+                        <button
+                            v-if="authStore.isLoggedIn"
+                            type="button"
+                            class="tw-mt-1 tw-flex tw-w-full tw-items-center tw-gap-3 tw-border-t tw-border-gray-100 tw-px-3 tw-py-2.5 tw-text-left hover:tw-bg-gray-50 hover:tw-text-[#c45500]"
+                            @click="authStore.logout()"
+                        >
+                            <svg
+                                xmlns="http://www.w3.org/2000/svg"
+                                class="tw-h-5 tw-w-5 tw-text-gray-500"
+                                fill="none"
+                                viewBox="0 0 24 24"
+                                stroke="currentColor"
+                            >
+                                <path
+                                    stroke-linecap="round"
+                                    stroke-linejoin="round"
+                                    stroke-width="2"
+                                    d="M17 16l4-4m0 0l-4-4m4 4H9m4 8H7a2 2 0 01-2-2V6a2 2 0 012-2h6"
+                                />
+                            </svg>
+                            <span>Đăng xuất</span>
+                        </button>
+                    </nav>
                 </div>
             </div>
 

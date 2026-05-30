@@ -1,5 +1,5 @@
 <template>
-    <div class="amazon-login-container">
+    <div class="login-container">
         <div class="logo-container">
             <router-link :to="{ name: 'Home' }" class="logo-link">
                 <span class="logo-text">{{ APP_CONFIG.appName }}</span>
@@ -12,8 +12,8 @@
             <div v-if="errorMessage" class="a-alert-content">
                 <i class="alert-icon">!</i>
                 <span class="alert-text">
-                  {{ errorMessage }}
-                  <span v-if="isCountingDown" class="countdown-timer">{{ formattedTime }}</span>
+                    {{ errorMessage }}
+                    <span v-if="isCountingDown" class="countdown-timer">{{ formattedTime }}</span>
                 </span>
             </div>
 

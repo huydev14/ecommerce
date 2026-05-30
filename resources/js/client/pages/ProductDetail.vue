@@ -2,6 +2,7 @@
 import { computed, onMounted, ref, watch } from 'vue';
 import { useRoute } from 'vue-router';
 import api from '@/services/api';
+import { APP_CONFIG } from '@/config';
 import { useCartStore } from '@/stores/cart';
 
 const route = useRoute();
@@ -22,7 +23,7 @@ const selectedVariant = computed(
     () => variants.value.find((variant) => variant.id === selectedVariantId.value) || variants.value[0] || null,
 );
 const activePrice = computed(() => selectedVariant.value?.price || product.value?.price || 0);
-const brandName = computed(() => product.value?.brand?.name || 'WorkHub');
+const brandName = computed(() => product.value?.brand?.name || APP_CONFIG.appName);
 const brandSlug = computed(() => product.value?.brand?.slug || '');
 const categoryName = computed(() => product.value?.category?.name || 'San pham');
 const productImages = computed(() => {
@@ -231,7 +232,7 @@ watch(() => route.params.slug, fetchProduct);
 
                 <dl class="pdp-seller">
                     <dt>Shipper / Seller</dt>
-                    <dd>WorkHub</dd>
+                    <dd>{{ APP_CONFIG.appName }}</dd>
                     <dt>Returns</dt>
                     <dd>FREE 30-day refund/replacement</dd>
                 </dl>

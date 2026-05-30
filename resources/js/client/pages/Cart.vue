@@ -115,7 +115,7 @@ onMounted(() => {
             <aside v-if="hasItems" class="cart-summary">
                 <h2>Tạm tính ({{ cartStore.totalItems }} sản phẩm)</h2>
                 <div class="cart-summary__total">{{ formatPrice(cartStore.subtotal) }}</div>
-                <button type="button" class="cart-checkout">Tiến hành thanh toán</button>
+                <RouterLink :to="{ name: 'Checkout' }" class="cart-checkout">Tiến hành thanh toán</RouterLink>
                 <RouterLink :to="{ name: 'ProductList' }" class="cart-secondary">Tiếp tục mua sắm</RouterLink>
             </aside>
         </div>

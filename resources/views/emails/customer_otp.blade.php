@@ -19,7 +19,7 @@
         <p>Mã này có hiệu lực trong 10 phút. Vui lòng không chia sẻ mã này với bất kỳ ai.</p>
 
         <div class="footer">
-            © 2026 {{ env('APP_NAME') }}.com.
+            © {{ date('Y') }} {{ env('APP_NAME') }}.com.
         </div>
     </div>
 </body>

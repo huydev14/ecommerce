@@ -57,7 +57,7 @@ class ProductController extends Controller
                 ->where('status', 'published')
                 ->with(['cheapestVariant'])
                 ->orderBy('created_at', 'desc')
-                ->take(12)
+                ->take(10)
                 ->get();
         });
 
