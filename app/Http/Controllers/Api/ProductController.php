@@ -55,7 +55,7 @@ class ProductController extends Controller
         $products = Cache::remember('api_new_arrivals', now()->addMinutes(30), function () {
             return Product::query()
                 ->where('status', 'published')
-                ->with(['cheapestVariant'])
+                ->with(['cheapestVariant', 'brand'])
                 ->orderBy('created_at', 'desc')
                 ->take(10)
                 ->get();
@@ -76,23 +76,36 @@ class ProductController extends Controller
                 ->where('status', 'published')
                 ->where('is_featured', true)
                 ->with([
+                    'brand:id,name,slug',
                     'category:id,name,slug',
                     'cheapestVariant'
                 ])
-                ->select(['id', 'category_id', 'name', 'slug', 'thumbnail', 'created_at'])
+                ->select(['id', 'brand_id', 'category_id', 'name', 'slug', 'thumbnail', 'created_at'])
                 ->latest()
                 ->take(8)
                 ->get()
                 ->map(function ($product) {
+                    $variant = $product->cheapestVariant;
+                    $compareAtPrice = $variant?->compare_at_price;
+                    $price = $variant?->price ?? 0;
+                    $displayCompareAtPrice = null;
+
+                    if ($compareAtPrice !== null) {
+                        $displayCompareAtPrice = (float) $compareAtPrice;
+                    } elseif ($price > 0) {
+                        $displayCompareAtPrice = round($price / 0.9, 2);
+                    }
+
                     return [
                         'id' => $product->id,
                         'name' => $product->name,
                         'slug' => $product->slug,
                         'thumbnail' => $product->thumbnail,
+                        'brand' => $product->brand,
                         'category' => $product->category,
-
-                        'price' => $product->cheapestVariant ? $product->cheapestVariant->price : 0,
-                        'compare_at_price' => $product->cheapestVariant ? $product->cheapestVariant->compare_at_price : null,
+                        'price' => $price,
+                        'compare_at_price' => $displayCompareAtPrice,
+                        'product_variant_id' => $variant?->id,
                     ];
                 });
         });

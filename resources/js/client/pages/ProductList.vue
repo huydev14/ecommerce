@@ -2,8 +2,8 @@
 import { computed, onMounted, ref, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import api from '@/services/api';
-import { APP_CONFIG } from '@/config';
 import { useCartStore } from '@/stores/cart';
+import ProductCard from '@/components/ProductCard.vue';
 
 const route = useRoute();
 const router = useRouter();
@@ -75,7 +75,6 @@ const resultRange = computed(() => {
     return `${start}-${end} trong ${meta.value.total} sản phẩm`;
 });
 
-const productUrl = (product) => (product.slug ? `/products/${product.slug}` : '#');
 const parseCommaQuery = (value) => {
     if (!value) {
         return [];
@@ -103,20 +102,6 @@ const toggleBrand = (brandSlug) => {
     };
 
     router.push({ name: 'ProductList', query });
-};
-
-const formatPrice = (price) => {
-    const numericPrice = Number(price || 0);
-
-    if (!numericPrice) {
-        return 'Liên hệ';
-    }
-
-    return new Intl.NumberFormat('vi-VN', {
-        style: 'currency',
-        currency: 'VND',
-        maximumFractionDigits: 0,
-    }).format(numericPrice);
 };
 
 const isAddingToCart = (product) => addingProductIds.value.has(product.id);
@@ -268,38 +253,18 @@ watch(() => [route.query.category, route.query.page, route.query.brand], fetchPr
                 <div v-else-if="!hasProducts" class="listing-state">Không có sản phẩm phù hợp.</div>
                 <template v-else>
                     <div class="product-grid">
-                        <article v-for="product in products" :key="product.id" class="product-card">
-                            <span class="product-badge">Mới</span>
-
-                            <a :href="productUrl(product)" class="product-image">
-                                <img :src="product.thumbnail" :alt="product.name" />
-                            </a>
-
-                            <div class="product-content">
-                                <a :href="productUrl(product)" class="product-title">{{ product.name }}</a>
-                                <div class="product-rating">
-                                    <span class="stars">★★★★★</span>
-                                    <span>5.0</span>
-                                </div>
-                                <p class="product-bought">Sản phẩm đang bán trên {{ APP_CONFIG.appName }}</p>
-                                <div class="product-price">{{ formatPrice(product.price) }}</div>
-                                <button
-                                    type="button"
-                                    class="cart-button"
-                                    :disabled="isAddingToCart(product)"
-                                    @click="addProductToCart(product)"
-                                >
-                                    {{ isAddingToCart(product) ? 'Đang thêm...' : 'Thêm vào giỏ' }}
-                                </button>
-                                <p
-                                    v-if="cartMessages[product.id]?.message"
-                                    class="cart-message"
-                                    :class="{ 'is-error': cartMessages[product.id]?.type === 'error' }"
-                                >
-                                    {{ cartMessages[product.id].message }}
-                                </p>
-                            </div>
-                        </article>
+                        <ProductCard
+                            v-for="product in products"
+                            :key="product.id"
+                            :product="product"
+                            :is-adding="isAddingToCart(product)"
+                            :message="cartMessages[product.id]?.message || ''"
+                            :message-type="cartMessages[product.id]?.type || 'success'"
+                            show-badge
+                            cart-label="Thêm vào giỏ"
+                            adding-label="Đang thêm..."
+                            @add-to-cart="addProductToCart"
+                        />
                     </div>
 
                     <nav v-if="meta.last_page > 1" class="listing-pagination" aria-label="Product pagination">

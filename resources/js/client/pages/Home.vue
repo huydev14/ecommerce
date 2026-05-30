@@ -5,6 +5,7 @@ import { Autoplay, Navigation, Pagination } from 'swiper/modules';
 import api from '../services/api';
 import { APP_CONFIG } from '@/config';
 import { useCartStore } from '@/stores/cart';
+import ProductCard from '@/components/ProductCard.vue';
 import 'swiper/css';
 import 'swiper/css/navigation';
 import 'swiper/css/pagination';
@@ -83,32 +84,6 @@ const sliderBanners = computed(() =>
 
 const staticGridBanners = computed(() => sortedBanners.value.filter((banner) => Number(banner.sort_order) >= 4).slice(0, 5));
 
-const formatCardPrice = (price) => {
-    const amount = Number(price);
-
-    if (!Number.isFinite(amount) || amount <= 0) {
-        return 'Contact';
-    }
-
-    return new Intl.NumberFormat('en-US', {
-        maximumFractionDigits: 0,
-    }).format(amount);
-};
-
-const getProductBrand = (product) => product.brand?.name || product.category?.name || APP_CONFIG.appName;
-
-const getProductRating = (product) => Number(product.rating || product.average_rating || 4.6).toFixed(1);
-
-const getProductReviewCount = (product) => {
-    const count = Number(product.reviews_count || product.review_count || product.total_reviews || 5500);
-    return count >= 1000 ? `${(count / 1000).toFixed(1)}K` : String(count);
-};
-
-const getProductBoughtCount = (product) => {
-    const count = Number(product.sold_count || product.orders_count || product.total_sold || 500);
-    return `${count}+ bought in past month`;
-};
-
 const getProductVariantId = (product) =>
     product.product_variant_id || product.default_variant_id || product.variant_id || product.variants?.[0]?.id;
 
@@ -136,18 +111,6 @@ const addProductToCart = async (product) => {
         nextAddingProductIds.delete(productKey);
         addingProductIds.value = nextAddingProductIds;
     }
-};
-
-const productImageUrl = (thumbnail) => {
-    if (!thumbnail) {
-        return '/img/default-image.jpg';
-    }
-
-    if (/^https?:\/\//i.test(thumbnail) || thumbnail.startsWith('/')) {
-        return thumbnail;
-    }
-
-    return `/storage/${thumbnail}`;
 };
 
 const bannerImageUrl = (imageUrl) => {
@@ -403,38 +366,14 @@ onMounted(() => {
                 </div>
 
                 <div ref="featuredSlider" class="featured-slider">
-                    <article v-for="product in featuredProducts" :key="product.id || product.slug || product.name" class="product-card">
-                        <router-link :to="{ name: 'ProductDetail', params: { slug: product.slug } }" class="product-card__image">
-                            <img :src="productImageUrl(product.thumbnail)" :alt="product.name" loading="lazy" />
-                        </router-link>
-                        <div class="product-card__body">
-                            <div class="product-card__brand">{{ getProductBrand(product) }}</div>
-                            <router-link :to="{ name: 'ProductDetail', params: { slug: product.slug } }" class="product-card__name">{{
-                                product.name
-                            }}</router-link>
-                            <div class="product-card__rating">
-                                <span>{{ getProductRating(product) }}</span>
-                                <span class="product-card__stars">★★★★★</span>
-                                <span class="product-card__chevron">⌄</span>
-                                <span class="product-card__reviews">({{ getProductReviewCount(product) }})</span>
-                            </div>
-                            <div class="product-card__meta">{{ getProductBoughtCount(product) }}</div>
-                            <div class="product-card__price">
-                                <span>VND</span>
-                                <strong>{{ formatCardPrice(product.price) }}</strong>
-                            </div>
-                            <div class="product-card__delivery"><span>VND 0 delivery</span> <strong>Tue, Jun 30</strong></div>
-                            <div class="product-card__ship">Ships to Vietnam</div>
-                            <button
-                                type="button"
-                                class="product-card__cart"
-                                :disabled="!getProductVariantId(product) || isAddingToCart(product)"
-                                @click="addProductToCart(product)"
-                            >
-                                {{ isAddingToCart(product) ? 'Adding...' : 'Add to cart' }}
-                            </button>
-                        </div>
-                    </article>
+                    <ProductCard
+                        v-for="product in featuredProducts"
+                        :key="product.id || product.slug || product.name"
+                        :product="product"
+                        :is-adding="isAddingToCart(product)"
+                        compact
+                        @add-to-cart="addProductToCart"
+                    />
                 </div>
 
                 <p v-if="featuredProducts.length === 0" class="featured-products__empty">Chưa có sản phẩm nổi bật.</p>
@@ -448,38 +387,14 @@ onMounted(() => {
 
                 <div class="new-products__rows">
                     <div v-for="(row, rowIndex) in newProductRows" :key="rowIndex" class="new-products__row">
-                        <article v-for="product in row" :key="product.id || product.slug || product.name" class="product-card">
-                            <router-link :to="{ name: 'ProductDetail', params: { slug: product.slug } }" class="product-card__image">
-                                <img :src="productImageUrl(product.thumbnail)" :alt="product.name" loading="lazy" />
-                            </router-link>
-                            <div class="product-card__body">
-                                <div class="product-card__brand">{{ getProductBrand(product) }}</div>
-                                <router-link :to="{ name: 'ProductDetail', params: { slug: product.slug } }" class="product-card__name">{{
-                                    product.name
-                                }}</router-link>
-                                <div class="product-card__rating">
-                                    <span>{{ getProductRating(product) }}</span>
-                                    <span class="product-card__stars">★★★★★</span>
-                                    <span class="product-card__chevron">⌄</span>
-                                    <span class="product-card__reviews">({{ getProductReviewCount(product) }})</span>
-                                </div>
-                                <div class="product-card__meta">{{ getProductBoughtCount(product) }}</div>
-                                <div class="product-card__price">
-                                    <span>VND</span>
-                                    <strong>{{ formatCardPrice(product.price) }}</strong>
-                                </div>
-                                <div class="product-card__delivery"><span>VND 0 delivery</span> <strong>Tue, Jun 30</strong></div>
-                                <div class="product-card__ship">Ships to Vietnam</div>
-                                <button
-                                    type="button"
-                                    class="product-card__cart"
-                                    :disabled="!getProductVariantId(product) || isAddingToCart(product)"
-                                    @click="addProductToCart(product)"
-                                >
-                                    {{ isAddingToCart(product) ? 'Adding...' : 'Add to cart' }}
-                                </button>
-                            </div>
-                        </article>
+                        <ProductCard
+                            v-for="product in row"
+                            :key="product.id || product.slug || product.name"
+                            :product="product"
+                            :is-adding="isAddingToCart(product)"
+                            compact
+                            @add-to-cart="addProductToCart"
+                        />
                     </div>
 
                     <p v-if="newProductRows.length === 0" class="new-products__empty">Chưa có sản phẩm mới.</p>

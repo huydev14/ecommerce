@@ -18,13 +18,27 @@ class ProductResource extends JsonResource
             'id' => $this->id,
             'name' => $this->name,
             'slug' => $this->slug,
-            'thumbnail' => $this->thumbnail 
+            'thumbnail' => $this->thumbnail
                 ? asset('storage/' . $this->thumbnail)
                 : asset('img/default-image.jpg'),
 
+            'brand' => $this->whenLoaded('brand', function () {
+                return [
+                    'id' => $this->brand?->id,
+                    'name' => $this->brand?->name,
+                    'slug' => $this->brand?->slug,
+                ];
+            }),
             'price' => $this->whenLoaded('cheapestVariant', function () {
                 return $this->cheapestVariant->price;
             }, 0),
+
+            'compare_at_price' => $this->whenLoaded('cheapestVariant', function () {
+                if ($this->cheapestVariant->compare_at_price !== null) {
+                    return (float) $this->cheapestVariant->compare_at_price;
+                }
+                return $this->cheapestVariant->price > 0 ? round($this->cheapestVariant->price / 0.9, 2) : null;
+            }),
 
             'product_variant_id' => $this->whenLoaded('cheapestVariant', function () {
                 return $this->cheapestVariant?->id;
