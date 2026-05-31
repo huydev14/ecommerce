@@ -10,6 +10,7 @@ const provinces = ref([]);
 const isLoading = ref(false);
 const errorMessage = ref('');
 const searchTerm = ref('');
+const showContent = ref(false);
 
 const filteredProvinces = computed(() => {
     const keyword = searchTerm.value.trim().toLowerCase();
@@ -37,7 +38,10 @@ const selectProvince = (province) => {
     emit('close');
 };
 
-onMounted(fetchProvinces);
+onMounted(() => {
+    showContent.value = true;
+    fetchProvinces();
+});
 </script>
 
 <template>
@@ -62,7 +66,7 @@ onMounted(fetchProvinces);
                     leave-from-class="tw-opacity-100 tw-translate-y-0 tw-scale-100"
                     leave-to-class="tw-opacity-0 tw-translate-y-4 tw-scale-95"
                 >
-                    <div class="tw-w-full tw-max-w-[400px] tw-overflow-hidden tw-rounded-xl tw-bg-white tw-text-[#0f1111] tw-shadow-2xl">
+                    <div v-show="showContent" class="tw-w-full tw-max-w-[400px] tw-overflow-hidden tw-rounded-xl tw-bg-white tw-text-[#0f1111] tw-shadow-2xl">
                         
                         <div class="tw-flex tw-items-center tw-justify-between tw-border-b tw-border-gray-200 tw-bg-gray-50/50 tw-px-5 tw-py-3.5">
                             <h2 class="tw-m-0 tw-text-[16px] tw-font-bold tw-text-gray-800">Chọn vị trí giao hàng</h2>

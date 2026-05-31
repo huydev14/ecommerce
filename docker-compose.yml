@@ -17,7 +17,7 @@ services:
     environment:
       RUN_MIGRATIONS: "true"
     networks:
-      - ecommerce-net
+      - shared-network
 
   worker:
     build:
@@ -33,11 +33,12 @@ services:
     volumes:
       - ecommerce-shared-storage:/var/www/html/storage
     networks:
-      - ecommerce-net
+      - shared-network
 
 networks:
-  ecommerce-net:
-    driver: bridge
+  shared-network:
+    external: true
+    name: shared-net
 
 volumes:
   ecommerce-shared-storage:
