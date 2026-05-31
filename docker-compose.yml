@@ -12,6 +12,7 @@ services:
     volumes:
       - ./docker/ssl:/etc/nginx/ssl:ro
       - ecommerce-shared-storage:/var/www/html/storage
+      - ./.env:/var/www/html/.env
     env_file:
       - .env
     environment:
@@ -32,6 +33,7 @@ services:
       - .env
     volumes:
       - ecommerce-shared-storage:/var/www/html/storage
+      - ./.env:/var/www/html/.env
     networks:
       - shared-network
 
