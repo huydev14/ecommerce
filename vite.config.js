@@ -24,6 +24,9 @@ export default defineConfig({
             },
         }),
     ],
+    build: {
+        reportCompressedSize: false,
+    },
     resolve: {
         alias: {
             '@': '/resources/js/client',
