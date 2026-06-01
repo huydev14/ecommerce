@@ -60,12 +60,12 @@ const checkoutItems = computed(() =>
             id: item.cart_item_id || item.product_variant_id,
             name: item.product_name || 'Sản phẩm',
             variant: item.sku ? `SKU: ${item.sku}` : '',
-            seller: APP_CONFIG.appName,
+            brand: item.brand.name || APP_CONFIG.appName,
             image: item.thumbnail || '/img/default-image.jpg',
             price,
             quantity,
             lineTotal: Number(item.line_total || price * quantity),
-            deliveryWindow: '27 Jun 2026 - 30 Jun 2026',
+            estimateShippingDate: item.estimate_shipping_date || '',
             shippingSpeed: 'Standard Delivery',
         };
     }),
@@ -271,7 +271,7 @@ watch(selectedAddressId, (addressId, previousAddressId) => {
                                 <div class="checkout-item__details">
                                     <RouterLink :to="{ name: 'ProductList' }" class="checkout-item__name">{{ item.name }}</RouterLink>
                                     <p v-if="item.variant">{{ item.variant }}</p>
-                                    <p>Sold by {{ item.seller }}</p>
+                                    <p>Sold by {{ item.brand }}</p>
                                     <strong>{{ formatCurrency(item.price) }}</strong>
                                     <p>Quantity: {{ item.quantity }}</p>
                                 </div>
@@ -282,7 +282,7 @@ watch(selectedAddressId, (addressId, previousAddressId) => {
                                         <input type="radio" checked />
                                         <span>{{ item.shippingSpeed }} (FREE Delivery)</span>
                                     </label>
-                                    <small>{{ item.deliveryWindow }}</small>
+                                    <small>{{ item.estimateShippingDate }}</small>
                                 </div>
                             </article>
                         </template>

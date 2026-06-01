@@ -11,7 +11,7 @@ const order = ref({
     customerName: '',
     email: '',
     deliveryAddress: [],
-    deliveryWindow: '',
+    estimate_shipping_date: '',
     paymentMethod: '',
     total: 0,
     items: [],
@@ -42,7 +42,7 @@ const fetchOrder = async () => {
         customerName: data.customer_name || '',
         email: data.customer_email || '',
         deliveryAddress: data.delivery_address || [],
-        deliveryWindow: data.delivery_window || '',
+        estimate_shipping_date: data.estimate_shipping_date || '',
         paymentMethod: data.payment_method || '',
         total: data.total || 0,
         items: data.items || [],
@@ -100,7 +100,7 @@ onMounted(fetchOrder);
                         <dl>
                             <div>
                                 <dt>Estimated delivery</dt>
-                                <dd>{{ order.deliveryWindow }}</dd>
+                                <dd>{{ order.estimate_shipping_date }}</dd>
                             </div>
                             <div>
                                 <dt>Ship to</dt>
@@ -182,7 +182,7 @@ onMounted(fetchOrder);
 
 .order-success-hero {
     display: flex;
-    align-items:center;
+    align-items: center;
     gap: 18px;
     padding: 28px;
     border-bottom: 1px solid #e7e7e7;

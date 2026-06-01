@@ -52,6 +52,7 @@ class CheckoutController extends Controller
         $subtotal = 0;
         $totalWeight = 0;
         $formattedItems = [];
+        $estimate_shipping_date = now()->addDays(3)->format('d M Y') . ' - ' . now()->addDays(7)->format('d M Y');
 
         foreach ($variants as $variant) {
             $product = $variant->product ?? null;
@@ -68,12 +69,14 @@ class CheckoutController extends Controller
             $formattedItems[] = [
                 'product_variant_id' => $variant->id,
                 'product_name' => $product->name,
+                'brand' => $variant->product->brand,
                 'sku' => $variant->sku,
                 'price' => $price,
                 'quantity' => $quantity,
                 'line_total' => $lineTotal,
                 'stock' => $variant->stocks ?? 0,
-                'thumbnail' => $product->thumbnail
+                'thumbnail' => $product->thumbnail,
+                'estimate_shipping_date' => $estimate_shipping_date,
             ];
         }
 
@@ -281,10 +284,10 @@ class CheckoutController extends Controller
                     $shippingAddress['phone'] ?? null,
                     $shippingAddress['full_address'] ?? null,
                 ])->filter()->values(),
-                'delivery_window' => $deliveryStart && $deliveryEnd ? "{$deliveryStart} - {$deliveryEnd}" : null,
+                'estimate_shipping_date' => $deliveryStart && $deliveryEnd ? "{$deliveryStart} - {$deliveryEnd}" : null,
                 'payment_method' => $paymentLabels[$order->payment_method] ?? $order->payment_method,
                 'total' => $order->total_amount,
-                'items' => $order->items->map(fn ($item) => [
+                'items' => $order->items->map(fn($item) => [
                     'id' => $item->id,
                     'name' => $item->product_name,
                     'quantity' => $item->quantity,
@@ -310,7 +313,7 @@ class CheckoutController extends Controller
 
         return response()->json([
             'success' => true,
-            'data' => $orders->map(fn ($order) => [
+            'data' => $orders->map(fn($order) => [
                 'order_number' => $order->order_number,
                 'placed_at' => optional($order->created_at)->format('d M Y, H:i'),
                 'status' => $order->status,
@@ -318,7 +321,7 @@ class CheckoutController extends Controller
                 'payment_status' => $order->payment_status,
                 'total' => $order->total_amount,
                 'item_count' => $order->items->sum('quantity'),
-                'items' => $order->items->map(fn ($item) => [
+                'items' => $order->items->map(fn($item) => [
                     'id' => $item->id,
                     'name' => $item->product_name,
                     'quantity' => $item->quantity,
