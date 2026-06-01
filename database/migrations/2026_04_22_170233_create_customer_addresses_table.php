@@ -27,6 +27,10 @@ return new class extends Migration {
             $table->string('specific_address');
 
             $table->boolean('is_default')->default(false);
+
+            $table->string('label',50)->comment('Home, Office,...');
+            $table->string('delivery_note')->nullable();
+
             $table->timestamps();
         });
     }

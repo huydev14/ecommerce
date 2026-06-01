@@ -1,19 +1,33 @@
 <script setup>
-import { computed, ref } from 'vue';
+import { computed, onMounted, ref } from 'vue';
 import { APP_CONFIG } from '@/config';
+import api from '@/services/api';
 
 const promoCode = ref('');
+const customerAddresses = ref([]);
+const selectedAddressId = ref('');
+const selectedPaymentMethod = ref('cod');
+const orderNote = ref('');
+const isLoadingAddresses = ref(false);
+const addressError = ref('');
 
-const deliveryAddress = {
-    name: 'Nguyễn Gia Huy',
-    lines: ['World Trade Center, 37 Nguyễn Thị Minh Khai', 'Phường Bến Nghé, Quận 1', 'TP. Hồ Chí Minh 700000'],
-    phone: '0903 237 900',
-};
-
-const paymentInfo = {
-    method: 'Thanh toán khi nhận hàng',
-    note: 'Không cần thẻ. Thanh toán trực tiếp cho đơn vị vận chuyển.',
-};
+const paymentMethods = [
+    {
+        value: 'cod',
+        label: 'Thanh toán khi nhận hàng',
+        note: 'Thanh toán trực tiếp cho đơn vị vận chuyển khi nhận hàng.',
+    },
+    {
+        value: 'vnpay',
+        label: 'VNPay',
+        note: 'Thanh toán online qua cổng VNPay sau khi đặt hàng.',
+    },
+    {
+        value: 'momo',
+        label: 'MoMo',
+        note: 'Thanh toán online bằng ví MoMo khi hoàn tất đơn hàng.',
+    },
+];
 
 const checkoutItems = [
     {
@@ -53,6 +67,42 @@ const itemSubtotal = computed(() => checkoutItems.reduce((total, item) => total 
 const deliveryFee = computed(() => 0);
 const promotionAmount = computed(() => Math.round(itemSubtotal.value * 0.08));
 const orderTotal = computed(() => itemSubtotal.value + deliveryFee.value - promotionAmount.value);
+const selectedAddress = computed(
+    () => customerAddresses.value.find((address) => String(address.id) === String(selectedAddressId.value)) || null,
+);
+const selectedPaymentInfo = computed(
+    () => paymentMethods.find((method) => method.value === selectedPaymentMethod.value) || paymentMethods[0],
+);
+const selectedAddressLines = computed(() => {
+    if (!selectedAddress.value) {
+        return [];
+    }
+
+    return [
+        selectedAddress.value.specific_address,
+        [selectedAddress.value.ward_name, selectedAddress.value.district_name].filter(Boolean).join(', '),
+        selectedAddress.value.province_name,
+    ].filter(Boolean);
+});
+
+const fetchCustomerAddresses = async () => {
+    isLoadingAddresses.value = true;
+    addressError.value = '';
+
+    try {
+        const response = await api.get('/customer-addresses');
+        customerAddresses.value = response.data.data || [];
+
+        const defaultAddress = customerAddresses.value.find((address) => address.is_default);
+        selectedAddressId.value = defaultAddress?.id || customerAddresses.value[0]?.id || '';
+    } catch (error) {
+        addressError.value = error.response?.data?.message || 'Không thể tải địa chỉ giao hàng.';
+    } finally {
+        isLoadingAddresses.value = false;
+    }
+};
+
+onMounted(fetchCustomerAddresses);
 </script>
 
 <template>
@@ -69,34 +119,57 @@ const orderTotal = computed(() => itemSubtotal.value + deliveryFee.value - promo
                         <article class="checkout-info-card">
                             <div class="checkout-section-title">
                                 <h2>Delivery Address</h2>
-                                <button type="button">Change</button>
+                                <RouterLink :to="{ name: 'CustomerAddresses' }" class="checkout-section-link">
+                                    Manage
+                                </RouterLink>
                             </div>
-                            <address>
-                                <strong>{{ deliveryAddress.name }}</strong>
-                                <span v-for="line in deliveryAddress.lines" :key="line">{{ line }}</span>
-                                <span>Phone: {{ deliveryAddress.phone }}</span>
+
+                            <div v-if="isLoadingAddresses" class="checkout-muted">Loading addresses...</div>
+                            <div v-else-if="addressError" class="checkout-alert">{{ addressError }}</div>
+                            <div v-else-if="!customerAddresses.length" class="checkout-empty">
+                                <p>Chưa có địa chỉ giao hàng.</p>
+                                <RouterLink :to="{ name: 'CustomerAddresses' }">Thêm địa chỉ</RouterLink>
+                            </div>
+
+                            <label v-else class="checkout-select-field">
+                                <span>Ship to</span>
+                                <select v-model="selectedAddressId">
+                                    <option v-for="address in customerAddresses" :key="address.id" :value="address.id">
+                                        {{ address.label }} - {{ address.receiver_name }}
+                                    </option>
+                                </select>
+                            </label>
+
+                            <address v-if="selectedAddress">
+                                <strong>{{ selectedAddress.receiver_name }}</strong>
+                                <span v-for="line in selectedAddressLines" :key="line">{{ line }}</span>
+                                <span>Phone: {{ selectedAddress.receiver_phone }}</span>
+                                <span v-if="selectedAddress.delivery_note">Note: {{ selectedAddress.delivery_note }}</span>
                             </address>
                         </article>
 
                         <article class="checkout-info-card">
                             <div class="checkout-section-title">
                                 <h2>Payment Information</h2>
-                                <button type="button">Change</button>
                             </div>
-                            <dl>
-                                <div>
-                                    <dt>Payment method</dt>
-                                    <dd>{{ paymentInfo.method }}</dd>
-                                </div>
-                                <div>
-                                    <dt>Note</dt>
-                                    <dd>{{ paymentInfo.note }}</dd>
-                                </div>
-                            </dl>
+                            <div class="checkout-payment-options">
+                                <label v-for="method in paymentMethods" :key="method.value" class="checkout-payment-option">
+                                    <input v-model="selectedPaymentMethod" type="radio" name="payment_method" :value="method.value" />
+                                    <span>
+                                        <strong>{{ method.label }}</strong>
+                                        <small>{{ method.note }}</small>
+                                    </span>
+                                </label>
+                            </div>
+                            <label class="checkout-note-field">
+                                <span>Order note</span>
+                                <textarea v-model.trim="orderNote" rows="2" placeholder="Ghi chú cho đơn hàng"></textarea>
+                            </label>
                         </article>
 
                         <article class="checkout-info-card checkout-promo">
                             <h2>Enter a promotional code.</h2>
+                            <p>{{ selectedPaymentInfo.note }}</p>
                             <div class="checkout-promo__form">
                                 <input v-model="promoCode" type="text" placeholder="Enter Code" aria-label="Promotional code" />
                                 <button type="button">Apply</button>
@@ -329,6 +402,7 @@ const orderTotal = computed(() => itemSubtotal.value + deliveryFee.value - promo
 }
 
 .checkout-section-title button,
+.checkout-section-link,
 .checkout-promo__form button {
     border: 1px solid #adb1b8;
     border-radius: 3px;
@@ -338,8 +412,10 @@ const orderTotal = computed(() => itemSubtotal.value + deliveryFee.value - promo
     font-size: 12px;
 }
 
-.checkout-section-title button {
+.checkout-section-title button,
+.checkout-section-link {
     padding: 4px 9px;
+    text-decoration: none;
 }
 
 .checkout-info-card address {
@@ -350,6 +426,113 @@ const orderTotal = computed(() => itemSubtotal.value + deliveryFee.value - promo
     font-style: normal;
     font-size: 13px;
     line-height: 1.35;
+}
+
+.checkout-muted,
+.checkout-alert,
+.checkout-empty {
+    margin-top: 12px;
+    font-size: 13px;
+    line-height: 1.4;
+}
+
+.checkout-muted {
+    color: #565959;
+}
+
+.checkout-alert {
+    color: #b12704;
+}
+
+.checkout-empty p {
+    margin: 0 0 6px;
+    color: #565959;
+}
+
+.checkout-empty a {
+    color: #007185;
+    font-size: 13px;
+    text-decoration: none;
+}
+
+.checkout-select-field,
+.checkout-note-field {
+    display: grid;
+    gap: 6px;
+    margin-top: 12px;
+    color: #565959;
+    font-size: 12px;
+    font-weight: 700;
+}
+
+.checkout-select-field select,
+.checkout-note-field textarea {
+    width: 100%;
+    border: 1px solid #a6a6a6;
+    border-radius: 3px;
+    background-color: #fff;
+    color: #111827;
+    font: inherit;
+    font-size: 13px;
+    font-weight: 400;
+    outline: none;
+}
+
+.checkout-select-field select {
+    appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg width='12' height='8' viewBox='0 0 12 8' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M1 1.5L6 6.5L11 1.5' stroke='%23374151' stroke-width='1.7' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+    background-position: right 10px center;
+    background-repeat: no-repeat;
+    background-size: 12px 8px;
+    padding: 8px 32px 8px 10px;
+}
+
+.checkout-note-field textarea {
+    resize: vertical;
+    padding: 8px 10px;
+}
+
+.checkout-select-field select:focus,
+.checkout-note-field textarea:focus,
+.checkout-promo__form input:focus {
+    border-color: #007185;
+    box-shadow: 0 0 0 3px rgba(0, 113, 133, 0.16);
+}
+
+.checkout-payment-options {
+    display: grid;
+    gap: 10px;
+    margin-top: 12px;
+}
+
+.checkout-payment-option {
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+    color: #111827;
+    font-size: 13px;
+    line-height: 1.35;
+}
+
+.checkout-payment-option input {
+    margin-top: 2px;
+    accent-color: #007185;
+}
+
+.checkout-payment-option span {
+    display: grid;
+    gap: 2px;
+}
+
+.checkout-payment-option small,
+.checkout-promo p {
+    color: #565959;
+    font-size: 12px;
+    line-height: 1.4;
+}
+
+.checkout-promo p {
+    margin: 8px 0 0;
 }
 
 .checkout-info-card dl,

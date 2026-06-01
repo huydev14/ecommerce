@@ -24,25 +24,6 @@ const filters = [
     },
 ];
 
-const colors = [
-    '#111111',
-    '#f5f5f5',
-    '#808080',
-    '#8b5a2b',
-    '#e8cda5',
-    '#cf2e2e',
-    '#e98ab6',
-    '#f59e0b',
-    '#f8df21',
-    '#ffffff',
-    '#64b246',
-    '#2f65b0',
-    '#6a4ca0',
-    '#d4a800',
-    '#737373',
-    '#d9f2ff',
-];
-
 const products = ref([]);
 const brandOptions = ref([]);
 const meta = ref({
@@ -225,20 +206,6 @@ watch(() => [route.query.category, route.query.page, route.query.brand], fetchPr
                 <section class="filter-group">
                     <h2>Đánh giá</h2>
                     <a href="#" class="review-filter"><span>★★★★★</span> trở lên</a>
-                </section>
-
-                <section class="filter-group">
-                    <h2>Màu sắc</h2>
-                    <div class="color-grid">
-                        <button
-                            v-for="color in colors"
-                            :key="color"
-                            type="button"
-                            class="color-swatch"
-                            :style="{ backgroundColor: color }"
-                            aria-label="Filter by color"
-                        ></button>
-                    </div>
                 </section>
             </aside>
 

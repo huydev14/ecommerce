@@ -9,6 +9,7 @@ use App\Http\Controllers\Api\CheckoutController;
 use App\Http\Controllers\Api\HomeController;
 use App\Http\Controllers\Api\LocationController;
 use App\Http\Controllers\Api\ProductController;
+use App\Http\Controllers\Api\CustomerAddressController;
 use Illuminate\Support\Facades\Route;
 
 Route::prefix('v1')->group(function () {
@@ -62,4 +63,10 @@ Route::prefix('v1')->group(function () {
 
     // ----- Checkout API -------------------------
     Route::post('/orders/checkout', [CheckoutController::class, 'processCheckout']);
+
+    Route::middleware('auth:api')->group(function () {
+        // ----- Customer addresses API -------------------------
+        Route::apiResource('customer-addresses', CustomerAddressController::class)->except(['show']);
+        Route::patch('customer-addresses/{id}/default', [CustomerAddressController::class, 'setDefault']);
+    });
 });

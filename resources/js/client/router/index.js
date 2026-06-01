@@ -30,6 +30,7 @@ const routes = [
                 path: 'checkout',
                 name: 'Checkout',
                 component: () => import('@/pages/Checkout.vue'),
+                meta: { requiresAuth: true },
             },
             {
                 path: 'order-success',
@@ -37,9 +38,15 @@ const routes = [
                 component: () => import('@/pages/OrderSuccess.vue'),
             },
             {
-                path: 'my-account/orders',
+                path: 'my-orders',
                 name: 'MyAccountOrders',
                 component: () => import('@/pages/MyAccountOrders.vue'),
+                meta: { requiresAuth: true },
+            },
+            {
+                path: 'customer-addresses',
+                name: 'CustomerAddresses',
+                component: () => import('@/pages/CustomerAddresses.vue'),
                 meta: { requiresAuth: true },
             },
         ],

@@ -19,6 +19,8 @@ class CustomerAddress extends Model
         'ward_name',
         'specific_address',
         'is_default',
+        'label',
+        'delivery_note',
     ];
 
     protected $casts = [

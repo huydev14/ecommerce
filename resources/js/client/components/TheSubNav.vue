@@ -205,6 +205,14 @@ onBeforeUnmount(() => {
                                 Your Orders
                             </router-link>
 
+                            <router-link
+                                :to="{ name: 'CustomerAddresses' }"
+                                class="tw-block tw-px-5 tw-py-2.5 tw-text-[14px] tw-font-medium tw-text-[#111827] hover:tw-bg-gray-50"
+                                @click="closeMenu"
+                            >
+                                Your Addresses
+                            </router-link>
+
                             <a
                                 href="#"
                                 class="tw-flex tw-items-center tw-gap-4 tw-px-5 tw-py-2.5 tw-text-[14px] tw-font-medium tw-text-[#111827] hover:tw-bg-gray-50"

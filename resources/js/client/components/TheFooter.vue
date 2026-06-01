@@ -8,6 +8,7 @@ const footerSections = [
         title: 'Let Us Help You',
         links: [
             { label: 'Your Orders', to: { name: 'MyAccountOrders' } },
+            { label: 'Your Addresses', to: { name: 'CustomerAddresses' } },
             { label: 'Login & Security', href: '#' },
             { label: 'Cart', to: { name: 'Cart' } },
             { label: 'Shipping Rates', href: '#' },
