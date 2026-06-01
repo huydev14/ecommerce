@@ -70,5 +70,7 @@ Route::prefix('v1')->group(function () {
         // ----- Checkout API -------------------------
         Route::get('/checkout', [CheckoutController::class, 'reviewCheckout']);
         Route::post('/checkout', [CheckoutController::class, 'processCheckout']);
+        Route::get('/orders', [CheckoutController::class, 'listOrders']);
+        Route::get('/orders/{orderNumber}', [CheckoutController::class, 'showOrder']);
     });
 });

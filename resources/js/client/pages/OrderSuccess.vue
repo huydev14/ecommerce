@@ -1,33 +1,21 @@
 <script setup>
-import { computed } from 'vue';
+import { computed, onMounted, ref } from 'vue';
+import { useRoute } from 'vue-router';
 import { APP_CONFIG } from '@/config';
+import api from '@/services/api';
 
-const order = {
-    code: 'WH-20260530-1024',
-    placedAt: '30 May 2026, 10:24',
-    customerName: 'Nguyễn Gia Huy',
-    email: 'huy@example.com',
-    deliveryAddress: ['World Trade Center, 37 Nguyễn Thị Minh Khai', 'Phường Bến Nghé, Quận 1', 'TP. Hồ Chí Minh 700000'],
-    deliveryWindow: '27 Jun 2026 - 30 Jun 2026',
-    paymentMethod: 'Thanh toán khi nhận hàng',
-    total: 241829,
-    items: [
-        {
-            id: 1,
-            name: 'Sách Chiếu Bóng - Cinema Book',
-            quantity: 1,
-            price: 120000,
-            image: '/img/default-image.jpg',
-        },
-        {
-            id: 2,
-            name: 'Truyện Cổ Andersen',
-            quantity: 1,
-            price: 142857,
-            image: '/img/default-image.jpg',
-        },
-    ],
-};
+const route = useRoute();
+const order = ref({
+    code: '',
+    placedAt: '',
+    customerName: '',
+    email: '',
+    deliveryAddress: [],
+    deliveryWindow: '',
+    paymentMethod: '',
+    total: 0,
+    items: [],
+});
 
 const formatCurrency = (value) =>
     new Intl.NumberFormat('vi-VN', {
@@ -36,7 +24,32 @@ const formatCurrency = (value) =>
         maximumFractionDigits: 0,
     }).format(Number(value || 0));
 
-const itemCount = computed(() => order.items.reduce((total, item) => total + item.quantity, 0));
+const itemCount = computed(() => order.value.items.reduce((total, item) => total + item.quantity, 0));
+
+const fetchOrder = async () => {
+    const orderNumber = route.query.order;
+
+    if (!orderNumber) {
+        return;
+    }
+
+    const response = await api.get(`/orders/${orderNumber}`);
+    const data = response.data.data || {};
+
+    order.value = {
+        code: data.order_number || '',
+        placedAt: data.placed_at || '',
+        customerName: data.customer_name || '',
+        email: data.customer_email || '',
+        deliveryAddress: data.delivery_address || [],
+        deliveryWindow: data.delivery_window || '',
+        paymentMethod: data.payment_method || '',
+        total: data.total || 0,
+        items: data.items || [],
+    };
+};
+
+onMounted(fetchOrder);
 </script>
 
 <template>
@@ -169,6 +182,7 @@ const itemCount = computed(() => order.items.reduce((total, item) => total + ite
 
 .order-success-hero {
     display: flex;
+    align-items:center;
     gap: 18px;
     padding: 28px;
     border-bottom: 1px solid #e7e7e7;

@@ -1,5 +1,72 @@
 <script setup>
+import { computed, onMounted, ref } from 'vue';
+import api from '@/services/api';
+
 const orderTabs = ['Orders', 'Buy Again', 'Not Yet Shipped'];
+const orders = ref([]);
+const searchQuery = ref('');
+const isLoading = ref(false);
+
+const formatCurrency = (value) =>
+    new Intl.NumberFormat('vi-VN', {
+        style: 'currency',
+        currency: 'VND',
+        maximumFractionDigits: 0,
+    }).format(Number(value || 0));
+
+const imageUrl = (image) => {
+    if (!image) {
+        return '/img/default-image.jpg';
+    }
+
+    if (/^https?:\/\//i.test(image) || image.startsWith('/')) {
+        return image;
+    }
+
+    return `/storage/${image}`;
+};
+
+const statusLabel = (status) => {
+    const labels = {
+        pending: 'Pending',
+        processing: 'Processing',
+        completed: 'Completed',
+        cancelled: 'Cancelled',
+    };
+
+    return labels[status] || status || 'Processing';
+};
+
+const filteredOrders = computed(() => {
+    const keyword = searchQuery.value.trim().toLowerCase();
+
+    if (!keyword) {
+        return orders.value;
+    }
+
+    return orders.value.filter((order) => {
+        const orderNumber = String(order.order_number || '').toLowerCase();
+        const itemNames = (order.items || []).map((item) => item.name).join(' ').toLowerCase();
+
+        return orderNumber.includes(keyword) || itemNames.includes(keyword);
+    });
+});
+
+const fetchOrders = async () => {
+    isLoading.value = true;
+
+    try {
+        const response = await api.get('/orders');
+        orders.value = (response.data.data || []).map((order) => ({
+            ...order,
+            items: order.items || [],
+        }));
+    } finally {
+        isLoading.value = false;
+    }
+};
+
+onMounted(fetchOrders);
 </script>
 
 <template>
@@ -8,10 +75,10 @@ const orderTabs = ['Orders', 'Buy Again', 'Not Yet Shipped'];
             <header class="orders-header">
                 <h1 id="orders-title">My Orders</h1>
 
-                <form class="orders-search" role="search">
+                <form class="orders-search" role="search" @submit.prevent>
                     <label class="orders-search__box">
                         <i class="fa-solid fa-magnifying-glass" aria-hidden="true"></i>
-                        <input type="search" placeholder="Search all orders" />
+                        <input v-model="searchQuery" type="search" placeholder="Search all orders" />
                     </label>
 
                     <button type="submit">Search Orders</button>
@@ -25,14 +92,58 @@ const orderTabs = ['Orders', 'Buy Again', 'Not Yet Shipped'];
             </nav>
 
             <div class="orders-filter">
-                <span><strong>0 orders</strong> placed in</span>
+                <span><strong>{{ filteredOrders.length }} orders</strong> placed in</span>
                 <button type="button">
                     past 3 months
                     <i class="fa-solid fa-chevron-down" aria-hidden="true"></i>
                 </button>
             </div>
 
-            <div class="orders-empty" role="status">
+            <div v-if="isLoading" class="orders-empty" role="status">
+                Loading your orders...
+            </div>
+
+            <div v-else-if="filteredOrders.length" class="orders-list">
+                <article v-for="order in filteredOrders" :key="order.order_number" class="orders-card">
+                    <header class="orders-card__header">
+                        <div>
+                            <span>Order placed</span>
+                            <strong>{{ order.placed_at }}</strong>
+                        </div>
+                        <div>
+                            <span>Total</span>
+                            <strong>{{ formatCurrency(order.total) }}</strong>
+                        </div>
+                        <div>
+                            <span>Payment</span>
+                            <strong>{{ order.payment_method }}</strong>
+                        </div>
+                        <div class="orders-card__code">
+                            <span>Order #{{ order.order_number }}</span>
+                            <RouterLink :to="{ name: 'OrderSuccess', query: { order: order.order_number } }">View order details</RouterLink>
+                        </div>
+                    </header>
+
+                    <div class="orders-card__body">
+                        <div class="orders-card__status">
+                            <strong>{{ statusLabel(order.status) }}</strong>
+                            <span>{{ order.item_count }} item{{ order.item_count > 1 ? 's' : '' }}</span>
+                        </div>
+
+                        <div class="orders-card__items">
+                            <div v-for="item in order.items.slice(0, 3)" :key="item.id" class="orders-card__item">
+                                <img :src="imageUrl(item.image)" :alt="item.name" />
+                                <div>
+                                    <strong>{{ item.name }}</strong>
+                                    <span>Qty: {{ item.quantity }} · {{ formatCurrency(item.price) }}</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </article>
+            </div>
+
+            <div v-else class="orders-empty" role="status">
                 Looks like you haven't placed an order in the last 3 months.
                 <a href="#">View orders in 2026</a>
             </div>
@@ -231,6 +342,93 @@ const orderTabs = ['Orders', 'Buy Again', 'Not Yet Shipped'];
     font-weight: 500;
 }
 
+.orders-list {
+    display: grid;
+    gap: 18px;
+    margin-top: 28px;
+}
+
+.orders-card {
+    overflow: hidden;
+    border: 1px solid #d5d9d9;
+    border-radius: 8px;
+    background: #ffffff;
+}
+
+.orders-card__header {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr minmax(220px, 1.2fr);
+    gap: 18px;
+    border-bottom: 1px solid #d5d9d9;
+    background: #f0f2f2;
+    padding: 14px 18px;
+}
+
+.orders-card__header span,
+.orders-card__status span,
+.orders-card__item span {
+    display: block;
+    color: #565959;
+    font-size: 13px;
+    line-height: 18px;
+}
+
+.orders-card__header strong,
+.orders-card__status strong,
+.orders-card__item strong {
+    display: block;
+    color: #0f1111;
+    font-size: 15px;
+    line-height: 20px;
+}
+
+.orders-card__code {
+    text-align: right;
+}
+
+.orders-card__code a {
+    color: #007185;
+    font-size: 14px;
+    line-height: 20px;
+    text-decoration: none;
+}
+
+.orders-card__code a:hover {
+    color: #c45500;
+    text-decoration: underline;
+}
+
+.orders-card__body {
+    display: grid;
+    grid-template-columns: 180px minmax(0, 1fr);
+    gap: 22px;
+    padding: 18px;
+}
+
+.orders-card__status strong {
+    font-size: 18px;
+}
+
+.orders-card__items {
+    display: grid;
+    gap: 14px;
+}
+
+.orders-card__item {
+    display: grid;
+    grid-template-columns: 72px minmax(0, 1fr);
+    align-items: center;
+    gap: 14px;
+}
+
+.orders-card__item img {
+    width: 72px;
+    height: 72px;
+    border: 1px solid #e3e6e6;
+    border-radius: 4px;
+    object-fit: cover;
+}
+
 .orders-history {
     display: grid;
     grid-template-columns: minmax(0, 1fr) 180px;
@@ -282,6 +480,15 @@ const orderTabs = ['Orders', 'Buy Again', 'Not Yet Shipped'];
     .orders-history {
         grid-template-columns: 1fr;
         padding: 24px 20px;
+    }
+
+    .orders-card__header,
+    .orders-card__body {
+        grid-template-columns: 1fr;
+    }
+
+    .orders-card__code {
+        text-align: left;
     }
 }
 
