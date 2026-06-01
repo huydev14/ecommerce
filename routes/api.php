@@ -5,6 +5,7 @@ use App\Http\Controllers\Api\Auth\OAuthController;
 
 use App\Http\Controllers\Api\CartController;
 use App\Http\Controllers\Api\CategoryController;
+use App\Http\Controllers\Api\CheckoutController;
 use App\Http\Controllers\Api\HomeController;
 use App\Http\Controllers\Api\LocationController;
 use App\Http\Controllers\Api\ProductController;
@@ -58,4 +59,7 @@ Route::prefix('v1')->group(function () {
     Route::post('/cart/items', [CartController::class, 'store']);
     Route::put('/cart/items/{variantId}', [CartController::class, 'update']);
     Route::delete('/cart/items/{variantId}', [CartController::class, 'destroy']);
+
+    // ----- Checkout API -------------------------
+    Route::post('/orders/checkout', [CheckoutController::class, 'processCheckout']);
 });
