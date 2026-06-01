@@ -1,5 +1,6 @@
 <script setup>
 import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue';
+import { useI18n } from 'vue-i18n';
 import { useRouter } from 'vue-router';
 import { useAuthStore } from '../stores/auth';
 import { useCartStore } from '../stores/cart';
@@ -11,10 +12,13 @@ const authStore = useAuthStore();
 const cartStore = useCartStore();
 const locationStore = useLocationStore();
 const router = useRouter();
+const { locale } = useI18n();
 const searchTerm = ref('fitness clothing');
 const isLocationModalOpen = ref(false);
 const cartPreviewItems = computed(() => cartStore.items.slice(0, 3));
 const currentLocationName = computed(() => locationStore.currentLocationName);
+const currentLanguageLabel = computed(() => locale.value.toUpperCase());
+const nextLanguageLabel = computed(() => (locale.value === 'vi' ? 'EN' : 'VI'));
 let originalBodyOverflow = '';
 let isBodyScrollLockedByLocationModal = false;
 
@@ -48,6 +52,13 @@ const submitSearch = () => {
     router.push({ name: 'ProductList', query: { q: query } });
 };
 
+const toggleLanguage = () => {
+    const nextLocale = locale.value === 'vi' ? 'en' : 'vi';
+    locale.value = nextLocale;
+    localStorage.setItem('user_locale', nextLocale);
+    document.documentElement.lang = nextLocale;
+};
+
 const formatPrice = (price) => {
     const numericPrice = Number(price || 0);
 
@@ -59,6 +70,7 @@ const formatPrice = (price) => {
 };
 
 onMounted(() => {
+    document.documentElement.lang = locale.value;
     cartStore.fetchCart().catch(() => {});
 });
 
@@ -292,13 +304,18 @@ onBeforeUnmount(unlockBodyScroll);
                 </div>
             </div>
 
-            <router-link
-                :to="{ name: 'MyAccountOrders' }"
-                class="tw-hidden tw-h-[50px] tw-cursor-pointer tw-flex-col tw-justify-center tw-rounded-sm tw-border tw-border-transparent tw-px-2 tw-py-1 hover:tw-border-white lg:tw-flex"
+            <button
+                type="button"
+                class="tw-hidden tw-h-[50px] tw-cursor-pointer tw-flex-col tw-justify-center tw-rounded-sm tw-border tw-border-transparent tw-bg-transparent tw-px-2 tw-py-1 tw-text-left hover:tw-border-white focus:tw-border-white focus:tw-outline-none lg:tw-flex"
+                :aria-label="`Switch language to ${nextLanguageLabel}`"
+                @click="toggleLanguage"
             >
-                <span class="tw-text-[12px] tw-leading-3 tw-text-white">Trả hàng</span>
-                <span class="tw-flex tw-items-center tw-text-[14px] tw-font-bold tw-leading-4 tw-text-white">& Đơn hàng</span>
-            </router-link>
+                <span class="tw-text-[12px] tw-leading-3 tw-text-[#cccccc]">Language</span>
+                <span class="tw-flex tw-items-center tw-gap-1 tw-text-[14px] tw-font-bold tw-leading-4 tw-text-white">
+                    {{ currentLanguageLabel }}
+                    <span class="tw-text-[12px] tw-font-medium tw-text-[#f59e0b]">/ {{ nextLanguageLabel }}</span>
+                </span>
+            </button>
 
             <div class="tw-group tw-relative tw-h-[50px]">
                 <router-link
