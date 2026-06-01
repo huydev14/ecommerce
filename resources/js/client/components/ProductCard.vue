@@ -108,9 +108,12 @@ const imageUrl = computed(() => {
     <article class="client-product-card" :class="{ 'client-product-card--compact': compact }">
         <span v-if="showBadge" class="client-product-card__badge">{{ badgeText }}</span>
 
-        <RouterLink :to="productRoute" class="client-product-card__image">
-            <img :src="imageUrl" :alt="product.name" loading="lazy" />
-        </RouterLink>
+        <div class="client-product-card__media">
+            <RouterLink :to="productRoute" class="client-product-card__image">
+                <img :src="imageUrl" :alt="product.name" loading="lazy" />
+            </RouterLink>
+            <span class="client-product-card__ship-badge tw-bg-red-800 tw-text-white">Freeship</span>
+        </div>
 
         <div class="client-product-card__body">
             <RouterLink :to="productRoute" class="client-product-card__name">{{ product.name }}</RouterLink>
@@ -133,22 +136,28 @@ const imageUrl = computed(() => {
                 <strong>{{ formatPrice(price) }}</strong>
             </div>
 
-            <div class="client-product-card__delivery"><span>VND 0 delivery</span> <strong>Tue, Jun 30</strong></div>
-            <div class="client-product-card__ship">Ships to Vietnam</div>
-
-            <button
-                type="button"
-                class="client-product-card__cart"
-                :disabled="!variantId || isAdding"
-                @click="emit('add-to-cart', product)"
-            >
-                {{ isAdding ? addingLabel : cartLabel }}
-            </button>
-
             <p v-if="message" class="client-product-card__message" :class="{ 'is-error': messageType === 'error' }">
                 {{ message }}
             </p>
         </div>
+
+        <button
+            type="button"
+            class="client-product-card__cart"
+            :disabled="!variantId || isAdding"
+            :aria-label="isAdding ? addingLabel : cartLabel"
+            @click="emit('add-to-cart', product)"
+        >
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" aria-hidden="true">
+                <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="2"
+                    d="M3 3h2l2.4 12.2a2 2 0 0 0 2 1.6h7.8a2 2 0 0 0 1.9-1.4L21 8H6"
+                />
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 21a1 1 0 1 0 0-2 1 1 0 0 0 0 2ZM18 21a1 1 0 1 0 0-2 1 1 0 0 0 0 2Z" />
+            </svg>
+        </button>
     </article>
 </template>
 
@@ -162,6 +171,16 @@ const imageUrl = computed(() => {
     border: 1px solid #f0f2f2;
     border-radius: 2px;
     background: #fff;
+    transition:
+        border-color 0.2s ease,
+        box-shadow 0.2s ease,
+        transform 0.2s ease;
+}
+
+.client-product-card:hover {
+    border-color: #d5d9d9;
+    box-shadow: 0 8px 24px rgba(15, 17, 17, 0.12);
+    transform: translateY(-2px);
 }
 
 .client-product-card__badge {
@@ -177,13 +196,19 @@ const imageUrl = computed(() => {
     font-weight: 700;
 }
 
+.client-product-card__media {
+    position: relative;
+    width: 100%;
+    height: 230px;
+    overflow: hidden;
+    background: #f7f7f7;
+}
+
 .client-product-card__image {
     display: grid;
     width: 100%;
-    height: 230px;
+    height: 100%;
     place-items: center;
-    overflow: hidden;
-    background: #f7f7f7;
     padding: 16px;
     text-decoration: none;
 }
@@ -194,9 +219,22 @@ const imageUrl = computed(() => {
     object-fit: contain;
 }
 
+.client-product-card__ship-badge {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    z-index: 2;
+
+    padding: 4px 9px;
+    font-size: 11px;
+    font-weight: 700;
+    line-height: 14px;
+    box-shadow: 0 1px 4px rgba(15, 17, 17, 0.1);
+}
+
 .client-product-card__body {
     display: flex;
-    min-height: 270px;
+    min-height: 220px;
     flex: 1;
     flex-direction: column;
     padding: 14px;
@@ -274,48 +312,50 @@ const imageUrl = computed(() => {
     display: flex;
     align-items: flex-start;
     gap: 3px;
-    margin-top: 4px;
+    margin-top: 6px;
     color: #0f1111;
 }
 
 .client-product-card__price span {
-    padding-top: 4px;
-    font-size: 12px;
-    line-height: 14px;
+    padding-top: 3px;
+    color: #565959;
+    font-size: 13px;
+    font-weight: 600;
+    line-height: 16px;
 }
 
 .client-product-card__price strong {
-    font-size: 28px;
-    font-weight: 400;
-    line-height: 32px;
-}
-
-.client-product-card__delivery {
-    margin-top: 8px;
-    color: #0f1111;
-    font-size: 13px;
-    line-height: 18px;
-}
-
-.client-product-card__delivery strong {
+    font-size: 22px;
     font-weight: 700;
+    line-height: 28px;
 }
 
 .client-product-card__cart {
-    width: 100%;
-    min-height: 38px;
-    margin-top: auto;
+    position: absolute;
+    right: 12px;
+    bottom: 12px;
+    z-index: 3;
+    display: grid;
+    width: 38px;
+    height: 38px;
+    place-items: center;
     border: 0;
     border-radius: 999px;
-    background: #ffd814;
-    color: #0f1111;
+    background: transparent;
+    padding: 0;
+    color: #0f172a;
     cursor: pointer;
-    font-size: 14px;
-    line-height: 18px;
+    opacity: 1;
+    pointer-events: auto;
+}
+
+.client-product-card__cart svg {
+    width: 18px;
+    height: 18px;
 }
 
 .client-product-card__cart:hover:not(:disabled) {
-    background: #f7ca00;
+    color: #007185;
 }
 
 .client-product-card__cart:disabled {
@@ -335,22 +375,25 @@ const imageUrl = computed(() => {
 }
 
 .client-product-card--compact .client-product-card__image {
-    height: 190px;
     padding: 14px;
 }
 
+.client-product-card--compact .client-product-card__media {
+    height: 190px;
+}
+
 .client-product-card--compact .client-product-card__body {
-    min-height: 236px;
+    min-height: 198px;
     padding: 12px;
 }
 
 .client-product-card--compact .client-product-card__price strong {
-    font-size: 26px;
-    line-height: 30px;
+    font-size: 21px;
+    line-height: 27px;
 }
 
 @media (max-width: 560px) {
-    .client-product-card__image {
+    .client-product-card__media {
         height: 190px;
     }
 
