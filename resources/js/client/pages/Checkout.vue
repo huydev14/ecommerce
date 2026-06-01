@@ -65,7 +65,6 @@ const checkoutItems = computed(() =>
             price,
             quantity,
             lineTotal: Number(item.line_total || price * quantity),
-            stockLabel: item.stock === null || item.stock === undefined ? 'Còn hàng' : `Còn ${item.stock} sản phẩm`,
             deliveryWindow: '27 Jun 2026 - 30 Jun 2026',
             shippingSpeed: 'Standard Delivery',
         };
@@ -275,7 +274,6 @@ watch(selectedAddressId, (addressId, previousAddressId) => {
                                     <p>Sold by {{ item.seller }}</p>
                                     <strong>{{ formatCurrency(item.price) }}</strong>
                                     <p>Quantity: {{ item.quantity }}</p>
-                                    <span>{{ item.stockLabel }}</span>
                                 </div>
 
                                 <div class="checkout-item__shipping">

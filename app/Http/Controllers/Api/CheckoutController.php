@@ -4,11 +4,8 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\CheckoutRequest;
-use App\Models\Cart;
-use App\Models\CartItem;
 use App\Models\CustomerAddress;
 use App\Models\Order;
-use App\Models\Product;
 use App\Models\ProductVariant;
 use App\Services\GhnService;
 use Illuminate\Http\Request;
@@ -75,7 +72,7 @@ class CheckoutController extends Controller
                 'price' => $price,
                 'quantity' => $quantity,
                 'line_total' => $lineTotal,
-                'stock' => $variant->stock ?? 0,
+                'stock' => $variant->stocks ?? 0,
                 'thumbnail' => $product->thumbnail
             ];
         }
@@ -138,17 +135,35 @@ class CheckoutController extends Controller
             foreach ($variantIds as $variantId) {
                 $quantity = (int) $cartItems[$variantId];
 
-                $variant = ProductVariant::with('product')
-                    ->where('id', $variantId)
-                    ->lockForUpdate()
-                    ->first();
+                $variant = ProductVariant::with([
+                    'product',
+                    'stocks' => function ($query) {
+                        $query->lockForUpdate();
+                    }
+                ])->where('id', $variantId)->first();
 
-                if (!$variant || $variant->stock < $quantity) {
+                if (!$variant || $variant->available_stock < $quantity) {
                     $name = $variant->product->name ?? 'Sản phẩm';
                     throw new \Exception("Sản phẩm '{$name}' không đủ số lượng trong kho.");
                 }
 
-                $variant->stock -= $quantity;
+                $remainingToDeduct = $quantity;
+
+                foreach ($variant->stocks as $stock) {
+                    $availableInThisStock = $stock->quantity - $stock->reserved_quantity;
+                    if ($availableInThisStock > 0) {
+                        $deduct = min($availableInThisStock, $remainingToDeduct);
+
+                        $stock->quantity -= $deduct;
+                        $stock->save();
+
+                        $remainingToDeduct -= $deduct;
+                    }
+
+                    if ($remainingToDeduct <= 0) {
+                        break;
+                    }
+                }
                 $variant->save();
 
                 $price = $variant->price;
@@ -230,6 +245,88 @@ class CheckoutController extends Controller
                 'message' => $e->getMessage()
             ], 422);
         }
+    }
+
+    public function showOrder(Request $request, string $orderNumber)
+    {
+        $order = Order::with(['items.product'])
+            ->where('order_number', $orderNumber)
+            ->first();
+
+        if (!$order || ($order->customer_id && (int) $order->customer_id !== (int) $request->user()->id)) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Không tìm thấy đơn hàng.',
+            ], 404);
+        }
+
+        $shippingAddress = json_decode($order->shipping_address, true) ?: [];
+        $paymentLabels = [
+            'cod' => 'Thanh toán khi nhận hàng',
+            'vnpay' => 'VNPay',
+            'momo' => 'MoMo',
+        ];
+        $deliveryStart = $order->created_at?->copy()->addDays(3)->format('d M Y');
+        $deliveryEnd = $order->created_at?->copy()->addDays(7)->format('d M Y');
+
+        return response()->json([
+            'success' => true,
+            'data' => [
+                'order_number' => $order->order_number,
+                'placed_at' => optional($order->created_at)->format('d M Y, H:i'),
+                'customer_name' => $order->customer_name,
+                'customer_email' => $order->customer_email,
+                'delivery_address' => collect([
+                    $shippingAddress['name'] ?? null,
+                    $shippingAddress['phone'] ?? null,
+                    $shippingAddress['full_address'] ?? null,
+                ])->filter()->values(),
+                'delivery_window' => $deliveryStart && $deliveryEnd ? "{$deliveryStart} - {$deliveryEnd}" : null,
+                'payment_method' => $paymentLabels[$order->payment_method] ?? $order->payment_method,
+                'total' => $order->total_amount,
+                'items' => $order->items->map(fn ($item) => [
+                    'id' => $item->id,
+                    'name' => $item->product_name,
+                    'quantity' => $item->quantity,
+                    'price' => $item->total_price,
+                    'image' => $item->product->thumbnail ?? '/img/default-image.jpg',
+                ])->values(),
+            ],
+        ]);
+    }
+
+    public function listOrders(Request $request)
+    {
+        $orders = Order::with(['items.product'])
+            ->where('customer_id', $request->user()->id)
+            ->latest()
+            ->get();
+
+        $paymentLabels = [
+            'cod' => 'Thanh toán khi nhận hàng',
+            'vnpay' => 'VNPay',
+            'momo' => 'MoMo',
+        ];
+
+        return response()->json([
+            'success' => true,
+            'data' => $orders->map(fn ($order) => [
+                'order_number' => $order->order_number,
+                'placed_at' => optional($order->created_at)->format('d M Y, H:i'),
+                'status' => $order->status,
+                'payment_method' => $paymentLabels[$order->payment_method] ?? $order->payment_method,
+                'payment_status' => $order->payment_status,
+                'total' => $order->total_amount,
+                'item_count' => $order->items->sum('quantity'),
+                'items' => $order->items->map(fn ($item) => [
+                    'id' => $item->id,
+                    'name' => $item->product_name,
+                    'quantity' => $item->quantity,
+                    'price' => $item->total_price,
+                    'image' => $item->product->thumbnail ?? '/img/default-image.jpg',
+                ])->values(),
+            ])->values(),
+        ]);
     }
 
     private function getRedisCartKey(Request $request): string
