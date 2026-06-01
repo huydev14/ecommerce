@@ -1,7 +1,9 @@
 <script setup>
 import { computed, onMounted, reactive, ref } from 'vue';
+import { useI18n } from 'vue-i18n';
 import api from '@/services/api';
 
+const { t } = useI18n();
 const defaultAddressForm = () => ({
     id: null,
     label: '',
@@ -39,7 +41,7 @@ const getWardName = (ward) => ward.WardName || ward.ward_name || ward.name || ''
 const fullAddress = (address) =>
     [address.specific_address, address.ward_name, address.district_name, address.province_name].filter(Boolean).join(', ');
 
-const addressTitle = (address) => address.label || (address.is_default ? 'Default address' : 'Shipping address');
+const addressTitle = (address) => address.label || (address.is_default ? t('addresses.defaultAddress') : t('addresses.shippingAddress'));
 
 const extractError = (error, fallback) => {
     if (error.response?.data?.message) {
@@ -69,7 +71,7 @@ const fetchAddresses = async () => {
         const response = await api.get('/customer-addresses');
         addresses.value = response.data.data || [];
     } catch (error) {
-        errorMessage.value = extractError(error, 'Unable to load addresses.');
+        errorMessage.value = extractError(error, t('addresses.errors_loadAddresses'));
     } finally {
         isLoading.value = false;
     }
@@ -130,7 +132,7 @@ const handleProvinceChange = async () => {
     try {
         await loadDistricts(form.province_id);
     } catch (error) {
-        errorMessage.value = extractError(error, 'Unable to load districts.');
+        errorMessage.value = extractError(error, t('addresses.errors_loadDistricts'));
     }
 };
 
@@ -141,7 +143,7 @@ const handleDistrictChange = async () => {
     try {
         await loadWards(form.district_id);
     } catch (error) {
-        errorMessage.value = extractError(error, 'Unable to load wards.');
+        errorMessage.value = extractError(error, t('addresses.errors_loadWards'));
     }
 };
 
@@ -171,7 +173,7 @@ const editAddress = async (address) => {
         await loadDistricts(form.province_id, form.district_id);
         await loadWards(form.district_id, form.ward_code);
     } catch (error) {
-        errorMessage.value = extractError(error, 'Unable to load address location data.');
+        errorMessage.value = extractError(error, t('addresses.errors_loadLocationData'));
     }
 };
 
@@ -200,11 +202,11 @@ const saveAddress = async () => {
             ? await api.put(`/customer-addresses/${form.id}`, payload)
             : await api.post('/customer-addresses', payload);
 
-        successMessage.value = response.data.message || 'Address saved.';
+        successMessage.value = response.data.message || t('addresses.messages_saved');
         resetForm();
         await fetchAddresses();
     } catch (error) {
-        errorMessage.value = extractError(error, 'Unable to save address.');
+        errorMessage.value = extractError(error, t('addresses.errors_saveAddress'));
     } finally {
         isSaving.value = false;
     }
@@ -216,15 +218,15 @@ const setDefaultAddress = async (address) => {
 
     try {
         const response = await api.patch(`/customer-addresses/${address.id}/default`);
-        successMessage.value = response.data.message || 'Default address updated.';
+        successMessage.value = response.data.message || t('addresses.messages_defaultUpdated');
         await fetchAddresses();
     } catch (error) {
-        errorMessage.value = extractError(error, 'Unable to update default address.');
+        errorMessage.value = extractError(error, t('addresses.errors_updateDefault'));
     }
 };
 
 const removeAddress = async (address) => {
-    if (!confirm('Delete this address?')) {
+    if (!confirm(t('addresses.confirmDelete'))) {
         return;
     }
 
@@ -233,7 +235,7 @@ const removeAddress = async (address) => {
 
     try {
         const response = await api.delete(`/customer-addresses/${address.id}`);
-        successMessage.value = response.data.message || 'Address deleted.';
+        successMessage.value = response.data.message || t('addresses.messages_deleted');
 
         if (form.id === address.id) {
             resetForm();
@@ -241,7 +243,7 @@ const removeAddress = async (address) => {
 
         await fetchAddresses();
     } catch (error) {
-        errorMessage.value = extractError(error, 'Unable to delete address.');
+        errorMessage.value = extractError(error, t('addresses.errors_deleteAddress'));
     }
 };
 
@@ -249,7 +251,7 @@ onMounted(async () => {
     try {
         await Promise.all([fetchAddresses(), fetchProvinces()]);
     } catch (error) {
-        errorMessage.value = extractError(error, 'Unable to initialize address page.');
+        errorMessage.value = extractError(error, t('addresses.errors_initialize'));
     }
 });
 </script>
@@ -259,26 +261,26 @@ onMounted(async () => {
         <div class="addresses-page__inner">
             <header class="addresses-header">
                 <div>
-                    <p class="addresses-eyebrow">Your Account</p>
-                    <h1 id="addresses-title">Your Addresses</h1>
+                    <p class="addresses-eyebrow">{{ t('addresses.account') }}</p>
+                    <h1 id="addresses-title">{{ t('addresses.title') }}</h1>
                 </div>
-                <router-link :to="{ name: 'MyAccountOrders' }" class="addresses-header__link">View orders</router-link>
+                <router-link :to="{ name: 'MyAccountOrders' }" class="addresses-header__link">{{ t('addresses.viewOrders') }}</router-link>
             </header>
 
             <div v-if="errorMessage" class="address-alert is-error" role="alert">{{ errorMessage }}</div>
             <div v-if="successMessage" class="address-alert is-success" role="status">{{ successMessage }}</div>
 
             <div class="addresses-layout">
-                <section class="addresses-list" aria-label="Saved addresses">
-                    <div v-if="isLoading" class="addresses-empty">Loading addresses...</div>
-                    <div v-else-if="!addresses.length" class="addresses-empty">No saved addresses yet.</div>
+                <section class="addresses-list" :aria-label="t('addresses.aria_saved')">
+                    <div v-if="isLoading" class="addresses-empty">{{ t('addresses.loading') }}</div>
+                    <div v-else-if="!addresses.length" class="addresses-empty">{{ t('addresses.empty') }}</div>
 
                     <template v-else>
                         <article v-for="address in addresses" :key="address.id" class="address-card" :class="{ 'is-default': address.is_default }">
                             <div class="address-card__top">
                                 <div>
                                     <h2>{{ addressTitle(address) }}</h2>
-                                    <span v-if="address.is_default">Default address</span>
+                                    <span v-if="address.is_default">{{ t('addresses.defaultAddress') }}</span>
                                 </div>
                                 <i class="fa-solid fa-location-dot" aria-hidden="true"></i>
                             </div>
@@ -295,9 +297,11 @@ onMounted(async () => {
                             <p v-if="address.delivery_note" class="address-card__note">{{ address.delivery_note }}</p>
 
                             <div class="address-card__actions">
-                                <button type="button" @click="editAddress(address)">Edit</button>
-                                <button v-if="!address.is_default" type="button" @click="setDefaultAddress(address)">Set default</button>
-                                <button type="button" class="is-danger" @click="removeAddress(address)">Delete</button>
+                                <button type="button" @click="editAddress(address)">{{ t('addresses.actions_edit') }}</button>
+                                <button v-if="!address.is_default" type="button" @click="setDefaultAddress(address)">
+                                    {{ t('addresses.actions_setDefault') }}
+                                </button>
+                                <button type="button" class="is-danger" @click="removeAddress(address)">{{ t('addresses.actions_delete') }}</button>
                             </div>
                         </article>
                     </template>
@@ -305,60 +309,60 @@ onMounted(async () => {
 
                 <form class="address-form" @submit.prevent="saveAddress">
                     <div class="address-form__header">
-                        <h2>{{ isEditing ? 'Edit address' : 'Add new address' }}</h2>
-                        <button v-if="isEditing" type="button" @click="resetForm">Cancel</button>
+                        <h2>{{ isEditing ? t('addresses.form_editTitle') : t('addresses.form_addTitle') }}</h2>
+                        <button v-if="isEditing" type="button" @click="resetForm">{{ t('addresses.actions_cancel') }}</button>
                     </div>
 
                     <div class="address-form__row">
                         <label>
-                            Address label
-                            <input v-model.trim="form.label" type="text" maxlength="50" placeholder="Home, Office" required />
+                            {{ t('addresses.form_label') }}
+                            <input v-model.trim="form.label" type="text" maxlength="50" :placeholder="t('addresses.form_labelPlaceholder')" required />
                         </label>
                         <label>
-                            Receiver name
+                            {{ t('addresses.form_receiverName') }}
                             <input v-model.trim="form.receiver_name" type="text" required />
                         </label>
                     </div>
 
                     <div class="address-form__row">
                         <label>
-                            Phone
+                            {{ t('addresses.form_phone') }}
                             <input v-model.trim="form.receiver_phone" type="tel" required />
                         </label>
                         <label>
-                            Delivery note
-                            <input v-model.trim="form.delivery_note" type="text" maxlength="255" placeholder="Call before delivery" />
+                            {{ t('addresses.form_deliveryNote') }}
+                            <input v-model.trim="form.delivery_note" type="text" maxlength="255" :placeholder="t('addresses.form_deliveryNotePlaceholder')" />
                         </label>
                     </div>
 
                     <label>
-                        Street address
+                        {{ t('addresses.form_streetAddress') }}
                         <input v-model.trim="form.specific_address" type="text" required />
                     </label>
 
                     <div class="address-form__row is-three">
                         <label>
-                            Province / City
+                            {{ t('addresses.form_province') }}
                             <select v-model="form.province_id" required @change="handleProvinceChange">
-                                <option value="">Select province / city</option>
+                                <option value="">{{ t('addresses.form_selectProvince') }}</option>
                                 <option v-for="province in provinces" :key="getProvinceId(province)" :value="getProvinceId(province)">
                                     {{ getProvinceName(province) }}
                                 </option>
                             </select>
                         </label>
                         <label>
-                            District
+                            {{ t('addresses.form_district') }}
                             <select v-model="form.district_id" required :disabled="!districts.length" @change="handleDistrictChange">
-                                <option value="">Select district</option>
+                                <option value="">{{ t('addresses.form_selectDistrict') }}</option>
                                 <option v-for="district in districts" :key="getDistrictId(district)" :value="getDistrictId(district)">
                                     {{ getDistrictName(district) }}
                                 </option>
                             </select>
                         </label>
                         <label>
-                            Ward
+                            {{ t('addresses.form_ward') }}
                             <select v-model="form.ward_code" required :disabled="!wards.length" @change="handleWardChange">
-                                <option value="">Select ward</option>
+                                <option value="">{{ t('addresses.form_selectWard') }}</option>
                                 <option v-for="ward in wards" :key="getWardCode(ward)" :value="getWardCode(ward)">
                                     {{ getWardName(ward) }}
                                 </option>
@@ -368,11 +372,11 @@ onMounted(async () => {
 
                     <label class="address-form__check">
                         <input v-model="form.is_default" type="checkbox" />
-                        Use as default shipping address
+                        {{ t('addresses.form_useDefault') }}
                     </label>
 
                     <button type="submit" class="address-form__submit" :disabled="isSaving">
-                        {{ isSaving ? 'Saving...' : isEditing ? 'Save changes' : 'Add address' }}
+                        {{ isSaving ? t('addresses.actions_saving') : isEditing ? t('addresses.actions_saveChanges') : t('addresses.actions_addAddress') }}
                     </button>
                 </form>
             </div>

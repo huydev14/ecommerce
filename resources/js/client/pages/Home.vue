@@ -1,5 +1,6 @@
 <script setup>
 import { computed, onMounted, ref } from 'vue';
+import { useI18n } from 'vue-i18n';
 import { Swiper, SwiperSlide } from 'swiper/vue';
 import { Autoplay, Navigation, Pagination } from 'swiper/modules';
 import api from '../services/api';
@@ -11,17 +12,18 @@ import 'swiper/css/navigation';
 import 'swiper/css/pagination';
 
 const cartStore = useCartStore();
+const { t } = useI18n();
 
-const bestSellers = [
-    { icon: '💻', name: 'Laptop WorkPro 14 inch', discount: '-18%', rating: '★★★★★ 2,143', price: '₫18.990.000' },
-    { icon: '🎧', name: 'Tai nghe chống ồn', discount: '-25%', rating: '★★★★☆ 871', price: '₫1.290.000' },
-    { icon: '🪑', name: 'Ghế công thái học', discount: '-12%', rating: '★★★★★ 654', price: '₫2.690.000' },
-    { icon: '📷', name: 'Camera văn phòng', discount: '-10%', rating: '★★★★☆ 342', price: '₫990.000' },
-    { icon: '⌚', name: 'Smartwatch Active', discount: '-30%', rating: '★★★★☆ 1,120', price: '₫1.790.000' },
-    { icon: '🖨', name: 'Máy in laser Wi-Fi', discount: '-8%', rating: '★★★★★ 431', price: '₫3.190.000' },
-    { icon: '🧴', name: 'Combo chăm sóc nhà', discount: '-22%', rating: '★★★★☆ 221', price: '₫259.000' },
-    { icon: '💡', name: 'Đèn bàn LED', discount: '-15%', rating: '★★★★★ 588', price: '₫399.000' },
-];
+const bestSellers = computed(() => [
+    { icon: '💻', name: t('home.bestSellers_items_workProLaptop'), discount: '-18%', rating: '★★★★★ 2,143', price: '₫18.990.000' },
+    { icon: '🎧', name: t('home.bestSellers_items_noiseCancelingHeadphones'), discount: '-25%', rating: '★★★★☆ 871', price: '₫1.290.000' },
+    { icon: '🪑', name: t('home.bestSellers_items_ergonomicChair'), discount: '-12%', rating: '★★★★★ 654', price: '₫2.690.000' },
+    { icon: '📷', name: t('home.bestSellers_items_officeCamera'), discount: '-10%', rating: '★★★★☆ 342', price: '₫990.000' },
+    { icon: '⌚', name: t('home.bestSellers_items_activeSmartwatch'), discount: '-30%', rating: '★★★★☆ 1,120', price: '₫1.790.000' },
+    { icon: '🖨', name: t('home.bestSellers_items_wifiLaserPrinter'), discount: '-8%', rating: '★★★★★ 431', price: '₫3.190.000' },
+    { icon: '🧴', name: t('home.bestSellers_items_homeCareCombo'), discount: '-22%', rating: '★★★★☆ 221', price: '₫259.000' },
+    { icon: '💡', name: t('home.bestSellers_items_ledDeskLamp'), discount: '-15%', rating: '★★★★★ 588', price: '₫399.000' },
+]);
 
 const banners = ref([]);
 const categories = ref([]);
@@ -119,7 +121,7 @@ const addProductToCart = async (product) => {
     try {
         await cartStore.addItem(variantId, 1);
     } catch (error) {
-        console.error('Unable to add product to cart:', error);
+        console.error(t('home.errors_addToCart'), error);
     } finally {
         const nextAddingProductIds = new Set(addingProductIds.value);
         nextAddingProductIds.delete(productKey);
@@ -172,7 +174,7 @@ const fetchHomeData = async () => {
         isHomeDataLoading.value = false;
     } catch (error) {
         isHomeDataLoading.value = false;
-        console.error('Lỗi khi lấy dữ liệu trang chủ:', error);
+        console.error(t('home.errors_fetchHomeData'), error);
     }
 };
 
@@ -184,7 +186,7 @@ const fetchCategories = async () => {
             categories.value = getCategoryItems(response.data);
         }
     } catch (error) {
-        console.error('Lỗi khi lấy danh mục:', error);
+        console.error(t('home.errors_fetchCategories'), error);
     }
 };
 
@@ -207,7 +209,7 @@ const fetchFeaturedProducts = async () => {
             featuredProducts.value = normalizeProducts(response.data);
         }
     } catch (error) {
-        console.error('Lỗi khi lấy sản phẩm nổi bật:', error);
+        console.error(t('home.errors_fetchFeaturedProducts'), error);
     }
 };
 
@@ -219,7 +221,7 @@ const fetchNewArrivals = async () => {
             newProducts.value = normalizeProducts(response.data);
         }
     } catch (error) {
-        console.error('Lỗi khi lấy sản phẩm mới:', error);
+        console.error(t('home.errors_fetchNewArrivals'), error);
     }
 };
 
@@ -240,8 +242,8 @@ onMounted(() => {
 
 <template>
     <div class="home">
-        <section class="home-hero" aria-label="Danh mục và banner trang chủ">
-            <aside class="home-category-menu" aria-label="Danh mục sản phẩm">
+        <section class="home-hero" :aria-label="t('home.aria_hero')">
+            <aside class="home-category-menu" :aria-label="t('home.aria_categoryMenu')">
                 <ul v-if="menuCategories.length > 0" class="home-category-menu__list">
                     <li
                         v-for="category in menuCategories"
@@ -275,7 +277,7 @@ onMounted(() => {
                             v-if="hasChildren(category)"
                             class="home-category-flyout"
                             role="menu"
-                            :aria-label="`Danh mục con của ${category.name}`"
+                            :aria-label="t('home.aria_categoryChildren', { name: category.name })"
                         >
                             <router-link :to="categoryRoute(category)" class="home-category-flyout__heading">
                                 {{ category.name }}
@@ -302,10 +304,10 @@ onMounted(() => {
                     </li>
                 </ul>
 
-                <div v-else class="home-category-menu__empty">Chưa có danh mục.</div>
+                <div v-else class="home-category-menu__empty">{{ t('home.empty_categories') }}</div>
             </aside>
 
-            <div class="home-banner-grid" aria-label="Banner khuyến mãi">
+            <div class="home-banner-grid" :aria-label="t('home.aria_promoBanners')">
                 <div class="home-banner-slider">
                     <swiper
                         v-if="sliderBanners.length > 0"
@@ -324,10 +326,10 @@ onMounted(() => {
                     >
                         <swiper-slide v-for="banner in sliderBanners" :key="banner.id">
                             <a v-if="banner.link" :href="banner.link" class="home-banner-slide">
-                                <img :src="bannerImageUrl(banner.image_url)" :alt="banner.title || `${APP_CONFIG.appName} banner`" />
+                                <img :src="bannerImageUrl(banner.image_url)" :alt="banner.title || t('home.banner_alt', { appName: APP_CONFIG.appName })" />
                             </a>
                             <div v-else class="home-banner-slide">
-                                <img :src="bannerImageUrl(banner.image_url)" :alt="banner.title || `${APP_CONFIG.appName} banner`" />
+                                <img :src="bannerImageUrl(banner.image_url)" :alt="banner.title || t('home.banner_alt', { appName: APP_CONFIG.appName })" />
                             </div>
                         </swiper-slide>
                     </swiper>
@@ -342,9 +344,9 @@ onMounted(() => {
                     :key="banner.id"
                     :href="banner.link || '#'"
                     class="home-banner-tile"
-                    :aria-label="banner.title || 'Banner khuyến mãi'"
+                    :aria-label="banner.title || t('home.aria_promoBanner')"
                 >
-                    <img :src="bannerImageUrl(banner.image_url)" :alt="banner.title || `${APP_CONFIG.appName} banner`" loading="lazy" />
+                    <img :src="bannerImageUrl(banner.image_url)" :alt="banner.title || t('home.banner_alt', { appName: APP_CONFIG.appName })" loading="lazy" />
                 </a>
 
                 <div
@@ -359,10 +361,10 @@ onMounted(() => {
         </section>
 
         <div class="home__content">
-            <section class="rail" aria-label="Sản phẩm bán chạy nhất">
+            <section class="rail" :aria-label="t('home.bestSellers_aria')">
                 <div class="section-heading">
-                    <h2>Sản phẩm bán chạy nhất</h2>
-                    <a href="#" class="link">Xem thêm</a>
+                    <h2>{{ t('home.bestSellers_title') }}</h2>
+                    <a href="#" class="link">{{ t('home.links_seeMore') }}</a>
                 </div>
 
                 <div class="product-row">
@@ -370,7 +372,7 @@ onMounted(() => {
                         <a href="#" class="product__image">{{ product.icon }}</a>
                         <div class="product__deal">
                             <span>{{ product.discount }}</span>
-                            <b>Deal</b>
+                            <b>{{ t('home.bestSellers_deal') }}</b>
                         </div>
                         <a href="#" class="product__name">{{ product.name }}</a>
                         <div class="product__rating">{{ product.rating }}</div>
@@ -379,16 +381,16 @@ onMounted(() => {
                 </div>
             </section>
 
-            <section class="rail featured-products" aria-label="Featured products">
+            <section class="rail featured-products" :aria-label="t('home.featuredProducts_aria')">
                 <div class="section-heading">
                     <div>
-                        <span class="featured-products__eyebrow">Featured products</span>
-                        <h2>Sản phẩm nổi bật</h2>
+                        <span class="featured-products__eyebrow">{{ t('home.featuredProducts_eyebrow') }}</span>
+                        <h2>{{ t('home.featuredProducts_title') }}</h2>
                     </div>
 
-                    <div class="slider-controls" aria-label="Điều hướng sản phẩm nổi bật">
-                        <button type="button" aria-label="Cuộn sang trái" @click="scrollFeatured(-1)">‹</button>
-                        <button type="button" aria-label="Cuộn sang phải" @click="scrollFeatured(1)">›</button>
+                    <div class="slider-controls" :aria-label="t('home.featuredProducts_controls')">
+                        <button type="button" :aria-label="t('home.actions_scrollLeft')" @click="scrollFeatured(-1)">‹</button>
+                        <button type="button" :aria-label="t('home.actions_scrollRight')" @click="scrollFeatured(1)">›</button>
                     </div>
                 </div>
 
@@ -403,13 +405,13 @@ onMounted(() => {
                     />
                 </div>
 
-                <p v-if="featuredProducts.length === 0" class="featured-products__empty">Chưa có sản phẩm nổi bật.</p>
+                <p v-if="featuredProducts.length === 0" class="featured-products__empty">{{ t('home.empty_featuredProducts') }}</p>
             </section>
 
-            <section class="rail new-products" aria-label="New products">
+            <section class="rail new-products" :aria-label="t('home.newProducts_aria')">
                 <div class="section-heading">
-                    <h2>Sản phẩm mới</h2>
-                    <a href="#" class="link">Xem hàng mới về</a>
+                    <h2>{{ t('home.newProducts_title') }}</h2>
+                    <a href="#" class="link">{{ t('home.links_seeNewArrivals') }}</a>
                 </div>
 
                 <div class="new-products__rows">
@@ -424,7 +426,7 @@ onMounted(() => {
                         />
                     </div>
 
-                    <p v-if="newProductRows.length === 0" class="new-products__empty">Chưa có sản phẩm mới.</p>
+                    <p v-if="newProductRows.length === 0" class="new-products__empty">{{ t('home.empty_newProducts') }}</p>
                 </div>
             </section>
         </div>

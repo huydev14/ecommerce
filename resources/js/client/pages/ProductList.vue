@@ -1,5 +1,6 @@
 <script setup>
 import { computed, onMounted, ref, watch } from 'vue';
+import { useI18n } from 'vue-i18n';
 import { useRoute, useRouter } from 'vue-router';
 import api from '@/services/api';
 import { useCartStore } from '@/stores/cart';
@@ -8,21 +9,26 @@ import ProductCard from '@/components/ProductCard.vue';
 const route = useRoute();
 const router = useRouter();
 const cartStore = useCartStore();
+const { t } = useI18n();
 
-const filters = [
+const filters = computed(() => [
     {
-        title: 'Khoảng giá',
-        links: ['Dưới 500.000đ', '500.000đ - 1.000.000đ', 'Trên 1.000.000đ'],
+        title: t('productList.filters_price_title'),
+        links: [
+            t('productList.filters_price_under500'),
+            t('productList.filters_price_from500To1m'),
+            t('productList.filters_price_over1m'),
+        ],
     },
     {
-        title: 'Tình trạng',
-        options: ['Còn hàng', 'Hàng mới', 'Bán chạy'],
+        title: t('productList.filters_status_title'),
+        options: [t('productList.filters_status_inStock'), t('productList.filters_status_new'), t('productList.filters_status_bestSeller')],
     },
     {
-        title: 'Ưu đãi',
-        links: ['Có giảm giá', 'Giao nhanh', 'Đánh giá cao'],
+        title: t('productList.filters_offer_title'),
+        links: [t('productList.filters_offer_discount'), t('productList.filters_offer_fastDelivery'), t('productList.filters_offer_highRating')],
     },
-];
+]);
 
 const products = ref([]);
 const brandOptions = ref([]);
@@ -37,7 +43,7 @@ const addingProductIds = ref(new Set());
 const cartMessages = ref({});
 
 const categorySlug = computed(() => route.query.category || '');
-const searchQuery = computed(() => route.query.q || categorySlug.value || 'tất cả sản phẩm');
+const searchQuery = computed(() => route.query.q || categorySlug.value || t('productList.allProducts'));
 const currentPage = computed(() => Number(route.query.page || 1));
 const hasProducts = computed(() => products.value.length > 0);
 const selectedBrands = computed(() => parseCommaQuery(route.query.brand));
@@ -47,13 +53,13 @@ const paginationQuery = (page) => ({
 });
 const resultRange = computed(() => {
     if (!meta.value.total || !hasProducts.value) {
-        return '0 sản phẩm';
+        return t('productList.resultCount', { count: 0 });
     }
 
     const start = (meta.value.current_page - 1) * 24 + 1;
     const end = start + products.value.length - 1;
 
-    return `${start}-${end} trong ${meta.value.total} sản phẩm`;
+    return t('productList.resultRange', { start, end, total: meta.value.total });
 });
 
 const parseCommaQuery = (value) => {
@@ -99,7 +105,7 @@ const setCartMessage = (productId, message, type = 'success') => {
 
 const addProductToCart = async (product) => {
     if (!product.product_variant_id) {
-        setCartMessage(product.id, 'Sản phẩm chưa có phân loại để thêm vào giỏ.', 'error');
+        setCartMessage(product.id, t('productList.messages_missingVariant'), 'error');
         return;
     }
 
@@ -108,9 +114,9 @@ const addProductToCart = async (product) => {
 
     try {
         await cartStore.addItem(product.product_variant_id, 1);
-        setCartMessage(product.id, 'Đã thêm vào giỏ hàng.');
+        setCartMessage(product.id, t('productList.messages_addedToCart'));
     } catch (error) {
-        setCartMessage(product.id, error.response?.data?.message || 'Không thể thêm vào giỏ hàng.', 'error');
+        setCartMessage(product.id, error.response?.data?.message || t('productList.messages_addToCartFailed'), 'error');
     } finally {
         const nextAddingProductIds = new Set(addingProductIds.value);
         nextAddingProductIds.delete(product.id);
@@ -141,12 +147,12 @@ const fetchProducts = async () => {
             brandOptions.value = response.data.meta?.filters?.brands || brandOptions.value;
         } else {
             products.value = [];
-            errorMessage.value = 'Không thể tải danh sách sản phẩm.';
+            errorMessage.value = t('productList.errors_fetchProducts');
         }
     } catch (error) {
         products.value = [];
-        errorMessage.value = 'Có lỗi xảy ra khi tải danh sách sản phẩm.';
-        console.error('Lỗi khi lấy danh sách sản phẩm:', error);
+        errorMessage.value = t('productList.errors_fetchProductsGeneric');
+        console.error(t('productList.errors_fetchProductsLog'), error);
     } finally {
         isLoading.value = false;
     }
@@ -161,21 +167,21 @@ watch(() => [route.query.category, route.query.page, route.query.brand], fetchPr
     <section class="product-listing">
         <div class="listing-summary">
             <p>
-                {{ resultRange }} cho <strong>"{{ searchQuery }}"</strong>
+                {{ t('productList.resultsFor', { range: resultRange, query: searchQuery }) }}
             </p>
 
             <label class="sort-control">
-                <span>Sắp xếp:</span>
+                <span>{{ t('productList.sort_label') }}</span>
                 <select>
-                    <option>Mới nhất</option>
+                    <option>{{ t('productList.sort_newest') }}</option>
                 </select>
             </label>
         </div>
 
         <div class="listing-shell">
-            <aside class="listing-filters" aria-label="Product filters">
+            <aside class="listing-filters" :aria-label="t('productList.aria_filters')">
                 <section class="filter-group">
-                    <h2>Thương hiệu</h2>
+                    <h2>{{ t('productList.filters_brand') }}</h2>
 
                     <div v-if="brandOptions.length" class="filter-options">
                         <label v-for="brand in brandOptions" :key="brand.slug" class="filter-check">
@@ -183,7 +189,7 @@ watch(() => [route.query.category, route.query.page, route.query.brand], fetchPr
                             <span>{{ brand.name }}</span>
                         </label>
                     </div>
-                    <p v-else class="filter-empty">Chưa có thương hiệu.</p>
+                    <p v-else class="filter-empty">{{ t('productList.empty_brands') }}</p>
                 </section>
 
                 <section v-for="group in filters" :key="group.title" class="filter-group">
@@ -200,24 +206,24 @@ watch(() => [route.query.category, route.query.page, route.query.brand], fetchPr
                         <a v-for="link in group.links" :key="link" href="#">{{ link }}</a>
                     </div>
 
-                    <button v-if="group.hasMore" type="button" class="filter-more">Xem thêm</button>
+                    <button v-if="group.hasMore" type="button" class="filter-more">{{ t('productList.showMore') }}</button>
                 </section>
 
                 <section class="filter-group">
-                    <h2>Đánh giá</h2>
-                    <a href="#" class="review-filter"><span>★★★★★</span> trở lên</a>
+                    <h2>{{ t('productList.filters_rating') }}</h2>
+                    <a href="#" class="review-filter"><span>★★★★★</span> {{ t('productList.filters_andUp') }}</a>
                 </section>
             </aside>
 
             <main class="listing-results">
                 <header class="results-header">
-                    <h1>Danh sách sản phẩm</h1>
-                    <p>Sản phẩm được lấy từ API và hiển thị theo danh mục nếu URL có tham số category.</p>
+                    <h1>{{ t('productList.title') }}</h1>
+                    <p>{{ t('productList.description') }}</p>
                 </header>
 
-                <div v-if="isLoading" class="listing-state">Đang tải sản phẩm...</div>
+                <div v-if="isLoading" class="listing-state">{{ t('productList.loading') }}</div>
                 <div v-else-if="errorMessage" class="listing-state is-error">{{ errorMessage }}</div>
-                <div v-else-if="!hasProducts" class="listing-state">Không có sản phẩm phù hợp.</div>
+                <div v-else-if="!hasProducts" class="listing-state">{{ t('productList.empty_products') }}</div>
                 <template v-else>
                     <div class="product-grid">
                         <ProductCard
@@ -228,30 +234,30 @@ watch(() => [route.query.category, route.query.page, route.query.brand], fetchPr
                             :message="cartMessages[product.id]?.message || ''"
                             :message-type="cartMessages[product.id]?.type || 'success'"
                             show-badge
-                            cart-label="Thêm vào giỏ"
-                            adding-label="Đang thêm..."
+                            :cart-label="t('productCard.actions_addToCart')"
+                            :adding-label="t('productCard.actions_adding')"
                             @add-to-cart="addProductToCart"
                         />
                     </div>
 
-                    <nav v-if="meta.last_page > 1" class="listing-pagination" aria-label="Product pagination">
+                    <nav v-if="meta.last_page > 1" class="listing-pagination" :aria-label="t('productList.aria_pagination')">
                         <RouterLink
                             v-if="meta.current_page > 1"
                             class="pagination-link"
                             :to="{ name: 'ProductList', query: paginationQuery(meta.current_page - 1) }"
                         >
-                            Trước
+                            {{ t('productList.pagination_previous') }}
                         </RouterLink>
-                        <span v-else class="pagination-link is-disabled">Trước</span>
-                        <span>Trang {{ meta.current_page }} / {{ meta.last_page }}</span>
+                        <span v-else class="pagination-link is-disabled">{{ t('productList.pagination_previous') }}</span>
+                        <span>{{ t('productList.pagination_page', { current: meta.current_page, total: meta.last_page }) }}</span>
                         <RouterLink
                             v-if="meta.current_page < meta.last_page"
                             class="pagination-link"
                             :to="{ name: 'ProductList', query: paginationQuery(meta.current_page + 1) }"
                         >
-                            Sau
+                            {{ t('productList.pagination_next') }}
                         </RouterLink>
-                        <span v-else class="pagination-link is-disabled">Sau</span>
+                        <span v-else class="pagination-link is-disabled">{{ t('productList.pagination_next') }}</span>
                     </nav>
                 </template>
             </main>

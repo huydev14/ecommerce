@@ -1,10 +1,12 @@
 <script setup>
 import { computed, onMounted, ref } from 'vue';
+import { useI18n } from 'vue-i18n';
 import { useRoute } from 'vue-router';
 import { APP_CONFIG } from '@/config';
 import api from '@/services/api';
 
 const route = useRoute();
+const { t } = useI18n();
 const order = ref({
     code: '',
     placedAt: '',
@@ -69,66 +71,65 @@ onMounted(fetchOrder);
                         </svg>
                     </div>
                     <div>
-                        <p class="order-success-eyebrow">Order placed</p>
-                        <h1>Cảm ơn bạn, {{ order.customerName }}.</h1>
+                        <p class="order-success-eyebrow">{{ t('orderSuccess.eyebrow') }}</p>
+                        <h1>{{ t('orderSuccess.title', { name: order.customerName }) }}</h1>
                         <p>
-                            Đơn hàng của bạn đã được ghi nhận. Chúng tôi đã gửi thông tin xác nhận đến
-                            <strong>{{ order.email }}</strong
-                            >.
+                            {{ t('orderSuccess.confirmationPrefix') }}
+                            <strong>{{ order.email }}</strong>.
                         </p>
                     </div>
                 </div>
 
-                <section class="order-success-summary" aria-label="Order summary">
+                <section class="order-success-summary" :aria-label="t('orderSuccess.aria_summary')">
                     <div>
-                        <span>Order number</span>
+                        <span>{{ t('orderSuccess.summary_orderNumber') }}</span>
                         <strong>{{ order.code }}</strong>
                     </div>
                     <div>
-                        <span>Placed at</span>
+                        <span>{{ t('orderSuccess.summary_placedAt') }}</span>
                         <strong>{{ order.placedAt }}</strong>
                     </div>
                     <div>
-                        <span>Total</span>
+                        <span>{{ t('orderSuccess.summary_total') }}</span>
                         <strong>{{ formatCurrency(order.total) }}</strong>
                     </div>
                 </section>
 
                 <div class="order-success-grid">
                     <section class="order-success-panel">
-                        <h2>Delivery details</h2>
+                        <h2>{{ t('orderSuccess.delivery_title') }}</h2>
                         <dl>
                             <div>
-                                <dt>Estimated delivery</dt>
+                                <dt>{{ t('orderSuccess.delivery_estimated') }}</dt>
                                 <dd>{{ order.estimate_shipping_date }}</dd>
                             </div>
                             <div>
-                                <dt>Ship to</dt>
+                                <dt>{{ t('orderSuccess.delivery_shipTo') }}</dt>
                                 <dd>
                                     <span v-for="line in order.deliveryAddress" :key="line">{{ line }}</span>
                                 </dd>
                             </div>
                             <div>
-                                <dt>Payment</dt>
+                                <dt>{{ t('orderSuccess.delivery_payment') }}</dt>
                                 <dd>{{ order.paymentMethod }}</dd>
                             </div>
                         </dl>
                     </section>
 
                     <section class="order-success-panel">
-                        <h2>What happens next</h2>
+                        <h2>{{ t('orderSuccess.next_title') }}</h2>
                         <ol class="order-success-steps">
                             <li class="is-active">
-                                <strong>Order confirmed</strong>
-                                <span>{{ APP_CONFIG.appName }} is preparing your order.</span>
+                                <strong>{{ t('orderSuccess.next_confirmedTitle') }}</strong>
+                                <span>{{ t('orderSuccess.next_confirmedText', { appName: APP_CONFIG.appName }) }}</span>
                             </li>
                             <li>
-                                <strong>Shipping update</strong>
-                                <span>You will receive tracking information when the package is on the way.</span>
+                                <strong>{{ t('orderSuccess.next_shippingTitle') }}</strong>
+                                <span>{{ t('orderSuccess.next_shippingText') }}</span>
                             </li>
                             <li>
-                                <strong>Delivery</strong>
-                                <span>Payment will be collected when your order arrives.</span>
+                                <strong>{{ t('orderSuccess.next_deliveryTitle') }}</strong>
+                                <span>{{ t('orderSuccess.next_deliveryText') }}</span>
                             </li>
                         </ol>
                     </section>
@@ -136,8 +137,8 @@ onMounted(fetchOrder);
 
                 <section class="order-success-panel order-success-items">
                     <div class="order-success-section-heading">
-                        <h2>Items in this order</h2>
-                        <span>{{ itemCount }} sản phẩm</span>
+                        <h2>{{ t('orderSuccess.items_title') }}</h2>
+                        <span>{{ t('orderSuccess.items_count', { count: itemCount }) }}</span>
                     </div>
 
                     <article v-for="item in order.items" :key="item.id" class="order-success-item">
@@ -146,15 +147,15 @@ onMounted(fetchOrder);
                         </RouterLink>
                         <div>
                             <RouterLink :to="{ name: 'ProductList' }" class="order-success-item__name">{{ item.name }}</RouterLink>
-                            <p>Quantity: {{ item.quantity }}</p>
+                            <p>{{ t('orderSuccess.items_quantity', { quantity: item.quantity }) }}</p>
                         </div>
                         <strong>{{ formatCurrency(item.price) }}</strong>
                     </article>
                 </section>
 
                 <div class="order-success-actions">
-                    <RouterLink :to="{ name: 'MyAccountOrders' }" class="order-success-primary">View your orders</RouterLink>
-                    <RouterLink :to="{ name: 'Home' }" class="order-success-secondary">Continue shopping</RouterLink>
+                    <RouterLink :to="{ name: 'MyAccountOrders' }" class="order-success-primary">{{ t('orderSuccess.actions_viewOrders') }}</RouterLink>
+                    <RouterLink :to="{ name: 'Home' }" class="order-success-secondary">{{ t('orderSuccess.actions_continueShopping') }}</RouterLink>
                 </div>
             </main>
         </div>

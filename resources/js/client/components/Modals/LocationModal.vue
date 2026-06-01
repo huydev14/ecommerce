@@ -1,10 +1,12 @@
 <script setup>
 import { computed, onMounted, ref } from 'vue';
+import { useI18n } from 'vue-i18n';
 import api from '@/services/api';
 import { useLocationStore } from '@/stores/location';
 
 const emit = defineEmits(['close']);
 
+const { t } = useI18n();
 const locationStore = useLocationStore();
 const provinces = ref([]);
 const isLoading = ref(false);
@@ -27,7 +29,7 @@ const fetchProvinces = async () => {
         const response = await api.get('/locations/provinces');
         provinces.value = Array.isArray(response.data?.data) ? response.data.data : [];
     } catch (error) {
-        errorMessage.value = error.response?.data?.message || 'Không thể tải danh sách tỉnh thành.';
+        errorMessage.value = error.response?.data?.message || t('locationModal.errors_fetchProvinces');
     } finally {
         isLoading.value = false;
     }
@@ -69,11 +71,11 @@ onMounted(() => {
                     <div v-show="showContent" class="tw-w-full tw-max-w-[400px] tw-overflow-hidden tw-rounded-xl tw-bg-white tw-text-[#0f1111] tw-shadow-2xl">
                         
                         <div class="tw-flex tw-items-center tw-justify-between tw-border-b tw-border-gray-200 tw-bg-gray-50/50 tw-px-5 tw-py-3.5">
-                            <h2 class="tw-m-0 tw-text-[16px] tw-font-bold tw-text-gray-800">Chọn vị trí giao hàng</h2>
+                            <h2 class="tw-m-0 tw-text-[16px] tw-font-bold tw-text-gray-800">{{ t('locationModal.title') }}</h2>
                             <button
                                 type="button"
                                 class="tw-flex tw-h-8 tw-w-8 tw-items-center tw-justify-center tw-rounded-full tw-text-gray-400 tw-transition-colors hover:tw-bg-gray-200 hover:tw-text-gray-700 focus:tw-outline-none"
-                                aria-label="Đóng"
+                                :aria-label="t('common.close')"
                                 @click="emit('close')"
                             >
                                 <svg class="tw-h-5 tw-w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -93,7 +95,7 @@ onMounted(() => {
                                 <input
                                     v-model="searchTerm"
                                     type="text"
-                                    placeholder="Tìm tỉnh / thành phố..."
+                                    :placeholder="t('locationModal.searchPlaceholder')"
                                     class="tw-w-full tw-rounded-lg tw-border tw-border-gray-300 tw-bg-gray-50 tw-py-2.5 tw-pl-9 tw-pr-3 tw-text-[14px] tw-transition-all focus:tw-border-[#f3a847] focus:tw-bg-white focus:tw-outline-none focus:tw-ring-1 focus:tw-ring-[#f3a847]"
                                 />
                             </div>
@@ -103,7 +105,7 @@ onMounted(() => {
                                     <circle class="tw-opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
                                     <path class="tw-opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                                 </svg>
-                                <span class="tw-mt-2 tw-text-[13px]">Đang tải dữ liệu...</span>
+                                <span class="tw-mt-2 tw-text-[13px]">{{ t('locationModal.loading') }}</span>
                             </div>
                             
                             <div v-else-if="errorMessage" class="tw-rounded-lg tw-bg-red-50 tw-p-4 tw-text-center tw-text-[13px] tw-text-red-600 tw-border tw-border-red-100">
@@ -134,7 +136,7 @@ onMounted(() => {
                                 </button>
 
                                 <div v-if="!filteredProvinces.length" class="tw-py-10 tw-text-center tw-text-[14px] tw-text-gray-500">
-                                    Không tìm thấy kết quả phù hợp.
+                                    {{ t('locationModal.empty') }}
                                 </div>
                             </div>
 

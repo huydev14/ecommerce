@@ -1,26 +1,29 @@
 <script setup>
+import { computed } from 'vue';
+import { useI18n } from 'vue-i18n';
 import { APP_CONFIG } from '@/config';
 
+const { t } = useI18n();
 const currentYear = new Date().getFullYear();
 
-const footerSections = [
+const footerSections = computed(() => [
     {
-        title: 'Let Us Help You',
+        title: t('footer.sections_help_title'),
         links: [
-            { label: 'My Orders', to: { name: 'MyAccountOrders' } },
-            { label: 'My Addresses', to: { name: 'CustomerAddresses' } },
-            { label: 'Login & Security', href: '#' },
-            { label: 'Cart', to: { name: 'Cart' } },
-            { label: 'Shipping Rates', href: '#' },
-            { label: 'Returns & Replacements', href: '#' },
+            { label: t('footer.sections_help_links_orders'), to: { name: 'MyAccountOrders' } },
+            { label: t('footer.sections_help_links_addresses'), to: { name: 'CustomerAddresses' } },
+            { label: t('footer.sections_help_links_security'), href: '#' },
+            { label: t('footer.sections_help_links_cart'), to: { name: 'Cart' } },
+            { label: t('footer.sections_help_links_shippingRates'), href: '#' },
+            { label: t('footer.sections_help_links_returns'), href: '#' },
         ],
     },
-];
+]);
 </script>
 
 <template>
     <div class="client-footer">
-        <a href="#" class="footer__back">Back to top</a>
+        <a href="#" class="footer__back">{{ t('footer.backToTop') }}</a>
 
         <div class="footer__main">
             <div class="footer__content">
@@ -43,16 +46,16 @@ const footerSections = [
                     </div>
 
                     <div class="footer__controls">
-                        <button type="button">Tiếng Việt</button>
+                        <button type="button">{{ t('footer.controls_language') }}</button>
                         <button type="button">VND</button>
-                        <button type="button">Việt Nam</button>
+                        <button type="button">{{ t('footer.controls_country') }}</button>
                     </div>
                 </div>
             </div>
         </div>
 
         <div class="footer__bottom">
-            <p>&copy; {{ currentYear }} {{ APP_CONFIG.appName }} - Ecommerce System.</p>
+            <p>&copy; {{ currentYear }} {{ APP_CONFIG.appName }} - {{ t('footer.copyrightSuffix') }}</p>
         </div>
     </div>
 </template>

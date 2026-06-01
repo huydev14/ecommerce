@@ -2,69 +2,71 @@
     <AuthLayout :title="currentTitle" :errorMessage="errorMessage" :retryAfter="retryAfter" :actionText="actionText">
         <form v-if="step === 'email'" @submit.prevent="handleCheckEmail" class="login-form" novalidate>
             <div class="a-input-text-group">
-                <label for="email" class="a-form-label">Nhập số điện thoại di động hoặc email</label>
+                <label for="email" class="a-form-label">{{ t('login.emailLabel') }}</label>
                 <input id="email" type="email" v-model="form.email" required class="a-input-text" />
             </div>
 
             <button type="submit" class="a-button-primary" :disabled="isLoading">
-                {{ isLoading ? 'Đang kiểm tra...' : 'Tiếp tục' }}
+                {{ isLoading ? t('login.checking') : t('login.continue') }}
             </button>
 
             <div class="a-divider a-divider-break tw-mb-5 tw-mt-5">
-                <h5>Hoặc</h5>
+                <h5>{{ t('login.or') }}</h5>
             </div>
 
             <button type="button" @click="loginWithSocial('google')" class="a-button-secondary w-100 social-btn" :disabled="isLoading">
                 <img src="https://www.svgrepo.com/show/475656/google-color.svg" alt="Google Logo" class="social-icon" />
-                Tiếp tục với Google
+                {{ t('login.continueWithGoogle') }}
             </button>
         </form>
 
         <form v-else-if="step === 'password'" @submit.prevent="handleLogin" class="login-form" novalidate>
             <div class="email-display-box">
                 <span class="email-text">{{ form.email }}</span>
-                <a href="#" @click.prevent="step = 'email'" class="a-link-normal change-link">Thay đổi</a>
+                <a href="#" @click.prevent="step = 'email'" class="a-link-normal change-link">{{ t('login.change') }}</a>
             </div>
 
             <div class="a-input-text-group">
                 <div class="password-label-group">
-                    <label for="password" class="a-form-label">Mật khẩu</label>
-                    <a href="#" class="a-link-normal forgot-password">Quên mật khẩu?</a>
+                    <label for="password" class="a-form-label">{{ t('login.passwordLabel') }}</label>
+                    <a href="#" class="a-link-normal forgot-password">{{ t('login.forgotPassword') }}</a>
                 </div>
                 <input id="password" type="password" v-model="form.password" required class="a-input-text" autofocus />
             </div>
 
             <button type="submit" class="a-button-primary" :disabled="isLoading">
-                {{ isLoading ? 'Đang đăng nhập...' : 'Đăng nhập' }}
+                {{ isLoading ? t('login.signingIn') : t('login.signIn') }}
             </button>
         </form>
 
         <div v-else-if="step === 'new_user'" class="login-form">
             <div class="email-display-box">
                 <span class="email-text">{{ form.email }}</span>
-                <a href="#" @click.prevent="step = 'email'" class="a-link-normal change-link">Thay đổi</a>
+                <a href="#" @click.prevent="step = 'email'" class="a-link-normal change-link">{{ t('login.change') }}</a>
             </div>
 
-            <p class="new-user-text">Hãy tạo tài khoản bằng email của bạn</p>
+            <p class="new-user-text">{{ t('login.createWithEmail') }}</p>
 
-            <button @click="goToRegister" class="a-button-primary">Tiếp tục tạo tài khoản</button>
+            <button @click="goToRegister" class="a-button-primary">{{ t('login.continueCreateAccount') }}</button>
         </div>
 
         <template #footer-action>
             <div v-if="step === 'email'">
                 <div class="a-divider a-divider-break">
-                    <h5>Mới biết đến {{ APP_CONFIG.appName }}?</h5>
+                    <h5>{{ t('login.newToApp', { appName: APP_CONFIG.appName }) }}</h5>
                 </div>
                 <router-link :to="{ name: 'Register' }" custom v-slot="{ navigate }">
-                    <button @click="navigate" class="a-button-secondary w-100">Tạo tài khoản {{ APP_CONFIG.appName }} của bạn</button>
+                    <button @click="navigate" class="a-button-secondary w-100">
+                        {{ t('login.createYourAccount', { appName: APP_CONFIG.appName }) }}
+                    </button>
                 </router-link>
             </div>
 
             <div v-if="step === 'new_user'">
                 <div class="a-divider a-divider-break"></div>
                 <div class="already-have-account" style="margin-top: 14px">
-                    <span style="font-weight: bold; display: block; margin-bottom: 4px">Đã là khách hàng?</span>
-                    <a href="#" @click.prevent="step = 'email'" class="a-link-normal"> Đăng nhập bằng email hoặc số điện thoại di động </a>
+                    <span style="font-weight: bold; display: block; margin-bottom: 4px">{{ t('login.alreadyCustomer') }}</span>
+                    <a href="#" @click.prevent="step = 'email'" class="a-link-normal">{{ t('login.signInWithEmailOrPhone') }}</a>
                 </div>
             </div>
         </template>
@@ -73,6 +75,7 @@
 
 <script setup>
 import { ref, reactive, computed } from 'vue';
+import { useI18n } from 'vue-i18n';
 import { useRouter } from 'vue-router';
 import { useAuthStore } from '../stores/auth';
 import api from '../services/api';
@@ -81,6 +84,7 @@ import { APP_CONFIG } from '@/config';
 
 const router = useRouter();
 const authStore = useAuthStore();
+const { t } = useI18n();
 
 const step = ref('email');
 
@@ -94,13 +98,13 @@ const errorMessage = ref('');
 const retryAfter = ref(0);
 
 const currentTitle = computed(() => {
-    if (step.value === 'email') return 'Đăng nhập';
-    if (step.value === 'password') return 'Đăng nhập';
-    return `Có vẻ như bạn mới biết đến ${APP_CONFIG.appName}?`;
+    if (step.value === 'email') return t('login.title');
+    if (step.value === 'password') return t('login.title');
+    return t('login.newUserTitle', { appName: APP_CONFIG.appName });
 });
 
 const actionText = computed(() => {
-    return step.value === 'password' ? 'đăng nhập' : 'tiếp tục';
+    return step.value === 'password' ? t('login.signInAction') : t('login.continueAction');
 });
 
 const handleCheckEmail = async () => {
@@ -118,7 +122,7 @@ const handleCheckEmail = async () => {
             step.value = 'new_user';
         }
     } catch (error) {
-        errorMessage.value = error.response?.data?.message || 'Không thể kết nối đến máy chủ.';
+        errorMessage.value = error.response?.data?.message || t('login.errors_connection');
     } finally {
         isLoading.value = false;
     }
@@ -140,13 +144,13 @@ const handleLogin = async () => {
         }
     } catch (error) {
         if (error.response && error.response.data) {
-            errorMessage.value = error.response.data.message || 'Đã có lỗi xảy ra, vui lòng thử lại!';
+            errorMessage.value = error.response.data.message || t('login.errors_generic');
             // Handle rate limit
             if (error.response.status === 429 && error.response.data.retry_after) {
                 retryAfter.value = error.response.data.retry_after;
             }
         } else {
-            errorMessage.value = 'Không thể kết nối đến máy chủ.';
+            errorMessage.value = t('login.errors_connection');
         }
     } finally {
         isLoading.value = false;

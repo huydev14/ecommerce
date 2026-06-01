@@ -1,6 +1,9 @@
 <script setup>
 import { computed } from 'vue';
+import { useI18n } from 'vue-i18n';
 import { APP_CONFIG } from '@/config';
+
+const { t } = useI18n();
 
 const props = defineProps({
     product: {
@@ -15,21 +18,18 @@ const props = defineProps({
         type: Boolean,
         default: false,
     },
-    showBadge: {
-        type: Boolean,
-        default: false,
-    },
+
     badgeText: {
         type: String,
-        default: 'Mới',
+        default: '',
     },
     cartLabel: {
         type: String,
-        default: 'Add to cart',
+        default: '',
     },
     addingLabel: {
         type: String,
-        default: 'Adding...',
+        default: '',
     },
     message: {
         type: String,
@@ -81,7 +81,7 @@ const formatPrice = (value) => {
     const amount = Number(value);
 
     if (!Number.isFinite(amount) || amount <= 0) {
-        return 'Liên hệ';
+        return t('productCard.contact');
     }
 
     return new Intl.NumberFormat('en-US', {
@@ -102,17 +102,21 @@ const imageUrl = computed(() => {
 
     return `/storage/${thumbnail}`;
 });
+
+const displayBadgeText = computed(() => props.badgeText || t('productCard.badge_new'));
+const displayCartLabel = computed(() => props.cartLabel || t('productCard.actions_addToCart'));
+const displayAddingLabel = computed(() => props.addingLabel || t('productCard.actions_adding'));
+const freeshipLabel = computed(() => t('productCard.badge_freeship'));
 </script>
 
 <template>
     <article class="client-product-card" :class="{ 'client-product-card--compact': compact }">
-        <span v-if="showBadge" class="client-product-card__badge">{{ badgeText }}</span>
+    
 
         <div class="client-product-card__media">
             <RouterLink :to="productRoute" class="client-product-card__image">
                 <img :src="imageUrl" :alt="product.name" loading="lazy" />
             </RouterLink>
-            <span class="client-product-card__ship-badge tw-bg-red-800 tw-text-white">Freeship</span>
         </div>
 
         <div class="client-product-card__body">
@@ -145,7 +149,7 @@ const imageUrl = computed(() => {
             type="button"
             class="client-product-card__cart"
             :disabled="!variantId || isAdding"
-            :aria-label="isAdding ? addingLabel : cartLabel"
+            :aria-label="isAdding ? displayAddingLabel : displayCartLabel"
             @click="emit('add-to-cart', product)"
         >
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" aria-hidden="true">
@@ -181,19 +185,6 @@ const imageUrl = computed(() => {
     border-color: #d5d9d9;
     box-shadow: 0 8px 24px rgba(15, 17, 17, 0.12);
     transform: translateY(-2px);
-}
-
-.client-product-card__badge {
-    position: absolute;
-    top: 8px;
-    left: 8px;
-    z-index: 2;
-    border-radius: 3px;
-    background: #0f172a;
-    padding: 3px 7px;
-    color: #fff;
-    font-size: 11px;
-    font-weight: 700;
 }
 
 .client-product-card__media {

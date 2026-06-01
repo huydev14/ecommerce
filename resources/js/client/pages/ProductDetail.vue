@@ -1,5 +1,6 @@
 <script setup>
 import { computed, onMounted, ref, watch } from 'vue';
+import { useI18n } from 'vue-i18n';
 import { useRoute } from 'vue-router';
 import api from '@/services/api';
 import { APP_CONFIG } from '@/config';
@@ -7,6 +8,7 @@ import { useCartStore } from '@/stores/cart';
 
 const route = useRoute();
 const cartStore = useCartStore();
+const { t } = useI18n();
 
 const product = ref(null);
 const isLoading = ref(false);
@@ -25,14 +27,14 @@ const selectedVariant = computed(
 const activePrice = computed(() => selectedVariant.value?.price || product.value?.price || 0);
 const brandName = computed(() => product.value?.brand?.name || APP_CONFIG.appName);
 const brandSlug = computed(() => product.value?.brand?.slug || '');
-const categoryName = computed(() => product.value?.category?.name || 'San pham');
+const categoryName = computed(() => product.value?.category?.name || t('productDetail.fallback_category'));
 const productImages = computed(() => {
     const image = product.value?.thumbnail;
 
     return image ? [image, image, image, image] : [];
 });
 
-const getVariantLabel = (variant, fallback = 'Mặc định') => {
+const getVariantLabel = (variant, fallback = t('productDetail.fallback_defaultVariant')) => {
     const attributes = variant?.attributes || {};
 
     return attributes.variant_name || attributes.name || attributes.size || attributes.color || variant?.sku || fallback;
@@ -41,7 +43,7 @@ const getVariantLabel = (variant, fallback = 'Mặc định') => {
 const variantLabels = computed(() => {
     return variants.value.map((variant, index) => ({
         id: variant.id,
-        label: getVariantLabel(variant, `Lựa chọn ${index + 1}`),
+        label: getVariantLabel(variant, t('productDetail.fallback_option', { number: index + 1 })),
         price: variant.price,
     }));
 });
@@ -53,13 +55,13 @@ const descriptionItems = computed(() => {
         .map((item) => item.trim())
         .filter(Boolean);
 
-    return normalized.length ? normalized.slice(0, 5) : ['Sản phẩm chưa có mô tả'];
+    return normalized.length ? normalized.slice(0, 5) : [t('productDetail.fallback_noDescription')];
 });
 const specifications = computed(() => [
-    ['Brand', brandName.value],
-    ['Category', categoryName.value],
-    ['SKU', selectedVariant.value?.sku || 'Dang cap nhat'],
-    ['Variant', getVariantLabel(selectedVariant.value)],
+    [t('productDetail.specs_brand'), brandName.value],
+    [t('productDetail.specs_category'), categoryName.value],
+    ['SKU', selectedVariant.value?.sku || t('productDetail.fallback_updating')],
+    [t('productDetail.specs_variant'), getVariantLabel(selectedVariant.value)],
 ]);
 
 const fetchProduct = async () => {
@@ -75,12 +77,12 @@ const fetchProduct = async () => {
             selectedVariantId.value = response.data.data.variants?.[0]?.id || null;
         } else {
             product.value = null;
-            errorMessage.value = 'Khong the tai thong tin san pham.';
+            errorMessage.value = t('productDetail.errors_fetchProduct');
         }
     } catch (error) {
         product.value = null;
-        errorMessage.value = 'San pham khong ton tai hoac chua duoc xuat ban.';
-        console.error('Loi khi lay chi tiet san pham:', error);
+        errorMessage.value = t('productDetail.errors_notFound');
+        console.error(t('productDetail.errors_fetchProductLog'), error);
     } finally {
         isLoading.value = false;
     }
@@ -90,7 +92,7 @@ const formatPrice = (price) => {
     const numericPrice = Number(price || 0);
 
     if (!numericPrice) {
-        return 'Lien he';
+        return t('productDetail.contact');
     }
 
     return new Intl.NumberFormat('vi-VN', {
@@ -105,7 +107,7 @@ const addToCart = async () => {
     cartError.value = '';
 
     if (!selectedVariant.value?.id) {
-        cartError.value = 'Vui lòng chọn phân loại sản phẩm.';
+        cartError.value = t('productDetail.errors_selectVariant');
         return;
     }
 
@@ -113,9 +115,9 @@ const addToCart = async () => {
 
     try {
         await cartStore.addItem(selectedVariant.value.id, Number(quantity.value || 1));
-        cartMessage.value = 'Đã thêm sản phẩm vào giỏ hàng.';
+        cartMessage.value = t('productDetail.messages_addedToCart');
     } catch (error) {
-        cartError.value = error.response?.data?.message || 'Không thể thêm sản phẩm vào giỏ hàng.';
+        cartError.value = error.response?.data?.message || t('productDetail.errors_addToCart');
     } finally {
         isAddingToCart.value = false;
     }
@@ -128,11 +130,11 @@ watch(() => route.params.slug, fetchProduct);
 
 <template>
     <section class="pdp-page">
-        <div v-if="isLoading" class="pdp-state">Đang tải sản phẩm...</div>
+        <div v-if="isLoading" class="pdp-state">{{ t('productDetail.loading') }}</div>
         <div v-else-if="errorMessage" class="pdp-state is-error">{{ errorMessage }}</div>
 
         <div v-else-if="product" class="pdp-shell">
-            <aside class="pdp-gallery" aria-label="Product images">
+            <aside class="pdp-gallery" :aria-label="t('productDetail.aria_images')">
                 <div class="pdp-gallery__main">
                     <img :src="selectedImage" :alt="product.name" />
                 </div>
@@ -150,34 +152,34 @@ watch(() => route.params.slug, fetchProduct);
                     </button>
                 </div>
 
-                <a href="#" class="pdp-gallery__link">Click to see full view</a>
+                <a href="#" class="pdp-gallery__link">{{ t('productDetail.fullView') }}</a>
             </aside>
 
             <main class="pdp-details">
                 <RouterLink v-if="brandSlug" class="pdp-store" :to="{ name: 'ProductList', query: { brand: brandSlug } }">
-                    Visit the {{ brandName }} Store
+                    {{ t('productDetail.visitStore', { brand: brandName }) }}
                 </RouterLink>
-                <span v-else class="pdp-store">Visit the {{ brandName }} Store</span>
+                <span v-else class="pdp-store">{{ t('productDetail.visitStore', { brand: brandName }) }}</span>
                 <h1>{{ product.name }}</h1>
 
                 <div class="pdp-rating">
                     <span>4.7</span>
                     <span class="pdp-stars">★★★★★</span>
-                    <a href="#">121 ratings</a>
+                    <a href="#">{{ t('productDetail.ratings', { count: 121 }) }}</a>
                     <span>|</span>
-                    <a href="#">Search this page</a>
+                    <a href="#">{{ t('productDetail.searchThisPage') }}</a>
                 </div>
 
-                <p class="pdp-bought"><strong>10K+</strong> bought in past month</p>
+                <p class="pdp-bought" v-html="t('productDetail.boughtInPastMonth', { count: '10K+' })"></p>
 
                 <hr />
 
                 <div class="pdp-price">{{ formatPrice(activePrice) }}</div>
-                <p class="pdp-shipping">FREE International Returns</p>
-                <p class="pdp-muted">$55.87 Phí vận chuyển</p>
+                <p class="pdp-shipping">{{ t('productDetail.freeReturns') }}</p>
+                <p class="pdp-muted">{{ t('productDetail.shippingFee', { fee: '$55.87' }) }}</p>
 
                 <section v-if="variantLabels.length" class="pdp-options">
-                    <h2>Options</h2>
+                    <h2>{{ t('productDetail.options') }}</h2>
                     <div class="pdp-option-grid">
                         <button
                             v-for="variant in variantLabels"
@@ -201,43 +203,43 @@ watch(() => route.params.slug, fetchProduct);
                 </dl>
 
                 <section class="pdp-about">
-                    <h2>About this item</h2>
+                    <h2>{{ t('productDetail.about') }}</h2>
                     <ul>
                         <li v-for="item in descriptionItems" :key="item">{{ item }}</li>
                     </ul>
                 </section>
             </main>
 
-            <aside class="pdp-buybox" aria-label="Purchase options">
+            <aside class="pdp-buybox" :aria-label="t('productDetail.aria_purchaseOptions')">
                 <div class="pdp-buybox__price">{{ formatPrice(activePrice) }}</div>
-                <p class="pdp-muted">$55.87 Shipping</p>
-                <p class="pdp-delivery">Delivery <strong>Wednesday, June 24</strong></p>
-                <a href="#" class="pdp-location">Deliver to Vietnam</a>
-                <p class="pdp-stock">In Stock</p>
+                <p class="pdp-muted">{{ t('productDetail.shipping', { fee: '$55.87' }) }}</p>
+                <p class="pdp-delivery" v-html="t('productDetail.delivery', { date: 'Wednesday, June 24' })"></p>
+                <a href="#" class="pdp-location">{{ t('productDetail.deliverTo') }}</a>
+                <p class="pdp-stock">{{ t('productDetail.inStock') }}</p>
 
                 <label class="pdp-qty">
-                    <span>Quantity:</span>
+                    <span>{{ t('productDetail.quantity') }}</span>
                     <select v-model="quantity">
                         <option v-for="value in 10" :key="value" :value="value">{{ value }}</option>
                     </select>
                 </label>
 
                 <button type="button" class="pdp-cart" :disabled="isAddingToCart" @click="addToCart">
-                    {{ isAddingToCart ? 'Adding...' : 'Add to cart' }}
+                    {{ isAddingToCart ? t('productCard.actions_adding') : t('productCard.actions_addToCart') }}
                 </button>
-                <button type="button" class="pdp-buy">Buy Now</button>
+                <button type="button" class="pdp-buy">{{ t('productDetail.buyNow') }}</button>
 
                 <p v-if="cartMessage" class="pdp-cart-message">{{ cartMessage }}</p>
                 <p v-if="cartError" class="pdp-cart-message is-error">{{ cartError }}</p>
 
                 <dl class="pdp-seller">
-                    <dt>Shipper / Seller</dt>
+                    <dt>{{ t('productDetail.seller_shipperSeller') }}</dt>
                     <dd>{{ APP_CONFIG.appName }}</dd>
-                    <dt>Returns</dt>
-                    <dd>FREE 30-day refund/replacement</dd>
+                    <dt>{{ t('productDetail.seller_returns') }}</dt>
+                    <dd>{{ t('productDetail.seller_freeRefund') }}</dd>
                 </dl>
 
-                <button type="button" class="pdp-secondary">Add to List</button>
+                <button type="button" class="pdp-secondary">{{ t('productDetail.addToList') }}</button>
             </aside>
         </div>
     </section>

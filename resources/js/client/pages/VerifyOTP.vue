@@ -1,17 +1,17 @@
 <template>
-    <AuthLayout title="Xác minh địa chỉ email" :errorMessage="errorMessage" :retryAfter="retryAfter" actionText="xác minh">
+    <AuthLayout :title="t('verifyOtp.title')" :errorMessage="errorMessage" :retryAfter="retryAfter" :actionText="t('verifyOtp.actionText')">
         <form @submit.prevent="handleVerify" class="login-form verify-otp-page">
             <div class="verify-instruction">
-                <p>Để xác minh email của bạn, chúng tôi đã gửi Mã pin một lần (OTP) đến</p>
+                <p>{{ t('verifyOtp.instruction') }}</p>
                 <div class="email-display">
                     <strong>{{ email }}</strong>
-                    <router-link :to="{ name: 'Register' }" class="a-link-normal change-email-link">Thay đổi</router-link>
+                    <router-link :to="{ name: 'Register' }" class="a-link-normal change-email-link">{{ t('verifyOtp.change') }}</router-link>
                 </div>
             </div>
 
             <div class="a-input-text-group">
                 <div class="password-label-group">
-                    <label for="otp" class="a-form-label">Nhập mã OTP</label>
+                    <label for="otp" class="a-form-label">{{ t('verifyOtp.otpLabel') }}</label>
                 </div>
                 <input
                     id="otp"
@@ -25,7 +25,7 @@
             </div>
 
             <button type="submit" class="a-button-primary" :disabled="isLoading || otpCode.length < 6">
-                {{ isLoading ? 'Đang xác minh...' : 'Tạo tài khoản ' + APP_CONFIG.appName + ' của bạn' }}
+                {{ isLoading ? t('verifyOtp.verifying') : t('verifyOtp.createAccount', { appName: APP_CONFIG.appName }) }}
             </button>
         </form>
 
@@ -33,9 +33,9 @@
             <div class="resend-section verify-otp-page">
                 <div class="a-divider a-divider-break"></div>
                 <div class="resend-content">
-                    <p class="resend-text">Bạn chưa nhận được email?</p>
+                    <p class="resend-text">{{ t('verifyOtp.notReceived') }}</p>
                     <a href="#" @click.prevent="handleResend" class="a-link-normal" :class="{ disabled: isResending }">
-                        {{ isResending ? 'Đang gửi lại...' : 'Gửi lại mã OTP' }}
+                        {{ isResending ? t('verifyOtp.resending') : t('verifyOtp.resend') }}
                     </a>
                 </div>
                 <div v-if="resendSuccessMessage" class="a-alert-inline success-text"><i>✓</i> {{ resendSuccessMessage }}</div>
@@ -48,6 +48,7 @@
 import '@scss/client/auth.scss';
 
 import { ref, onMounted } from 'vue';
+import { useI18n } from 'vue-i18n';
 import { useRouter, useRoute } from 'vue-router';
 import api from '../services/api';
 import AuthLayout from '@/layouts/AuthLayout.vue';
@@ -55,6 +56,7 @@ import { APP_CONFIG } from '@/config';
 
 const router = useRouter();
 const route = useRoute();
+const { t } = useI18n();
 
 const email = ref('');
 const otpCode = ref('');
@@ -88,9 +90,9 @@ const handleVerify = async () => {
         }
     } catch (error) {
         if (error.response && error.response.data) {
-            errorMessage.value = error.response.data.message || 'Mã OTP không hợp lệ hoặc đã hết hạn.';
+            errorMessage.value = error.response.data.message || t('verifyOtp.errors_invalid');
         } else {
-            errorMessage.value = 'Lỗi kết nối mạng.';
+            errorMessage.value = t('verifyOtp.errors_network');
         }
     } finally {
         isLoading.value = false;
@@ -108,20 +110,20 @@ const handleResend = async () => {
     try {
         const response = await api.post('/resend-otp', { email: email.value });
         if (response.data.success) {
-            resendSuccessMessage.value = 'Một mã OTP mới đã được gửi đến email của bạn.';
+            resendSuccessMessage.value = t('verifyOtp.resendSuccess');
             otpCode.value = '';
         }
     } catch (error) {
         if (error.response && error.response.data) {
-            errorMessage.value = error.response.data.message || 'Không thể gửi lại mã lúc này. Vui lòng thử lại sau.';
+            errorMessage.value = error.response.data.message || t('verifyOtp.errors_resendFailed');
             // Handle rate limit - extract retry_after
             if (error.response.status === 429 && error.response.data.retry_after) {
                 retryAfter.value = error.response.data.retry_after;
             }
         } else {
-            errorMessage.value = 'Lỗi kết nối mạng. Vui lòng thử lại sau.';
+            errorMessage.value = t('verifyOtp.errors_networkRetry');
         }
-        console.error('Resend OTP Error:', error);
+        console.error(t('verifyOtp.errors_resendLog'), error);
     } finally {
         isResending.value = false;
     }

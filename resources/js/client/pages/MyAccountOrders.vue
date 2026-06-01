@@ -1,8 +1,14 @@
 <script setup>
 import { computed, onMounted, ref } from 'vue';
+import { useI18n } from 'vue-i18n';
 import api from '@/services/api';
 
-const orderTabs = ['Orders', 'Buy Again', 'Not Yet Shipped'];
+const { t } = useI18n();
+const orderTabs = computed(() => [
+    { key: 'orders', label: t('orders.tabs_orders') },
+    { key: 'buyAgain', label: t('orders.tabs_buyAgain') },
+    { key: 'notYetShipped', label: t('orders.tabs_notYetShipped') },
+]);
 const orders = ref([]);
 const searchQuery = ref('');
 const isLoading = ref(false);
@@ -28,13 +34,13 @@ const imageUrl = (image) => {
 
 const statusLabel = (status) => {
     const labels = {
-        pending: 'Pending',
-        processing: 'Processing',
-        completed: 'Completed',
-        cancelled: 'Cancelled',
+        pending: 'orders.status_pending',
+        processing: 'orders.status_processing',
+        completed: 'orders.status_completed',
+        cancelled: 'orders.status_cancelled',
     };
 
-    return labels[status] || status || 'Processing';
+    return labels[status] ? t(labels[status]) : status || t('orders.status_processing');
 };
 
 const filteredOrders = computed(() => {
@@ -73,61 +79,63 @@ onMounted(fetchOrders);
     <section class="orders-page" aria-labelledby="orders-title">
         <div class="orders-page__inner">
             <header class="orders-header">
-                <h1 id="orders-title">My Orders</h1>
+                <h1 id="orders-title">{{ t('orders.title') }}</h1>
 
                 <form class="orders-search" role="search" @submit.prevent>
                     <label class="orders-search__box">
                         <i class="fa-solid fa-magnifying-glass" aria-hidden="true"></i>
-                        <input v-model="searchQuery" type="search" placeholder="Search all orders" />
+                        <input v-model="searchQuery" type="search" :placeholder="t('orders.searchPlaceholder')" />
                     </label>
 
-                    <button type="submit">Search Orders</button>
+                    <button type="submit">{{ t('orders.searchButton') }}</button>
                 </form>
             </header>
 
-            <nav class="orders-tabs" aria-label="Order views">
-                <a v-for="tab in orderTabs" :key="tab" href="#" :class="{ 'is-active': tab === 'Orders' }">
-                    {{ tab }}
+            <nav class="orders-tabs" :aria-label="t('orders.aria_views')">
+                <a v-for="tab in orderTabs" :key="tab.key" href="#" :class="{ 'is-active': tab.key === 'orders' }">
+                    {{ tab.label }}
                 </a>
             </nav>
 
             <div class="orders-filter">
-                <span><strong>{{ filteredOrders.length }} orders</strong> placed in</span>
+                <span v-html="t('orders.placedIn', { count: filteredOrders.length })"></span>
                 <button type="button">
-                    past 3 months
+                    {{ t('orders.pastThreeMonths') }}
                     <i class="fa-solid fa-chevron-down" aria-hidden="true"></i>
                 </button>
             </div>
 
             <div v-if="isLoading" class="orders-empty" role="status">
-                Loading your orders...
+                {{ t('orders.loading') }}
             </div>
 
             <div v-else-if="filteredOrders.length" class="orders-list">
                 <article v-for="order in filteredOrders" :key="order.order_number" class="orders-card">
                     <header class="orders-card__header">
                         <div>
-                            <span>Order placed</span>
+                            <span>{{ t('orders.card_orderPlaced') }}</span>
                             <strong>{{ order.placed_at }}</strong>
                         </div>
                         <div>
-                            <span>Total</span>
+                            <span>{{ t('orders.card_total') }}</span>
                             <strong>{{ formatCurrency(order.total) }}</strong>
                         </div>
                         <div>
-                            <span>Payment</span>
+                            <span>{{ t('orders.card_payment') }}</span>
                             <strong>{{ order.payment_method }}</strong>
                         </div>
                         <div class="orders-card__code">
-                            <span>Order #{{ order.order_number }}</span>
-                            <RouterLink :to="{ name: 'OrderSuccess', query: { order: order.order_number } }">View order details</RouterLink>
+                            <span>{{ t('orders.card_orderNumber', { number: order.order_number }) }}</span>
+                            <RouterLink :to="{ name: 'OrderSuccess', query: { order: order.order_number } }">
+                                {{ t('orders.card_viewDetails') }}
+                            </RouterLink>
                         </div>
                     </header>
 
                     <div class="orders-card__body">
                         <div class="orders-card__status">
                             <strong>{{ statusLabel(order.status) }}</strong>
-                            <span>{{ order.item_count }} item{{ order.item_count > 1 ? 's' : '' }}</span>
+                            <span>{{ t('orders.card_itemCount', { count: order.item_count }) }}</span>
                         </div>
 
                         <div class="orders-card__items">
@@ -135,7 +143,7 @@ onMounted(fetchOrders);
                                 <img :src="imageUrl(item.image)" :alt="item.name" />
                                 <div>
                                     <strong>{{ item.name }}</strong>
-                                    <span>Qty: {{ item.quantity }} · {{ formatCurrency(item.price) }}</span>
+                                    <span>{{ t('orders.card_quantity', { quantity: item.quantity, price: formatCurrency(item.price) }) }}</span>
                                 </div>
                             </div>
                         </div>
@@ -144,8 +152,8 @@ onMounted(fetchOrders);
             </div>
 
             <div v-else class="orders-empty" role="status">
-                Looks like you haven't placed an order in the last 3 months.
-                <a href="#">View orders in 2026</a>
+                {{ t('orders.empty') }}
+                <a href="#">{{ t('orders.viewOrdersInYear', { year: 2026 }) }}</a>
             </div>
         </div>
 

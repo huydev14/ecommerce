@@ -1,7 +1,9 @@
 <script setup>
 import { computed, onMounted, ref } from 'vue';
+import { useI18n } from 'vue-i18n';
 import { useCartStore } from '@/stores/cart';
 
+const { t } = useI18n();
 const cartStore = useCartStore();
 const updatingItems = ref(new Set());
 
@@ -63,15 +65,15 @@ onMounted(() => {
         <div class="cart-shell">
             <main class="cart-main">
                 <header class="cart-header">
-                    <h1>Giỏ hàng</h1>
-                    <span>Giá</span>
+                    <h1>{{ t('cart.title') }}</h1>
+                    <span>{{ t('cart.price') }}</span>
                 </header>
 
-                <div v-if="cartStore.isLoading && !hasItems" class="cart-state">Đang tải giỏ hàng...</div>
+                <div v-if="cartStore.isLoading && !hasItems" class="cart-state">{{ t('cart.loading') }}</div>
                 <div v-else-if="cartStore.errorMessage && !hasItems" class="cart-state is-error">{{ cartStore.errorMessage }}</div>
                 <div v-else-if="!hasItems" class="cart-empty">
-                    <h2>Giỏ hàng của bạn đang trống</h2>
-                    <RouterLink :to="{ name: 'ProductList' }" class="cart-primary">Tiếp tục mua sắm</RouterLink>
+                    <h2>{{ t('cart.emptyTitle') }}</h2>
+                    <RouterLink :to="{ name: 'ProductList' }" class="cart-primary">{{ t('cart.continueShopping') }}</RouterLink>
                 </div>
 
                 <template v-else>
@@ -84,12 +86,12 @@ onMounted(() => {
                             <h2>{{ item.product_name }}</h2>
                             <p v-if="item.variant_name" class="cart-muted">{{ item.variant_name }}</p>
                             <p class="cart-stock" :class="{ 'is-out': !item.is_available }">
-                                {{ item.is_available ? 'Còn hàng' : 'Hết hàng' }}
+                                {{ item.is_available ? t('cart.stock_in') : t('cart.stock_out') }}
                             </p>
 
                             <div class="cart-actions">
                                 <label>
-                                    <span>Số lượng</span>
+                                    <span>{{ t('cart.quantity') }}</span>
                                     <input
                                         type="number"
                                         min="1"
@@ -99,7 +101,7 @@ onMounted(() => {
                                         @change="updateQuantity(item, $event)"
                                     />
                                 </label>
-                                <button type="button" :disabled="isUpdating(item)" @click="removeItem(item)">Xóa</button>
+                                <button type="button" :disabled="isUpdating(item)" @click="removeItem(item)">{{ t('cart.remove') }}</button>
                             </div>
                         </div>
 
@@ -107,16 +109,16 @@ onMounted(() => {
                     </article>
 
                     <div class="cart-mobile-subtotal">
-                        Tạm tính ({{ cartStore.totalItems }} sản phẩm): <strong>{{ formatPrice(cartStore.subtotal) }}</strong>
+                        {{ t('cart.subtotalWithCount', { count: cartStore.totalItems }) }}: <strong>{{ formatPrice(cartStore.subtotal) }}</strong>
                     </div>
                 </template>
             </main>
 
             <aside v-if="hasItems" class="cart-summary">
-                <h2>Tạm tính ({{ cartStore.totalItems }} sản phẩm)</h2>
+                <h2>{{ t('cart.subtotalWithCount', { count: cartStore.totalItems }) }}</h2>
                 <div class="cart-summary__total">{{ formatPrice(cartStore.subtotal) }}</div>
-                <RouterLink :to="{ name: 'Checkout' }" class="cart-checkout">Tiến hành thanh toán</RouterLink>
-                <RouterLink :to="{ name: 'ProductList' }" class="cart-secondary">Tiếp tục mua sắm</RouterLink>
+                <RouterLink :to="{ name: 'Checkout' }" class="cart-checkout">{{ t('cart.checkout') }}</RouterLink>
+                <RouterLink :to="{ name: 'ProductList' }" class="cart-secondary">{{ t('cart.continueShopping') }}</RouterLink>
             </aside>
         </div>
     </section>

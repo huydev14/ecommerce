@@ -1,15 +1,18 @@
 <script setup>
 import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue';
 import axios from 'axios';
+import { useI18n } from 'vue-i18n';
 import { useAuthStore } from '../stores/auth';
 
 const authStore = useAuthStore();
+const { t, locale } = useI18n();
 const isMenuOpen = ref(false);
 const categories = ref([]);
 
-const userName = computed(() => authStore.user?.name || authStore.user?.fullname || 'Tài khoản');
+const userName = computed(() => authStore.user?.name || authStore.user?.fullname || t('subNav.accountFallback'));
 const userAvatar = computed(() => authStore.user?.avatar || authStore.user?.photo_url || authStore.user?.image || '');
 const userInitial = computed(() => userName.value.trim().charAt(0).toUpperCase() || 'U');
+const languageLabel = computed(() => (locale.value === 'vi' ? t('subNav.language_vi') : t('subNav.language_en')));
 
 const getCategoryItems = (payload) => {
     if (Array.isArray(payload?.data?.data)) {
@@ -33,7 +36,7 @@ const fetchCategories = async () => {
             categories.value = getCategoryItems(response.data);
         }
     } catch (error) {
-        console.error('Lỗi khi lấy danh mục:', error);
+        console.error(t('subNav.errors_fetchCategories'), error);
     }
 };
 
@@ -71,34 +74,34 @@ onBeforeUnmount(() => {
                 <svg xmlns="http://www.w3.org/2000/svg" class="tw-mr-1 tw-h-5 tw-w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
                 </svg>
-                Tất cả
+                {{ t('subNav.links_all') }}
             </button>
 
             <a
                 href="#"
                 class="tw-flex tw-flex-none tw-items-center tw-rounded-sm tw-border tw-border-transparent tw-px-2 tw-py-1 hover:tw-border-white"
-                >Today's Deals</a
+                >{{ t('subNav.links_deals') }}</a
             >
             <a
                 href="#"
                 class="tw-flex tw-flex-none tw-items-center tw-rounded-sm tw-border tw-border-transparent tw-px-2 tw-py-1 hover:tw-border-white"
-                >Dịch vụ khách hàng</a
+                >{{ t('subNav.links_customerService') }}</a
             >
             <a
                 href="#"
                 class="tw-hidden tw-flex-none tw-items-center tw-rounded-sm tw-border tw-border-transparent tw-px-2 tw-py-1 hover:tw-border-white sm:tw-flex"
-                >Registry</a
+                >{{ t('subNav.links_registry') }}</a
             >
          
             <a
                 href="#"
                 class="tw-hidden tw-flex-none tw-items-center tw-rounded-sm tw-border tw-border-transparent tw-px-2 tw-py-1 hover:tw-border-white md:tw-flex"
-                >Sell</a
+                >{{ t('subNav.links_sell') }}</a
             >
             <a
                 href="#"
                 class="tw-hidden tw-flex-none tw-items-center tw-rounded-sm tw-border tw-border-transparent tw-px-2 tw-py-1 hover:tw-border-white xl:tw-flex"
-                >Buy Again</a
+                >{{ t('subNav.links_buyAgain') }}</a
             >
         </div>
 
@@ -119,7 +122,7 @@ onBeforeUnmount(() => {
                             </svg>
                         </div>
                         <div>
-                            <div class="tw-text-base tw-font-bold">Hello, sign in</div>
+                            <div class="tw-text-base tw-font-bold">{{ t('subNav.signInGreeting') }}</div>
                         </div>
                     </div>
 
@@ -194,7 +197,9 @@ onBeforeUnmount(() => {
                     </section>
 
                     <section class="tw-px-0 tw-py-4">
-                        <h3 class="tw-px-5 tw-pb-4 tw-pt-1 tw-text-[17px] tw-font-bold tw-text-[#111827]">Help & Settings</h3>
+                        <h3 class="tw-px-5 tw-pb-4 tw-pt-1 tw-text-[17px] tw-font-bold tw-text-[#111827]">
+                            {{ t('subNav.helpSettings') }}
+                        </h3>
 
                         <div class="tw-space-y-1 tw-pb-2">
                             <router-link
@@ -202,7 +207,7 @@ onBeforeUnmount(() => {
                                 class="tw-block tw-px-5 tw-py-2.5 tw-text-[14px] tw-font-medium tw-text-[#111827] hover:tw-bg-gray-50"
                                 @click="closeMenu"
                             >
-                                Your Orders
+                                {{ t('subNav.account_orders') }}
                             </router-link>
 
                             <router-link
@@ -210,7 +215,7 @@ onBeforeUnmount(() => {
                                 class="tw-block tw-px-5 tw-py-2.5 tw-text-[14px] tw-font-medium tw-text-[#111827] hover:tw-bg-gray-50"
                                 @click="closeMenu"
                             >
-                                Your Addresses
+                                {{ t('subNav.account_addresses') }}
                             </router-link>
 
                             <a
@@ -218,7 +223,7 @@ onBeforeUnmount(() => {
                                 class="tw-flex tw-items-center tw-gap-4 tw-px-5 tw-py-2.5 tw-text-[14px] tw-font-medium tw-text-[#111827] hover:tw-bg-gray-50"
                             >
                                 <span class="tw-grid tw-h-5 tw-w-5 tw-place-items-center tw-text-[16px]" aria-hidden="true">🌐</span>
-                                <span>English</span>
+                                <span>{{ languageLabel }}</span>
                             </a>
 
                             <a
@@ -226,14 +231,14 @@ onBeforeUnmount(() => {
                                 class="tw-flex tw-items-center tw-gap-4 tw-px-5 tw-py-2.5 tw-text-[14px] tw-font-medium tw-text-[#111827] hover:tw-bg-gray-50"
                             >
                                 <span class="tw-grid tw-h-5 tw-w-5 tw-place-items-center tw-text-[16px]" aria-hidden="true">🇺🇸</span>
-                                <span>United States</span>
+                                <span>{{ t('subNav.country') }}</span>
                             </a>
 
                             <a
                                 href="#"
                                 class="tw-block tw-px-5 tw-py-2.5 tw-text-[14px] tw-font-medium tw-text-[#111827] hover:tw-bg-gray-50"
                             >
-                                Customer Service
+                                {{ t('subNav.links_customerService') }}
                             </a>
 
                             <router-link
@@ -242,7 +247,7 @@ onBeforeUnmount(() => {
                                 class="tw-block tw-px-5 tw-py-2.5 tw-text-[14px] tw-font-medium tw-text-[#111827] hover:tw-bg-gray-50"
                                 @click="closeMenu"
                             >
-                                Sign in
+                                {{ t('subNav.signIn') }}
                             </router-link>
                         </div>
                     </section>

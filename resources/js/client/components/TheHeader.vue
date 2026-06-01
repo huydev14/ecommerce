@@ -12,7 +12,7 @@ const authStore = useAuthStore();
 const cartStore = useCartStore();
 const locationStore = useLocationStore();
 const router = useRouter();
-const { locale } = useI18n();
+const { locale, t } = useI18n();
 const searchTerm = ref('fitness clothing');
 const isLocationModalOpen = ref(false);
 const cartPreviewItems = computed(() => cartStore.items.slice(0, 3));
@@ -22,30 +22,30 @@ const nextLanguageLabel = computed(() => (locale.value === 'vi' ? 'EN' : 'VI'));
 let originalBodyOverflow = '';
 let isBodyScrollLockedByLocationModal = false;
 
-const accountMenuItems = [
+const accountMenuItems = computed(() => [
     {
-        title: 'My orders',
+        title: t('header.account_orders'),
         iconPath: 'M9 5h6m-8 4h10m-10 4h10M7 3h10a2 2 0 012 2v14l-4-2-3 2-3-2-4 2V5a2 2 0 012-2z',
         to: { name: 'MyAccountOrders' },
     },
     {
-        title: 'Login & security',
+        title: t('header.account_security'),
         iconPath:
             'M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z',
         href: '#',
     },
     {
-        title: 'My addresses',
+        title: t('header.account_addresses'),
         iconPath:
             'M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z M15 11a3 3 0 11-6 0 3 3 0 016 0z',
         to: { name: 'CustomerAddresses' },
     },
     {
-        title: 'My payments',
+        title: t('header.account_payments'),
         iconPath: 'M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z',
         href: '#',
     },
-];
+]);
 
 const submitSearch = () => {
     const query = searchTerm.value.trim() || 'fitness clothing';
@@ -128,9 +128,9 @@ onBeforeUnmount(unlockBodyScroll);
                 @keydown.enter.prevent="isLocationModalOpen = true"
                 @keydown.space.prevent="isLocationModalOpen = true"
             >
-                <span class="tw-pl-4 tw-text-[12px] tw-leading-3 tw-text-[#cccccc]"
-                    >Giao đến {{ authStore.isLoggedIn && authStore.user ? authStore.user.name : 'Huy' }}</span
-                >
+                <span class="tw-pl-4 tw-text-[12px] tw-leading-3 tw-text-[#cccccc]">
+                    {{ t('header.location_deliverTo', { name: authStore.isLoggedIn && authStore.user ? authStore.user.name : t('header.location_guestName') }) }}
+                </span>
                 <div class="tw-flex tw-items-center">
                     <svg
                         xmlns="http://www.w3.org/2000/svg"
@@ -158,16 +158,16 @@ onBeforeUnmount(unlockBodyScroll);
                 <select
                     class="tw-hidden tw-cursor-pointer tw-border-r tw-border-gray-300 tw-bg-[#f3f3f3] tw-px-3 tw-text-xs tw-text-gray-700 hover:tw-bg-[#dadada] focus:tw-outline-none md:tw-block"
                 >
-                    <option>Tất cả</option>
-                    <option>Công nghệ</option>
-                    <option>Thời trang</option>
-                    <option>Nhà cửa</option>
+                    <option>{{ t('header.search_categories_all') }}</option>
+                    <option>{{ t('header.search_categories_tech') }}</option>
+                    <option>{{ t('header.search_categories_fashion') }}</option>
+                    <option>{{ t('header.search_categories_home') }}</option>
                 </select>
 
                 <input
                     v-model="searchTerm"
                     type="text"
-                    placeholder="Tìm kiếm sản phẩm..."
+                    :placeholder="t('header.search_placeholder')"
                     class="tw-min-w-0 tw-flex-grow tw-px-3 tw-text-[15px] tw-text-black focus:tw-outline-none"
                 />
 
@@ -197,11 +197,11 @@ onBeforeUnmount(unlockBodyScroll);
                     type="button"
                     class="tw-flex tw-h-full tw-cursor-pointer tw-flex-col tw-justify-center tw-rounded-sm tw-border tw-border-transparent tw-bg-transparent tw-px-2 tw-py-1 tw-text-left hover:tw-border-white focus:tw-border-white focus:tw-outline-none"
                 >
-                    <span class="tw-text-[12px] tw-leading-3 tw-text-white"
-                        >Xin chào, {{ authStore.isLoggedIn && authStore.user ? authStore.user.name : 'Đăng nhập' }}</span
-                    >
+                    <span class="tw-text-[12px] tw-leading-3 tw-text-white">
+                        {{ t('header.account_greeting', { name: authStore.isLoggedIn && authStore.user ? authStore.user.name : t('header.account_signIn') }) }}
+                    </span>
                     <span class="tw-flex tw-items-center tw-text-[14px] tw-font-bold tw-leading-4 tw-text-white">
-                        Tài khoản
+                        {{ t('header.account_label') }}
                         <svg
                             xmlns="http://www.w3.org/2000/svg"
                             class="tw-ml-1 tw-h-3 tw-w-3 tw-text-gray-400"
@@ -230,11 +230,11 @@ onBeforeUnmount(unlockBodyScroll);
                             :to="{ name: 'Login' }"
                             class="tw-flex tw-h-9 tw-w-full tw-items-center tw-justify-center tw-rounded-full tw-bg-[#ffd814] tw-text-[14px] tw-font-medium tw-text-[#111827] hover:tw-bg-[#f7ca00]"
                         >
-                            Đăng nhập
+                            {{ t('header.account_signIn') }}
                         </router-link>
                     </div>
 
-                    <nav class="tw-text-3" aria-label="Tài khoản">
+                    <nav class="tw-text-3" :aria-label="t('header.account_aria')">
                         <component
                             :is="item.to ? 'router-link' : 'a'"
                             v-for="item in accountMenuItems"
@@ -298,7 +298,7 @@ onBeforeUnmount(unlockBodyScroll);
                                     />
                                 </svg>
                             </span>
-                            <span class="tw-text-[14px] tw-font-medium">Đăng xuất</span>
+                            <span class="tw-text-[14px] tw-font-medium">{{ t('header.account_logout') }}</span>
                         </button>
                     </nav>
                 </div>
@@ -307,10 +307,10 @@ onBeforeUnmount(unlockBodyScroll);
             <button
                 type="button"
                 class="tw-hidden tw-h-[50px] tw-cursor-pointer tw-flex-col tw-justify-center tw-rounded-sm tw-border tw-border-transparent tw-bg-transparent tw-px-2 tw-py-1 tw-text-left hover:tw-border-white focus:tw-border-white focus:tw-outline-none lg:tw-flex"
-                :aria-label="`Switch language to ${nextLanguageLabel}`"
+                :aria-label="t('header.language_switchTo', { language: nextLanguageLabel })"
                 @click="toggleLanguage"
             >
-                <span class="tw-text-[12px] tw-leading-3 tw-text-[#cccccc]">Language</span>
+                <span class="tw-text-[12px] tw-leading-3 tw-text-[#cccccc]">{{ t('header.language_label') }}</span>
                 <span class="tw-flex tw-items-center tw-gap-1 tw-text-[14px] tw-font-bold tw-leading-4 tw-text-white">
                     {{ currentLanguageLabel }}
                     <span class="tw-text-[12px] tw-font-medium tw-text-[#f59e0b]">/ {{ nextLanguageLabel }}</span>
@@ -343,7 +343,7 @@ onBeforeUnmount(unlockBodyScroll);
                             />
                         </svg>
                     </div>
-                    <span class="tw-mb-1 tw-ml-1 tw-text-[14px] tw-font-bold tw-text-white">Cart</span>
+                    <span class="tw-mb-1 tw-ml-1 tw-text-[14px] tw-font-bold tw-text-white">{{ t('header.cart_label') }}</span>
                 </router-link>
 
                 <div
@@ -355,22 +355,22 @@ onBeforeUnmount(unlockBodyScroll);
 
                     <div class="tw-mb-3 tw-flex tw-items-center tw-justify-between tw-border-b tw-border-gray-200 tw-pb-3">
                         <div>
-                            <h3 class="tw-m-0 tw-text-[18px] tw-font-bold">Giỏ hàng</h3>
-                            <p class="tw-m-0 tw-text-[12px] tw-text-gray-600">{{ cartStore.totalItems }} sản phẩm</p>
+                            <h3 class="tw-m-0 tw-text-[18px] tw-font-bold">{{ t('header.cart_title') }}</h3>
+                            <p class="tw-m-0 tw-text-[12px] tw-text-gray-600">{{ t('header.cart_itemCount', { count: cartStore.totalItems }) }}</p>
                         </div>
                         <div class="tw-text-right tw-text-[14px] tw-font-bold">{{ formatPrice(cartStore.subtotal) }}</div>
                     </div>
 
                     <div v-if="cartStore.isLoading" class="tw-py-8 tw-text-center tw-text-[13px] tw-text-gray-600">
-                        Đang tải giỏ hàng...
+                        {{ t('header.cart_loading') }}
                     </div>
                     <div v-else-if="cartStore.isEmpty" class="tw-py-8 tw-text-center">
-                        <p class="tw-mb-3 tw-text-[14px] tw-text-gray-700">Giỏ hàng của bạn đang trống.</p>
+                        <p class="tw-mb-3 tw-text-[14px] tw-text-gray-700">{{ t('header.cart_empty') }}</p>
                         <router-link
                             :to="{ name: 'ProductList' }"
                             class="tw-rounded-full tw-bg-[#ffd814] tw-px-4 tw-py-2 tw-text-[13px] tw-text-[#0f1111] hover:tw-bg-[#f7ca00]"
                         >
-                            Mua sắm ngay
+                            {{ t('header.cart_shopNow') }}
                         </router-link>
                     </div>
 
@@ -393,21 +393,21 @@ onBeforeUnmount(unlockBodyScroll);
                                     >
                                         {{ item.product_name }}
                                     </router-link>
-                                    <p class="tw-m-0 tw-text-[12px] tw-text-gray-600">SL: {{ item.quantity }}</p>
+                                    <p class="tw-m-0 tw-text-[12px] tw-text-gray-600">{{ t('header.cart_quantity', { quantity: item.quantity }) }}</p>
                                     <p class="tw-m-0 tw-text-[13px] tw-font-bold">{{ formatPrice(item.line_total) }}</p>
                                 </div>
                             </div>
                         </div>
 
                         <p v-if="cartStore.items.length > cartPreviewItems.length" class="tw-mt-3 tw-text-[12px] tw-text-gray-600">
-                            +{{ cartStore.items.length - cartPreviewItems.length }} sản phẩm khác trong giỏ hàng
+                            {{ t('header.cart_moreItems', { count: cartStore.items.length - cartPreviewItems.length }) }}
                         </p>
 
                         <router-link
                             :to="{ name: 'Cart' }"
                             class="tw-mt-4 tw-block tw-w-full tw-rounded-full tw-bg-[#ffd814] tw-py-2 tw-text-center tw-text-[14px] tw-font-semibold tw-text-[#0f1111] hover:tw-bg-[#f7ca00]"
                         >
-                            Xem giỏ hàng
+                            {{ t('header.cart_viewCart') }}
                         </router-link>
                     </template>
                 </div>
@@ -422,7 +422,7 @@ onBeforeUnmount(unlockBodyScroll);
                 <input
                     v-model="searchTerm"
                     type="text"
-                    placeholder="Tìm kiếm sản phẩm..."
+                    :placeholder="t('header.search_placeholder')"
                     class="tw-flex-grow tw-px-3 tw-text-black focus:tw-outline-none"
                 />
                 <button type="submit" class="tw-flex tw-w-[45px] tw-items-center tw-justify-center tw-bg-[#febd69]">

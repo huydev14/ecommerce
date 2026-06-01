@@ -1,10 +1,12 @@
 <script setup>
 import { computed, onMounted, ref, watch } from 'vue';
+import { useI18n } from 'vue-i18n';
 import { useRouter } from 'vue-router';
 import { APP_CONFIG } from '@/config';
 import api from '@/services/api';
 
 const router = useRouter();
+const { t } = useI18n();
 const promoCode = ref('');
 const customerAddresses = ref([]);
 const selectedAddressId = ref('');
@@ -26,23 +28,23 @@ const checkoutError = ref('');
 const isProcessing = ref(false);
 let isSyncingAddressFromApi = false;
 
-const paymentMethods = [
+const paymentMethods = computed(() => [
     {
         value: 'cod',
-        label: 'Thanh toán khi nhận hàng',
-        note: 'Thanh toán trực tiếp cho đơn vị vận chuyển khi nhận hàng.',
+        label: t('checkout.payment_cod_label'),
+        note: t('checkout.payment_cod_note'),
     },
     {
         value: 'vnpay',
         label: 'VNPay',
-        note: 'Thanh toán online qua cổng VNPay sau khi đặt hàng.',
+        note: t('checkout.payment_vnpay_note'),
     },
     {
         value: 'momo',
         label: 'MoMo',
-        note: 'Thanh toán online bằng ví MoMo khi hoàn tất đơn hàng.',
+        note: t('checkout.payment_momo_note'),
     },
-];
+]);
 
 const formatCurrency = (value) =>
     new Intl.NumberFormat('vi-VN', {
@@ -58,7 +60,7 @@ const checkoutItems = computed(() =>
 
         return {
             id: item.cart_item_id || item.product_variant_id,
-            name: item.product_name || 'Sản phẩm',
+            name: item.product_name || t('checkout.fallback_productName'),
             variant: item.sku ? `SKU: ${item.sku}` : '',
             brand: item.brand.name || APP_CONFIG.appName,
             image: item.thumbnail || '/img/default-image.jpg',
@@ -66,7 +68,7 @@ const checkoutItems = computed(() =>
             quantity,
             lineTotal: Number(item.line_total || price * quantity),
             estimateShippingDate: item.estimate_shipping_date || '',
-            shippingSpeed: 'Standard Delivery',
+            shippingSpeed: t('checkout.shipping_standardDelivery'),
         };
     }),
 );
@@ -82,7 +84,7 @@ const selectedAddress = computed(
         null,
 );
 const selectedPaymentInfo = computed(
-    () => paymentMethods.find((method) => method.value === selectedPaymentMethod.value) || paymentMethods[0],
+    () => paymentMethods.value.find((method) => method.value === selectedPaymentMethod.value) || paymentMethods.value[0],
 );
 const selectedAddressLines = computed(() => {
     if (!selectedAddress.value) {
@@ -122,7 +124,7 @@ const fetchCheckoutReview = async (addressId = selectedAddressId.value) => {
         isSyncingAddressFromApi = true;
         selectedAddressId.value = data.address?.id || customerAddresses.value[0]?.id || '';
     } catch (error) {
-        checkoutError.value = error.response?.data?.message || 'Không thể tải dữ liệu checkout.';
+        checkoutError.value = error.response?.data?.message || t('checkout.errors_fetchCheckout');
     } finally {
         isSyncingAddressFromApi = false;
         isLoadingCheckout.value = false;
@@ -135,7 +137,7 @@ const placeOrder = async () => {
     }
 
     if (!selectedAddressId.value) {
-        checkoutError.value = 'Vui lòng chọn địa chỉ giao hàng.';
+        checkoutError.value = t('checkout.errors_selectAddress');
         return;
     }
 
@@ -160,7 +162,7 @@ const placeOrder = async () => {
             query: data.order_number ? { order: data.order_number } : {},
         });
     } catch (error) {
-        checkoutError.value = error.response?.data?.message || 'Không thể đặt hàng. Vui lòng thử lại.';
+        checkoutError.value = error.response?.data?.message || t('checkout.errors_placeOrder');
     } finally {
         isProcessing.value = false;
     }
@@ -183,25 +185,27 @@ watch(selectedAddressId, (addressId, previousAddressId) => {
             <div class="checkout-layout">
                 <main class="checkout-main">
                     <header class="checkout-title">
-                        <h1>Review Your Order</h1>
-                        <p>Vui lòng kiểm tra địa chỉ, thanh toán và sản phẩm trước khi đặt hàng.</p>
+                        <h1>{{ t('checkout.title') }}</h1>
+                        <p>{{ t('checkout.subtitle') }}</p>
                     </header>
 
-                    <section class="checkout-panel checkout-info-grid" aria-label="Order information">
+                    <section class="checkout-panel checkout-info-grid" :aria-label="t('checkout.aria_orderInfo')">
                         <article class="checkout-info-card">
                             <div class="checkout-section-title">
-                                <h2>Delivery Address</h2>
-                                <RouterLink :to="{ name: 'CustomerAddresses' }" class="checkout-section-link"> Manage </RouterLink>
+                                <h2>{{ t('checkout.address_title') }}</h2>
+                                <RouterLink :to="{ name: 'CustomerAddresses' }" class="checkout-section-link">
+                                    {{ t('checkout.address_manage') }}
+                                </RouterLink>
                             </div>
 
-                            <div v-if="isLoadingCheckout" class="checkout-muted">Đang tải địa chỉ giao hàng...</div>
+                            <div v-if="isLoadingCheckout" class="checkout-muted">{{ t('checkout.address_loading') }}</div>
                             <div v-else-if="checkoutError" class="checkout-alert">{{ checkoutError }}</div>
                             <div v-else-if="!selectedAddress" class="checkout-empty">
-                                <p>Chưa có địa chỉ giao hàng.</p>
-                                <RouterLink :to="{ name: 'CustomerAddresses' }">Thêm địa chỉ</RouterLink>
+                                <p>{{ t('checkout.address_empty') }}</p>
+                                <RouterLink :to="{ name: 'CustomerAddresses' }">{{ t('checkout.address_add') }}</RouterLink>
                             </div>
                             <label v-else class="checkout-select-field">
-                                <span>Ship to</span>
+                                <span>{{ t('checkout.address_shipTo') }}</span>
                                 <select v-model="selectedAddressId">
                                     <option v-for="address in customerAddresses" :key="address.id" :value="address.id">
                                         {{ address.label }} - {{ address.receiver_name }}
@@ -212,14 +216,14 @@ watch(selectedAddressId, (addressId, previousAddressId) => {
                                 <span v-if="selectedAddress.label">{{ selectedAddress.label }}</span>
                                 <strong>{{ selectedAddress.receiver_name }}</strong>
                                 <span v-for="line in selectedAddressLines" :key="line">{{ line }}</span>
-                                <span>Phone: {{ selectedAddress.receiver_phone }}</span>
-                                <span v-if="selectedAddress.delivery_note">Note: {{ selectedAddress.delivery_note }}</span>
+                                <span>{{ t('checkout.address_phone', { phone: selectedAddress.receiver_phone }) }}</span>
+                                <span v-if="selectedAddress.delivery_note">{{ t('checkout.address_note', { note: selectedAddress.delivery_note }) }}</span>
                             </address>
                         </article>
 
                         <article class="checkout-info-card">
                             <div class="checkout-section-title">
-                                <h2>Payment Information</h2>
+                                <h2>{{ t('checkout.payment_title') }}</h2>
                             </div>
                             <div class="checkout-payment-options">
                                 <label v-for="method in paymentMethods" :key="method.value" class="checkout-payment-option">
@@ -231,35 +235,40 @@ watch(selectedAddressId, (addressId, previousAddressId) => {
                                 </label>
                             </div>
                             <label class="checkout-note-field">
-                                <span>Order note</span>
-                                <textarea v-model.trim="orderNote" rows="2" placeholder="Ghi chú cho đơn hàng"></textarea>
+                                <span>{{ t('checkout.orderNote_label') }}</span>
+                                <textarea v-model.trim="orderNote" rows="2" :placeholder="t('checkout.orderNote_placeholder')"></textarea>
                             </label>
                         </article>
 
                         <article class="checkout-info-card checkout-promo">
-                            <h2>Enter a promotional code.</h2>
+                            <h2>{{ t('checkout.promo_title') }}</h2>
                             <p>{{ selectedPaymentInfo.note }}</p>
                             <div class="checkout-promo__form">
-                                <input v-model="promoCode" type="text" placeholder="Enter Code" aria-label="Promotional code" />
-                                <button type="button">Apply</button>
+                                <input
+                                    v-model="promoCode"
+                                    type="text"
+                                    :placeholder="t('checkout.promo_placeholder')"
+                                    :aria-label="t('checkout.aria_promoCode')"
+                                />
+                                <button type="button">{{ t('checkout.promo_apply') }}</button>
                             </div>
                         </article>
                     </section>
 
-                    <section class="checkout-panel checkout-shipment" aria-label="Shipment details">
+                    <section class="checkout-panel checkout-shipment" :aria-label="t('checkout.aria_shipmentDetails')">
                         <div class="checkout-section-title">
                             <div>
-                                <h2>Shipment details</h2>
-                                <p>Estimated delivery: <strong>27 Jun 2026 - 30 Jun 2026</strong></p>
+                                <h2>{{ t('checkout.shipment_title') }}</h2>
+                                <p v-html="t('checkout.shipment_estimatedDelivery', { date: '27 Jun 2026 - 30 Jun 2026' })"></p>
                             </div>
-                            <span>Delivered by GHN - Express</span>
+                            <span>{{ t('checkout.shipment_deliveredBy') }}</span>
                         </div>
 
-                        <div v-if="isLoadingCheckout" class="checkout-muted">Đang tải sản phẩm...</div>
+                        <div v-if="isLoadingCheckout" class="checkout-muted">{{ t('checkout.shipment_loadingProducts') }}</div>
                         <div v-else-if="checkoutError" class="checkout-alert">{{ checkoutError }}</div>
                         <div v-else-if="!checkoutItems.length" class="checkout-empty">
-                            <p>Giỏ hàng của bạn đang trống.</p>
-                            <RouterLink :to="{ name: 'ProductList' }">Tiếp tục mua sắm</RouterLink>
+                            <p>{{ t('checkout.shipment_emptyCart') }}</p>
+                            <RouterLink :to="{ name: 'ProductList' }">{{ t('cart.continueShopping') }}</RouterLink>
                         </div>
 
                         <template v-else>
@@ -271,16 +280,16 @@ watch(selectedAddressId, (addressId, previousAddressId) => {
                                 <div class="checkout-item__details">
                                     <RouterLink :to="{ name: 'ProductList' }" class="checkout-item__name">{{ item.name }}</RouterLink>
                                     <p v-if="item.variant">{{ item.variant }}</p>
-                                    <p>Sold by {{ item.brand }}</p>
+                                    <p>{{ t('checkout.item_soldBy', { brand: item.brand }) }}</p>
                                     <strong>{{ formatCurrency(item.price) }}</strong>
-                                    <p>Quantity: {{ item.quantity }}</p>
+                                    <p>{{ t('checkout.item_quantity', { quantity: item.quantity }) }}</p>
                                 </div>
 
                                 <div class="checkout-item__shipping">
-                                    <h3>Choose a shipping speed:</h3>
+                                    <h3>{{ t('checkout.item_chooseShippingSpeed') }}</h3>
                                     <label>
                                         <input type="radio" checked />
-                                        <span>{{ item.shippingSpeed }} (FREE Delivery)</span>
+                                        <span>{{ t('checkout.item_freeDelivery', { speed: item.shippingSpeed }) }}</span>
                                     </label>
                                     <small>{{ item.estimateShippingDate }}</small>
                                 </div>
@@ -289,28 +298,28 @@ watch(selectedAddressId, (addressId, previousAddressId) => {
                     </section>
                 </main>
 
-                <aside class="checkout-summary" aria-label="Order summary">
+                <aside class="checkout-summary" :aria-label="t('checkout.aria_summary')">
                     <section class="checkout-summary__card">
-                        <h2>Order summary</h2>
+                        <h2>{{ t('checkout.summary_title') }}</h2>
                         <dl>
                             <div>
-                                <dt>Items:</dt>
+                                <dt>{{ t('checkout.summary_items') }}</dt>
                                 <dd>{{ formatCurrency(itemSubtotal) }}</dd>
                             </div>
                             <div>
-                                <dt>Delivery:</dt>
+                                <dt>{{ t('checkout.summary_delivery') }}</dt>
                                 <dd>{{ formatCurrency(deliveryFee) }}</dd>
                             </div>
                             <div>
-                                <dt>Total:</dt>
+                                <dt>{{ t('checkout.summary_total') }}</dt>
                                 <dd>{{ formatCurrency(itemSubtotal + deliveryFee) }}</dd>
                             </div>
                             <div class="is-discount">
-                                <dt>Promotion Applied:</dt>
+                                <dt>{{ t('checkout.summary_promotion') }}</dt>
                                 <dd>-{{ formatCurrency(promotionAmount) }}</dd>
                             </div>
                             <div class="is-total">
-                                <dt>Order Total:</dt>
+                                <dt>{{ t('checkout.summary_orderTotal') }}</dt>
                                 <dd>{{ formatCurrency(orderTotal) }}</dd>
                             </div>
                         </dl>
@@ -318,7 +327,7 @@ watch(selectedAddressId, (addressId, previousAddressId) => {
 
                     <button @click="placeOrder" :disabled="isProcessing" class="amazon-checkout-btn">
                         <span v-if="isProcessing" class="spinner"></span>
-                        <span v-else>Place your order</span>
+                        <span v-else>{{ t('checkout.placeOrder') }}</span>
                     </button>
                 </aside>
             </div>

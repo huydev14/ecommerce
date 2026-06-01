@@ -21,8 +21,10 @@
 
             <div class="a-divider-inner">
                 <p class="terms-text">
-                    Bằng cách {{ actionText }}, bạn đồng ý với <a href="#" class="a-link-normal">Điều kiện sử dụng</a> và
-                    <a href="#" class="a-link-normal">Thông báo bảo mật</a>.
+                    {{ t('authLayout.terms_prefix', { action: displayActionText }) }}
+                    <a href="#" class="a-link-normal">{{ t('authLayout.terms_conditions') }}</a>
+                    {{ t('authLayout.terms_middle') }}
+                    <a href="#" class="a-link-normal">{{ t('authLayout.terms_privacy') }}</a>.
                 </p>
             </div>
 
@@ -34,9 +36,12 @@
 
 <script setup>
 import { ref, computed, onMounted, onUnmounted, watch, provide } from 'vue';
+import { useI18n } from 'vue-i18n';
 import AuthFooter from '@/components/AuthFooter.vue';
 import '@scss/client/auth.scss';
 import { APP_CONFIG } from '@/config';
+
+const { t } = useI18n();
 
 const props = defineProps({
     title: {
@@ -49,7 +54,7 @@ const props = defineProps({
     },
     actionText: {
         type: String,
-        default: 'tiếp tục',
+        default: '',
     },
     retryAfter: {
         type: Number,
@@ -62,6 +67,7 @@ const remainingSeconds = ref(0);
 let intervalId = null;
 
 const isCountingDown = computed(() => remainingSeconds.value > 0);
+const displayActionText = computed(() => props.actionText || t('authLayout.defaultAction'));
 
 // Rate limit status
 const isRateLimited = computed(() => props.retryAfter > 0);
