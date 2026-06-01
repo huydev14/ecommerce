@@ -89,25 +89,11 @@ onBeforeUnmount(() => {
                 class="tw-hidden tw-flex-none tw-items-center tw-rounded-sm tw-border tw-border-transparent tw-px-2 tw-py-1 hover:tw-border-white sm:tw-flex"
                 >Registry</a
             >
-            <a
-                href="#"
-                class="tw-hidden tw-flex-none tw-items-center tw-rounded-sm tw-border tw-border-transparent tw-px-2 tw-py-1 hover:tw-border-white sm:tw-flex"
-                >Gift Cards</a
-            >
+         
             <a
                 href="#"
                 class="tw-hidden tw-flex-none tw-items-center tw-rounded-sm tw-border tw-border-transparent tw-px-2 tw-py-1 hover:tw-border-white md:tw-flex"
                 >Sell</a
-            >
-            <a
-                href="#"
-                class="tw-hidden tw-flex-none tw-items-center tw-rounded-sm tw-border tw-border-transparent tw-px-2 tw-py-1 hover:tw-border-white lg:tw-flex"
-                >Amazon Pay</a
-            >
-            <a
-                href="#"
-                class="tw-hidden tw-flex-none tw-items-center tw-rounded-sm tw-border tw-border-transparent tw-px-2 tw-py-1 hover:tw-border-white lg:tw-flex"
-                >Prime</a
             >
             <a
                 href="#"
@@ -212,11 +198,11 @@ onBeforeUnmount(() => {
 
                         <div class="tw-space-y-1 tw-pb-2">
                             <router-link
-                                :to="{ name: 'MyAccount' }"
+                                :to="{ name: 'MyAccountOrders' }"
                                 class="tw-block tw-px-5 tw-py-2.5 tw-text-[14px] tw-font-medium tw-text-[#111827] hover:tw-bg-gray-50"
                                 @click="closeMenu"
                             >
-                                Your Account
+                                Your Orders
                             </router-link>
 
                             <a

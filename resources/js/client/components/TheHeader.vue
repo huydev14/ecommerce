@@ -18,6 +18,35 @@ const currentLocationName = computed(() => locationStore.currentLocationName);
 let originalBodyOverflow = '';
 let isBodyScrollLockedByLocationModal = false;
 
+const accountMenuItems = [
+    {
+        title: 'My orders',
+        description: 'Track, return, cancel an order, download invoice or buy again',
+        iconPath: 'M9 5h6m-8 4h10m-10 4h10M7 3h10a2 2 0 012 2v14l-4-2-3 2-3-2-4 2V5a2 2 0 012-2z',
+        to: { name: 'MyAccountOrders' },
+    },
+    {
+        title: 'Login & security',
+        description: 'Edit login, name, email, mobile number, and password',
+        iconPath:
+            'M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z',
+        href: '#',
+    },
+    {
+        title: 'Your addresses',
+        description: 'Edit, remove, or set default address for fast checkout',
+        iconPath:
+            'M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z M15 11a3 3 0 11-6 0 3 3 0 016 0z',
+        href: '#',
+    },
+    {
+        title: 'Your payments',
+        description: 'View transactions, manage payment methods and settings',
+        iconPath: 'M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z',
+        href: '#',
+    },
+];
+
 const submitSearch = () => {
     const query = searchTerm.value.trim() || 'fitness clothing';
     router.push({ name: 'ProductList', query: { q: query } });
@@ -156,9 +185,9 @@ onBeforeUnmount(unlockBodyScroll);
             </form>
 
             <div class="tw-group tw-relative tw-hidden tw-h-[50px] lg:tw-flex">
-                <router-link
-                    :to="{ name: 'MyAccount' }"
-                    class="tw-flex tw-h-full tw-cursor-pointer tw-flex-col tw-justify-center tw-rounded-sm tw-border tw-border-transparent tw-px-2 tw-py-1 hover:tw-border-white"
+                <button
+                    type="button"
+                    class="tw-flex tw-h-full tw-cursor-pointer tw-flex-col tw-justify-center tw-rounded-sm tw-border tw-border-transparent tw-bg-transparent tw-px-2 tw-py-1 tw-text-left hover:tw-border-white focus:tw-border-white focus:tw-outline-none"
                 >
                     <span class="tw-text-[12px] tw-leading-3 tw-text-white"
                         >Xin chào, {{ authStore.isLoggedIn && authStore.user ? authStore.user.name : 'Đăng nhập' }}</span
@@ -178,10 +207,10 @@ onBeforeUnmount(unlockBodyScroll);
                             />
                         </svg>
                     </span>
-                </router-link>
+                </button>
 
                 <div
-                    class="tw-invisible tw-absolute tw-right-0 tw-top-[48px] tw-z-[90] tw-w-[280px] tw-rounded-md tw-border tw-border-gray-200 tw-bg-white tw-p-2 tw-text-[#111827] tw-opacity-0 tw-shadow-2xl tw-transition-all tw-duration-200 group-hover:tw-visible group-hover:tw-opacity-100"
+                    class="tw-invisible tw-absolute tw-right-0 tw-top-[48px] tw-z-[90] tw-w-[380px] tw-rounded-md tw-border tw-border-gray-200 tw-bg-white tw-p-2 tw-text-[#111827] tw-opacity-0 tw-shadow-2xl tw-transition-all tw-duration-200 group-focus-within:tw-visible group-focus-within:tw-opacity-100 group-hover:tw-visible group-hover:tw-opacity-100"
                 >
                     <div
                         class="tw-absolute -tw-top-2 tw-right-7 tw-h-4 tw-w-4 tw-rotate-45 tw-border-l tw-border-t tw-border-gray-200 tw-bg-white"
@@ -196,14 +225,18 @@ onBeforeUnmount(unlockBodyScroll);
                         </router-link>
                     </div>
 
-                    <nav class="tw-py-1 tw-text-[14px]" aria-label="Tài khoản">
-                        <router-link
-                            :to="{ name: 'MyAccount' }"
-                            class="tw-flex tw-items-center tw-gap-3 tw-rounded-md tw-px-3 tw-py-2.5 hover:tw-bg-gray-50 hover:tw-text-[#c45500]"
+                    <nav class="tw-grid tw-gap-1 tw-py-1 tw-text-[14px]" aria-label="Tài khoản">
+                        <component
+                            :is="item.to ? 'router-link' : 'a'"
+                            v-for="item in accountMenuItems"
+                            :key="item.title"
+                            :to="item.to"
+                            :href="item.href"
+                            class="tw-grid tw-grid-cols-[40px_1fr] tw-items-start tw-gap-3 tw-rounded-md tw-px-3 tw-py-2.5 hover:tw-bg-gray-50 hover:tw-text-[#c45500] tw-cursor-pointer"
                         >
                             <svg
                                 xmlns="http://www.w3.org/2000/svg"
-                                class="tw-h-5 tw-w-5 tw-text-gray-500"
+                                class="tw-mt-0.5 tw-h-5 tw-w-5 tw-text-gray-500"
                                 fill="none"
                                 viewBox="0 0 24 24"
                                 stroke="currentColor"
@@ -212,53 +245,14 @@ onBeforeUnmount(unlockBodyScroll);
                                     stroke-linecap="round"
                                     stroke-linejoin="round"
                                     stroke-width="2"
-                                    d="M5.121 17.804A8.966 8.966 0 0112 15c2.21 0 4.235.8 5.879 2.129M15 11a3 3 0 11-6 0 3 3 0 016 0zm6 1a9 9 0 11-18 0 9 9 0 0118 0z"
+                                    :d="item.iconPath"
                                 />
                             </svg>
-                            <span>Tài khoản</span>
-                        </router-link>
-
-                        <router-link
-                            :to="{ name: 'MyAccountOrders' }"
-                            class="tw-flex tw-items-center tw-gap-3 tw-rounded-md tw-px-3 tw-py-2.5 hover:tw-bg-gray-50 hover:tw-text-[#c45500]"
-                        >
-                            <svg
-                                xmlns="http://www.w3.org/2000/svg"
-                                class="tw-h-5 tw-w-5 tw-text-gray-500"
-                                fill="none"
-                                viewBox="0 0 24 24"
-                                stroke="currentColor"
-                            >
-                                <path
-                                    stroke-linecap="round"
-                                    stroke-linejoin="round"
-                                    stroke-width="2"
-                                    d="M9 5h6m-8 4h10m-10 4h10M7 3h10a2 2 0 012 2v14l-4-2-3 2-3-2-4 2V5a2 2 0 012-2z"
-                                />
-                            </svg>
-                            <span>Đơn hàng</span>
-                        </router-link>
-
-                        <a
-                            href="#"
-                            class="tw-flex tw-items-center tw-gap-3 tw-rounded-md tw-px-3 tw-py-2.5 hover:tw-bg-gray-50 hover:tw-text-[#c45500]"
-                        >
-                            <svg
-                                xmlns="http://www.w3.org/2000/svg"
-                                class="tw-h-5 tw-w-5 tw-text-gray-500"
-                                fill="none"
-                                viewBox="0 0 24 24"
-                                stroke="currentColor"
-                            >
-                                <path
-                                    stroke-linecap="round"
-                                    stroke-linejoin="round"
-                                    stroke-width="2"
-                                    d="M4.318 6.318a4.5 4.5 0 016.364 0L12 7.636l1.318-1.318a4.5 4.5 0 116.364 6.364L12 20.364l-7.682-7.682a4.5 4.5 0 010-6.364z"
-                                />
-                            </svg>
-                            <span>Yêu thích</span>
-                        </a>
+                            <span class="tw-grid tw-gap-0.5">
+                                <span class="tw-text-[14px] tw-font-semibold tw-leading-5">{{ item.title }}</span>
+                                <span class="tw-text-[12px] tw-leading-4 tw-text-gray-600">{{ item.description }}</span>
+                            </span>
+                        </component>
 
                         <button
                             v-if="authStore.isLoggedIn"

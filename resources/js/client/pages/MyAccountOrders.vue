@@ -1,18 +1,12 @@
 <script setup>
-const orderTabs = ['Orders', 'Buy Again', 'Not Yet Shipped', 'Digital Orders', 'Amazon Pay'];
+const orderTabs = ['Orders', 'Buy Again', 'Not Yet Shipped'];
 </script>
 
 <template>
     <section class="orders-page" aria-labelledby="orders-title">
         <div class="orders-page__inner">
-            <nav class="orders-breadcrumb" aria-label="Breadcrumb">
-                <router-link :to="{ name: 'MyAccount' }">Your Account</router-link>
-                <span aria-hidden="true">›</span>
-                <span>Your Orders</span>
-            </nav>
-
             <header class="orders-header">
-                <h1 id="orders-title">Your Orders</h1>
+                <h1 id="orders-title">My Orders</h1>
 
                 <form class="orders-search" role="search">
                     <label class="orders-search__box">
@@ -44,13 +38,6 @@ const orderTabs = ['Orders', 'Buy Again', 'Not Yet Shipped', 'Digital Orders', '
             </div>
         </div>
 
-        <aside class="orders-history" aria-label="Browsing history">
-            <p>After viewing product detail pages, look here to find an easy way to navigate back to pages you are interested in.</p>
-            <a href="#">
-                <span aria-hidden="true">›</span>
-                View or edit your browsing history
-            </a>
-        </aside>
     </section>
 </template>
 
