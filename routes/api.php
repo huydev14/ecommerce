@@ -17,12 +17,6 @@ Route::prefix('v1')->group(function () {
         return response()->json(['message' => 'Gọi API thành công']);
     });
 
-    Route::prefix('locations')->group(function () {
-        Route::get('/provinces', [LocationController::class, 'getProvinces']);
-        Route::get('/districts', [LocationController::class, 'getDistricts']);
-        Route::get('/wards', [LocationController::class, 'getWards']);
-    });
-
     Route::middleware('throttle:5,1')->group(function () {
         Route::post('/check-email', [AuthController::class, 'checkEmail']);
         Route::post('/login', [AuthController::class, 'login']);
@@ -61,11 +55,21 @@ Route::prefix('v1')->group(function () {
     Route::put('/cart/items/{variantId}', [CartController::class, 'update']);
     Route::delete('/cart/items/{variantId}', [CartController::class, 'destroy']);
 
+    // ----- Giaohangnhanh API -------------------------
+    Route::prefix('locations')->group(function () {
+        Route::get('/provinces', [LocationController::class, 'getProvinces']);
+        Route::get('/districts', [LocationController::class, 'getDistricts']);
+        Route::get('/wards', [LocationController::class, 'getWards']);
+    });
+
 
     Route::middleware('auth:api')->group(function () {
         // ----- Customer addresses API -------------------------
-        Route::apiResource('customer-addresses', CustomerAddressController::class)->except(['show']);
-        Route::patch('customer-addresses/{id}/default', [CustomerAddressController::class, 'setDefault']);
+        Route::get('/customer-addresses', [CustomerAddressController::class, 'index']);
+        Route::post('/customer-addresses', [CustomerAddressController::class, 'store']);
+        Route::put('/customer-addresses/{id}', [CustomerAddressController::class, 'update']);
+        Route::delete('/customer-addresses/{id}', [CustomerAddressController::class, 'destroy']);
+        Route::patch('/customer-addresses/{id}/default', [CustomerAddressController::class, 'setDefault']);
 
         // ----- Checkout API -------------------------
         Route::get('/checkout', [CheckoutController::class, 'reviewCheckout']);
