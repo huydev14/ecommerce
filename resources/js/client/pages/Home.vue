@@ -28,7 +28,9 @@ const categories = ref([]);
 const featuredProducts = ref([]);
 const newProducts = ref([]);
 const addingProductIds = ref(new Set());
+const isHomeDataLoading = ref(true);
 const swiperModules = [Autoplay, Pagination, Navigation];
+const STATIC_BANNER_SLOT_COUNT = 5;
 
 const featuredSlider = ref(null);
 
@@ -82,7 +84,19 @@ const sliderBanners = computed(() =>
     sortedBanners.value.filter((banner) => Number(banner.sort_order) >= 1 && Number(banner.sort_order) <= 3),
 );
 
-const staticGridBanners = computed(() => sortedBanners.value.filter((banner) => Number(banner.sort_order) >= 4).slice(0, 5));
+const staticGridBanners = computed(() =>
+    sortedBanners.value.filter((banner) => Number(banner.sort_order) >= 4).slice(0, STATIC_BANNER_SLOT_COUNT),
+);
+
+const showBannerPlaceholders = computed(() => isHomeDataLoading.value || sortedBanners.value.length === 0);
+
+const staticBannerPlaceholderCount = computed(() => {
+    if (showBannerPlaceholders.value) {
+        return STATIC_BANNER_SLOT_COUNT;
+    }
+
+    return Math.max(0, STATIC_BANNER_SLOT_COUNT - staticGridBanners.value.length);
+});
 
 const getProductVariantId = (product) =>
     product.product_variant_id || product.default_variant_id || product.variant_id || product.variants?.[0]?.id;
@@ -147,13 +161,17 @@ const categoryRoute = (category) => ({
 });
 
 const fetchHomeData = async () => {
+    isHomeDataLoading.value = true;
+
     try {
         const response = await api.get('/home');
 
         if (response.data?.success) {
             banners.value = Array.isArray(response.data.data?.banners) ? response.data.data.banners : [];
         }
+        isHomeDataLoading.value = false;
     } catch (error) {
+        isHomeDataLoading.value = false;
         console.error('Lỗi khi lấy dữ liệu trang chủ:', error);
     }
 };
@@ -314,8 +332,8 @@ onMounted(() => {
                         </swiper-slide>
                     </swiper>
 
-                    <div v-else class="home-banner-empty">
-                        <span>Ecommerce</span>
+                    <div v-else class="home-banner-placeholder home-banner-placeholder--hero" aria-hidden="true">
+                        <span></span>
                     </div>
                 </div>
 
@@ -328,6 +346,15 @@ onMounted(() => {
                 >
                     <img :src="bannerImageUrl(banner.image_url)" :alt="banner.title || `${APP_CONFIG.appName} banner`" loading="lazy" />
                 </a>
+
+                <div
+                    v-for="placeholderIndex in staticBannerPlaceholderCount"
+                    :key="`banner-placeholder-${placeholderIndex}`"
+                    class="home-banner-tile home-banner-placeholder"
+                    aria-hidden="true"
+                >
+                    <span></span>
+                </div>
             </div>
         </section>
 
@@ -665,15 +692,37 @@ onMounted(() => {
     transform: scale(1.04);
 }
 
-.home-banner-empty {
+.home-banner-placeholder {
     display: grid;
-    height: 100%;
     min-height: 0;
     place-items: center;
-    background: linear-gradient(100deg, #f5d39e 0%, #e9eef2 45%, #b7d8e8 100%);
-    color: #0f1111;
-    font-size: 42px;
-    font-weight: 700;
+    border: 1px solid #e5e7eb;
+    background: linear-gradient(100deg, #f3f4f6 0%, #e5e7eb 45%, #f3f4f6 100%);
+    background-size: 200% 100%;
+    animation: banner-placeholder-pulse 1.4s ease-in-out infinite;
+}
+
+.home-banner-placeholder--hero {
+    height: 100%;
+    border: 0;
+}
+
+.home-banner-placeholder span {
+    width: 30%;
+    max-width: 180px;
+    height: 10px;
+    border-radius: 999px;
+    background: rgba(156, 163, 175, 0.55);
+}
+
+@keyframes banner-placeholder-pulse {
+    0% {
+        background-position: 100% 0;
+    }
+
+    100% {
+        background-position: -100% 0;
+    }
 }
 
 .home-banner-slider :deep(.swiper-button-next),
