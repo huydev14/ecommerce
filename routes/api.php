@@ -61,12 +61,14 @@ Route::prefix('v1')->group(function () {
     Route::put('/cart/items/{variantId}', [CartController::class, 'update']);
     Route::delete('/cart/items/{variantId}', [CartController::class, 'destroy']);
 
-    // ----- Checkout API -------------------------
-    Route::post('/orders/checkout', [CheckoutController::class, 'processCheckout']);
 
     Route::middleware('auth:api')->group(function () {
         // ----- Customer addresses API -------------------------
         Route::apiResource('customer-addresses', CustomerAddressController::class)->except(['show']);
         Route::patch('customer-addresses/{id}/default', [CustomerAddressController::class, 'setDefault']);
+
+        // ----- Checkout API -------------------------
+        Route::get('/checkout', [CheckoutController::class, 'reviewCheckout']);
+        Route::post('/checkout', [CheckoutController::class, 'processCheckout']);
     });
 });

@@ -1,15 +1,30 @@
 <script setup>
-import { computed, onMounted, ref } from 'vue';
+import { computed, onMounted, ref, watch } from 'vue';
+import { useRouter } from 'vue-router';
 import { APP_CONFIG } from '@/config';
 import api from '@/services/api';
 
+const router = useRouter();
 const promoCode = ref('');
 const customerAddresses = ref([]);
 const selectedAddressId = ref('');
 const selectedPaymentMethod = ref('cod');
 const orderNote = ref('');
-const isLoadingAddresses = ref(false);
-const addressError = ref('');
+const checkoutReview = ref({
+    items: [],
+    address: null,
+    summary: {
+        subtotal: 0,
+        shipping_fee: 0,
+        discount: 0,
+        total: 0,
+    },
+    has_address: false,
+});
+const isLoadingCheckout = ref(false);
+const checkoutError = ref('');
+const isProcessing = ref(false);
+let isSyncingAddressFromApi = false;
 
 const paymentMethods = [
     {
@@ -29,33 +44,6 @@ const paymentMethods = [
     },
 ];
 
-const checkoutItems = [
-    {
-        id: 1,
-        name: 'Sách Chiếu Bóng - Cinema Book',
-        variant: 'Bìa mềm',
-        seller: APP_CONFIG.appName,
-        image: '/img/default-image.jpg',
-        price: 120000,
-        quantity: 1,
-        stockLabel: 'Còn 12 sản phẩm',
-        deliveryWindow: '27 Jun 2026 - 29 Jun 2026',
-        shippingSpeed: '2-4 Business Days',
-    },
-    {
-        id: 2,
-        name: 'Truyện Cổ Andersen',
-        variant: 'Ấn bản tiêu chuẩn',
-        seller: APP_CONFIG.appName,
-        image: '/img/default-image.jpg',
-        price: 142857,
-        quantity: 1,
-        stockLabel: 'Còn hàng',
-        deliveryWindow: '28 Jun 2026 - 30 Jun 2026',
-        shippingSpeed: 'Standard Delivery',
-    },
-];
-
 const formatCurrency = (value) =>
     new Intl.NumberFormat('vi-VN', {
         style: 'currency',
@@ -63,12 +51,36 @@ const formatCurrency = (value) =>
         maximumFractionDigits: 0,
     }).format(Number(value || 0));
 
-const itemSubtotal = computed(() => checkoutItems.reduce((total, item) => total + item.price * item.quantity, 0));
-const deliveryFee = computed(() => 0);
-const promotionAmount = computed(() => Math.round(itemSubtotal.value * 0.08));
-const orderTotal = computed(() => itemSubtotal.value + deliveryFee.value - promotionAmount.value);
+const checkoutItems = computed(() =>
+    checkoutReview.value.items.map((item) => {
+        const price = Number(item.price || 0);
+        const quantity = Number(item.quantity || 0);
+
+        return {
+            id: item.cart_item_id || item.product_variant_id,
+            name: item.product_name || 'Sản phẩm',
+            variant: item.sku ? `SKU: ${item.sku}` : '',
+            seller: APP_CONFIG.appName,
+            image: item.thumbnail || '/img/default-image.jpg',
+            price,
+            quantity,
+            lineTotal: Number(item.line_total || price * quantity),
+            stockLabel: item.stock === null || item.stock === undefined ? 'Còn hàng' : `Còn ${item.stock} sản phẩm`,
+            deliveryWindow: '27 Jun 2026 - 30 Jun 2026',
+            shippingSpeed: 'Standard Delivery',
+        };
+    }),
+);
+const checkoutSummary = computed(() => checkoutReview.value.summary || {});
+const itemSubtotal = computed(() => Number(checkoutSummary.value.subtotal || 0));
+const deliveryFee = computed(() => Number(checkoutSummary.value.shipping_fee || 0));
+const promotionAmount = computed(() => Number(checkoutSummary.value.discount || 0));
+const orderTotal = computed(() => Number(checkoutSummary.value.total || itemSubtotal.value + deliveryFee.value - promotionAmount.value));
 const selectedAddress = computed(
-    () => customerAddresses.value.find((address) => String(address.id) === String(selectedAddressId.value)) || null,
+    () =>
+        customerAddresses.value.find((address) => String(address.id) === String(selectedAddressId.value)) ||
+        checkoutReview.value.address ||
+        null,
 );
 const selectedPaymentInfo = computed(
     () => paymentMethods.find((method) => method.value === selectedPaymentMethod.value) || paymentMethods[0],
@@ -85,24 +97,85 @@ const selectedAddressLines = computed(() => {
     ].filter(Boolean);
 });
 
-const fetchCustomerAddresses = async () => {
-    isLoadingAddresses.value = true;
-    addressError.value = '';
+const fetchCheckoutReview = async (addressId = selectedAddressId.value) => {
+    isLoadingCheckout.value = true;
+    checkoutError.value = '';
 
     try {
-        const response = await api.get('/customer-addresses');
-        customerAddresses.value = response.data.data || [];
+        const response = await api.get('/checkout/', {
+            params: addressId ? { customer_address_id: addressId } : {},
+        });
+        const data = response.data.data || {};
 
-        const defaultAddress = customerAddresses.value.find((address) => address.is_default);
-        selectedAddressId.value = defaultAddress?.id || customerAddresses.value[0]?.id || '';
+        checkoutReview.value = {
+            items: data.items || [],
+            address: data.address || null,
+            addresses: data.addresses || [],
+            summary: {
+                subtotal: data.summary?.subtotal || 0,
+                shipping_fee: data.summary?.shipping_fee || 0,
+                discount: data.summary?.discount || 0,
+                total: data.summary?.total || 0,
+            },
+            has_address: Boolean(data.has_address),
+        };
+        customerAddresses.value = data.addresses || [];
+        isSyncingAddressFromApi = true;
+        selectedAddressId.value = data.address?.id || customerAddresses.value[0]?.id || '';
     } catch (error) {
-        addressError.value = error.response?.data?.message || 'Không thể tải địa chỉ giao hàng.';
+        checkoutError.value = error.response?.data?.message || 'Không thể tải dữ liệu checkout.';
     } finally {
-        isLoadingAddresses.value = false;
+        isSyncingAddressFromApi = false;
+        isLoadingCheckout.value = false;
     }
 };
 
-onMounted(fetchCustomerAddresses);
+const placeOrder = async () => {
+    if (isProcessing.value) {
+        return;
+    }
+
+    if (!selectedAddressId.value) {
+        checkoutError.value = 'Vui lòng chọn địa chỉ giao hàng.';
+        return;
+    }
+
+    isProcessing.value = true;
+    checkoutError.value = '';
+
+    try {
+        const response = await api.post('/checkout', {
+            customer_address_id: selectedAddressId.value,
+            payment_method: selectedPaymentMethod.value,
+            note: orderNote.value,
+        });
+        const data = response.data.data || {};
+
+        if (data.payment_url) {
+            window.location.href = data.payment_url;
+            return;
+        }
+
+        await router.push({
+            name: 'OrderSuccess',
+            query: data.order_number ? { order: data.order_number } : {},
+        });
+    } catch (error) {
+        checkoutError.value = error.response?.data?.message || 'Không thể đặt hàng. Vui lòng thử lại.';
+    } finally {
+        isProcessing.value = false;
+    }
+};
+
+onMounted(fetchCheckoutReview);
+
+watch(selectedAddressId, (addressId, previousAddressId) => {
+    if (!addressId || !previousAddressId || isSyncingAddressFromApi) {
+        return;
+    }
+
+    fetchCheckoutReview(addressId);
+});
 </script>
 
 <template>
@@ -119,18 +192,15 @@ onMounted(fetchCustomerAddresses);
                         <article class="checkout-info-card">
                             <div class="checkout-section-title">
                                 <h2>Delivery Address</h2>
-                                <RouterLink :to="{ name: 'CustomerAddresses' }" class="checkout-section-link">
-                                    Manage
-                                </RouterLink>
+                                <RouterLink :to="{ name: 'CustomerAddresses' }" class="checkout-section-link"> Manage </RouterLink>
                             </div>
 
-                            <div v-if="isLoadingAddresses" class="checkout-muted">Loading addresses...</div>
-                            <div v-else-if="addressError" class="checkout-alert">{{ addressError }}</div>
-                            <div v-else-if="!customerAddresses.length" class="checkout-empty">
+                            <div v-if="isLoadingCheckout" class="checkout-muted">Đang tải địa chỉ giao hàng...</div>
+                            <div v-else-if="checkoutError" class="checkout-alert">{{ checkoutError }}</div>
+                            <div v-else-if="!selectedAddress" class="checkout-empty">
                                 <p>Chưa có địa chỉ giao hàng.</p>
                                 <RouterLink :to="{ name: 'CustomerAddresses' }">Thêm địa chỉ</RouterLink>
                             </div>
-
                             <label v-else class="checkout-select-field">
                                 <span>Ship to</span>
                                 <select v-model="selectedAddressId">
@@ -139,8 +209,8 @@ onMounted(fetchCustomerAddresses);
                                     </option>
                                 </select>
                             </label>
-
                             <address v-if="selectedAddress">
+                                <span v-if="selectedAddress.label">{{ selectedAddress.label }}</span>
                                 <strong>{{ selectedAddress.receiver_name }}</strong>
                                 <span v-for="line in selectedAddressLines" :key="line">{{ line }}</span>
                                 <span>Phone: {{ selectedAddress.receiver_phone }}</span>
@@ -183,37 +253,45 @@ onMounted(fetchCustomerAddresses);
                                 <h2>Shipment details</h2>
                                 <p>Estimated delivery: <strong>27 Jun 2026 - 30 Jun 2026</strong></p>
                             </div>
-                            <span>Delivered by {{ APP_CONFIG.appName }} Logistics</span>
+                            <span>Delivered by GHN - Express</span>
                         </div>
 
-                        <article v-for="item in checkoutItems" :key="item.id" class="checkout-item">
-                            <RouterLink :to="{ name: 'ProductList' }" class="checkout-item__image">
-                                <img :src="item.image" :alt="item.name" />
-                            </RouterLink>
+                        <div v-if="isLoadingCheckout" class="checkout-muted">Đang tải sản phẩm...</div>
+                        <div v-else-if="checkoutError" class="checkout-alert">{{ checkoutError }}</div>
+                        <div v-else-if="!checkoutItems.length" class="checkout-empty">
+                            <p>Giỏ hàng của bạn đang trống.</p>
+                            <RouterLink :to="{ name: 'ProductList' }">Tiếp tục mua sắm</RouterLink>
+                        </div>
 
-                            <div class="checkout-item__details">
-                                <RouterLink :to="{ name: 'ProductList' }" class="checkout-item__name">{{ item.name }}</RouterLink>
-                                <p>{{ item.variant }}</p>
-                                <p>Sold by {{ item.seller }}</p>
-                                <strong>{{ formatCurrency(item.price) }}</strong>
-                                <span>{{ item.stockLabel }}</span>
-                            </div>
+                        <template v-else>
+                            <article v-for="item in checkoutItems" :key="item.id" class="checkout-item">
+                                <RouterLink :to="{ name: 'ProductList' }" class="checkout-item__image">
+                                    <img :src="item.image" :alt="item.name" />
+                                </RouterLink>
 
-                            <div class="checkout-item__shipping">
-                                <h3>Choose a shipping speed:</h3>
-                                <label>
-                                    <input type="radio" checked />
-                                    <span>{{ item.shippingSpeed }} (FREE Delivery)</span>
-                                </label>
-                                <small>{{ item.deliveryWindow }}</small>
-                            </div>
-                        </article>
+                                <div class="checkout-item__details">
+                                    <RouterLink :to="{ name: 'ProductList' }" class="checkout-item__name">{{ item.name }}</RouterLink>
+                                    <p v-if="item.variant">{{ item.variant }}</p>
+                                    <p>Sold by {{ item.seller }}</p>
+                                    <strong>{{ formatCurrency(item.price) }}</strong>
+                                    <p>Quantity: {{ item.quantity }}</p>
+                                    <span>{{ item.stockLabel }}</span>
+                                </div>
+
+                                <div class="checkout-item__shipping">
+                                    <h3>Choose a shipping speed:</h3>
+                                    <label>
+                                        <input type="radio" checked />
+                                        <span>{{ item.shippingSpeed }} (FREE Delivery)</span>
+                                    </label>
+                                    <small>{{ item.deliveryWindow }}</small>
+                                </div>
+                            </article>
+                        </template>
                     </section>
                 </main>
 
                 <aside class="checkout-summary" aria-label="Order summary">
-                    <RouterLink :to="{ name: 'OrderSuccess' }" class="checkout-place-order">Place your order</RouterLink>
-
                     <section class="checkout-summary__card">
                         <h2>Order summary</h2>
                         <dl>
@@ -240,14 +318,10 @@ onMounted(fetchCustomerAddresses);
                         </dl>
                     </section>
 
-                    <section class="checkout-promotion-box">
-                        <h3>Promotions applied:</h3>
-                        <ul>
-                            <li>Extra Discount</li>
-                            <li>Free Delivery</li>
-                        </ul>
-                        <a href="#">How are delivery costs calculated?</a>
-                    </section>
+                    <button @click="placeOrder" :disabled="isProcessing" class="amazon-checkout-btn">
+                        <span v-if="isProcessing" class="spinner"></span>
+                        <span v-else>Place your order</span>
+                    </button>
                 </aside>
             </div>
         </div>
@@ -676,25 +750,72 @@ onMounted(fetchCustomerAddresses);
     padding: 14px;
 }
 
-.checkout-place-order {
+.amazon-checkout-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
     width: 100%;
-    min-height: 34px;
-    border: 1px solid #a88734;
-    border-radius: 3px;
-    background: linear-gradient(#f7dfa5, #f0c14b);
-    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.45);
-    color: #111827;
+    min-height: 44px;
+    background: #ffd814;
+    border: 1px solid #fcd200;
+    box-shadow: 0 2px 5px 0 rgba(213, 217, 217, 0.5);
+    color: #0f1111;
     cursor: pointer;
-    font-size: 13px;
-    padding: 8px 10px;
+    font-size: 15px;
+    font-weight: 400;
+    line-height: 20px;
+    padding: 0 15px;
+    text-align: center;
+    text-decoration: none;
+    transition:
+        background-color 0.2s ease,
+        border-color 0.2s ease,
+        box-shadow 0.2s ease;
+    box-sizing: border-box;
 }
 
-.checkout-place-order:hover {
-    background: linear-gradient(#f5d78e, #eeb933);
+.amazon-checkout-btn:hover:not(:disabled) {
+    background: #f7ca00;
+    border-color: #f2c200;
+}
+
+.amazon-checkout-btn:focus-visible {
+    outline: none;
+    border-color: #008296;
+    box-shadow: 0 0 0 3px rgba(0, 130, 150, 0.4);
+}
+
+.amazon-checkout-btn:active:not(:disabled) {
+    background: #f0b800;
+    border-color: #008296;
+    box-shadow: inset 0 0 4px rgba(0, 0, 0, 0.2);
+    transform: scale(0.99);
+}
+
+.amazon-checkout-btn:disabled {
+    background: #f3f3f3;
+    border-color: #d5d9d9;
+    color: #878787;
+    cursor: not-allowed;
+    box-shadow: none;
+}
+
+.amazon-checkout-btn .spinner {
+    width: 20px;
+    height: 20px;
+    border: 3px solid rgba(15, 17, 17, 0.1);
+    border-radius: 50%;
+    border-top-color: #0f1111;
+    animation: spin 1s ease-in-out infinite;
+}
+
+@keyframes spin {
+    to {
+        transform: rotate(360deg);
+    }
 }
 
 .checkout-summary__card {
-    margin-top: 14px;
     padding: 14px;
 }
 

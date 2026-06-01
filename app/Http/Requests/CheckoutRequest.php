@@ -12,7 +12,7 @@ class CheckoutRequest extends FormRequest
      */
     public function authorize(): bool
     {
-        return false;
+        return true;
     }
 
     /**
@@ -25,10 +25,10 @@ class CheckoutRequest extends FormRequest
         return [
             'customer_address_id' => [
                 'required',
-                'exists:customer_address,id,user_id,' . $this->user()->id
+                'exists:customer_addresses,id,customer_id,' . $this->user()->id
             ],
             'payment_method' => 'required|in:cod,vnpay,momo',
-            'shipping_service_id' => 'required|integer',
+            'shipping_service_id' => 'nullable|integer',
             'voucher_code' => 'nullable|string',
             'note' => 'nullable|string|max:500'
         ];
