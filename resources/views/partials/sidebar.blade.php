@@ -78,7 +78,7 @@
 
         {{-- Account --}}
         <li
-            class="nav-item menu-open {{ request()->routeIs('users.*') && request()->routeIs('roles.*') ? 'menu-is-opening ' : '' }}">
+            class="nav-item menu-open {{ request()->routeIs('users.*') || request()->routeIs('roles.*') || request()->routeIs('customer-addresses.*') ? 'menu-is-opening ' : '' }}">
             <a href="#" class="nav-link">
                 <x-icon-people-setting class="nav-icon" />
                 <p>{{ __('header.accounts') }}
@@ -96,6 +96,12 @@
                     <a href="{{ route('roles.index') }}"
                         class="nav-link {{ request()->routeIs('roles.index') ? 'active' : '' }}">
                         <p>{{ __('role.management_title') }}</p>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="{{ route('customer-addresses.index') }}"
+                        class="nav-link {{ request()->routeIs('customer-addresses.*') ? 'active' : '' }}">
+                        <p>{{ __('customer_address.management_title') }}</p>
                     </a>
                 </li>
             </ul>

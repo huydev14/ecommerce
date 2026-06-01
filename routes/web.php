@@ -5,6 +5,7 @@ use App\Http\Controllers\AuditLogController;
 use App\Http\Controllers\BrandController;
 use App\Http\Controllers\CategoryController;
 use App\Http\Controllers\BannerController;
+use App\Http\Controllers\CustomerAddressController;
 use App\Http\Controllers\ProductController;
 use App\Http\Controllers\ProductImportController;
 use App\Http\Controllers\ProductVariantController;
@@ -106,6 +107,15 @@ Route::prefix('admin')->middleware('auth')->group(function () {
         Route::post('/{id}/restore', [ProductVariantController::class, 'restore'])->name('restore');
     });
     Route::resource('product-variants', ProductVariantController::class);
+
+    // --- Customer addresses -----------------------
+    Route::prefix('customer-addresses')->name('customer-addresses.')->group(function () {
+        Route::get('/data', [CustomerAddressController::class, 'data'])->name('data');
+        Route::get('/filter-data', [CustomerAddressController::class, 'getFilterData'])->name('filter_data');
+        Route::get('/districts', [CustomerAddressController::class, 'districts'])->name('districts');
+        Route::get('/wards', [CustomerAddressController::class, 'wards'])->name('wards');
+    });
+    Route::resource('customer-addresses', CustomerAddressController::class)->except(['show']);
 
     // --- Units ------------------------------------
     Route::prefix('units')->name('units.')->group(function () {
