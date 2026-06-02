@@ -6,7 +6,6 @@ import api from '@/services/api';
 const { t } = useI18n();
 const orderTabs = computed(() => [
     { key: 'orders', label: t('orders.tabs_orders') },
-    { key: 'buyAgain', label: t('orders.tabs_buyAgain') },
     { key: 'notYetShipped', label: t('orders.tabs_notYetShipped') },
 ]);
 const orders = ref([]);
@@ -89,7 +88,6 @@ onMounted(fetchOrders);
             <header class="orders-hero">
                 <div class="orders-hero__copy">
                     <h1 id="orders-title">{{ t('orders.title') }}</h1>
-                    <p v-html="t('orders.placedIn', { count: filteredOrders.length })"></p>
                 </div>
 
                 <form class="orders-search" role="search" @submit.prevent>
@@ -108,15 +106,15 @@ onMounted(fetchOrders);
             <div class="orders-summary" :aria-label="t('orders.title')">
                 <div class="orders-summary__item">
                     <span>{{ t('orders.tabs_orders') }}</span>
-                    <strong>{{ orders.length }}</strong>
+                    <p>{{ orders.length }}</p>
                 </div>
                 <div class="orders-summary__item">
                     <span>{{ t('orders.card_total') }}</span>
-                    <strong>{{ formatCurrency(totalSpent) }}</strong>
+                    <p>{{ formatCurrency(totalSpent) }}</p>
                 </div>
                 <div class="orders-summary__item">
                     <span>{{ t('orders.tabs_notYetShipped') }}</span>
-                    <strong>{{ activeOrderCount }}</strong>
+                    <p>{{ activeOrderCount }}</p>
                 </div>
             </div>
 
@@ -179,12 +177,6 @@ onMounted(fetchOrders);
                                 </div>
                             </div>
                         </div>
-
-                        <div class="orders-card__actions">
-                            <RouterLink class="orders-card__primary" :to="{ name: 'OrderSuccess', query: { order: order.order_number } }">
-                                {{ t('orders.card_viewDetails') }}
-                            </RouterLink>
-                        </div>
                     </div>
                 </article>
             </div>
@@ -243,9 +235,8 @@ onMounted(fetchOrders);
 
 .orders-hero h1 {
     margin: 0;
-    margin-top: 12px;
     color: #0f1111;
-    font-size: 38px;
+    font-size: 24px;
     font-weight: 700;
     line-height: 46px;
     letter-spacing: 0;
@@ -260,8 +251,7 @@ onMounted(fetchOrders);
 
 .orders-search {
     display: grid;
-    grid-template-columns: minmax(0, 1fr) 154px;
-    gap: 10px;
+    grid-template-columns: minmax(0, 1fr) 135px;
     align-items: center;
 }
 
@@ -271,7 +261,6 @@ onMounted(fetchOrders);
     min-width: 0;
     height: 48px;
     border: 1px solid #c7cccc;
-    border-radius: 8px;
     background: #ffffff;
     padding: 0 15px;
     color: #0f1111;
@@ -306,7 +295,6 @@ onMounted(fetchOrders);
     gap: 8px;
     min-height: 48px;
     border: 0;
-    border-radius: 999px;
     background: #ffd814;
     padding: 0 18px;
     color: #0f1111;
@@ -413,7 +401,6 @@ onMounted(fetchOrders);
     flex: none;
     min-height: 38px;
     border: 1px solid #d5d9d9;
-    border-radius: 999px;
     background: #ffffff;
     padding: 0 13px;
     color: #0f1111;
@@ -462,13 +449,11 @@ onMounted(fetchOrders);
 .orders-list {
     display: grid;
     gap: 16px;
-    margin-top: 18px;
 }
 
 .orders-card {
     overflow: hidden;
     border: 1px solid #d5d9d9;
-    border-radius: 8px;
     background: #ffffff;
     box-shadow: 0 1px 2px rgba(15, 17, 17, 0.08);
 }
@@ -542,11 +527,6 @@ onMounted(fetchOrders);
     color: #7a4d00;
 }
 
-.orders-status--processing {
-    background: #e7f2ff;
-    color: #075985;
-}
-
 .orders-status--completed {
     background: #e9f8ef;
     color: #0f6b3f;
@@ -612,17 +592,6 @@ onMounted(fetchOrders);
     line-height: 18px;
     text-decoration: none;
     cursor: pointer;
-}
-
-.orders-card__primary {
-    border: 0;
-    background: #ffd814;
-    color: #0f1111;
-}
-
-.orders-card__primary:hover {
-    background: #f7ca00;
-    text-decoration: none;
 }
 
 @media (max-width: 900px) {
@@ -696,7 +665,7 @@ onMounted(fetchOrders);
         padding: 15px 16px;
     }
 
-    .orders-summary__item strong {
+    .orders-summary__item p {
         font-size: 24px;
         line-height: 30px;
     }
