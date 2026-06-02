@@ -35,4 +35,44 @@ class LocationController extends Controller
         $wards = $this->ghnService->getWards($request->district_id);
         return response()->json(['success' => true, 'data' => $wards]);
     }
+
+    public function calculateShippingFee(Request $request)
+    {
+        $validated = $request->validate([
+            'province_id' => 'required|numeric',
+            'weight' => 'nullable|numeric|min:1',
+        ]);
+
+        $district = collect($this->ghnService->getDistricts($validated['province_id']))->first();
+
+        if (!$district) {
+            return response()->json(['success' => false, 'message' => 'District not found.'], 404);
+        }
+
+        $districtId = $district['DistrictID'] ?? null;
+
+        if (!$districtId) {
+            return response()->json(['success' => false, 'message' => 'District not found.'], 404);
+        }
+
+        $ward = collect($this->ghnService->getWards($districtId))->first();
+
+        if (!$ward) {
+            return response()->json(['success' => false, 'message' => 'Ward not found.'], 404);
+        }
+
+        $wardCode = $ward['WardCode'] ?? null;
+        $fee = $wardCode
+            ? $this->ghnService->calculateFee($districtId, $wardCode, $validated['weight'] ?? 30000)
+            : null;
+
+        if (!$fee) {
+            return response()->json(['success' => false, 'message' => 'Unable to calculate shipping fee.'], 422);
+        }
+
+        return response()->json([
+            'success' => true,
+            'data' => $fee,
+        ]);
+    }
 }

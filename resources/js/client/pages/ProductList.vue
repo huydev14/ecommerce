@@ -219,7 +219,6 @@ watch(() => [route.query.category, route.query.page, route.query.brand], fetchPr
             <main class="listing-results">
                 <header class="results-header">
                     <h1>{{ t('productList.title') }}</h1>
-                    <p>{{ t('productList.description') }}</p>
                 </header>
 
                 <div v-if="isLoading" class="listing-state">{{ t('productList.loading') }}</div>

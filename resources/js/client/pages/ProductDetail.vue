@@ -5,9 +5,11 @@ import { useRoute } from 'vue-router';
 import api from '@/services/api';
 import { APP_CONFIG } from '@/config';
 import { useCartStore } from '@/stores/cart';
+import { useLocationStore } from '@/stores/location';
 
 const route = useRoute();
 const cartStore = useCartStore();
+const locationStore = useLocationStore();
 const { t } = useI18n();
 
 const product = ref(null);
@@ -19,6 +21,9 @@ const quantity = ref(1);
 const isAddingToCart = ref(false);
 const cartMessage = ref('');
 const cartError = ref('');
+const shippingFee = ref(null);
+const isShippingFeeLoading = ref(false);
+const shippingFeeError = ref('');
 
 const variants = computed(() => product.value?.variants || []);
 const selectedVariant = computed(
@@ -28,11 +33,27 @@ const activePrice = computed(() => selectedVariant.value?.price || product.value
 const brandName = computed(() => product.value?.brand?.name || APP_CONFIG.appName);
 const brandSlug = computed(() => product.value?.brand?.slug || '');
 const categoryName = computed(() => product.value?.category?.name || t('productDetail.fallback_category'));
+const totalSold = computed(() => Number(product.value?.total_sold || product.value?.sold_count || 0));
+const deliveryLocationName = computed(
+    () => locationStore.currentLocationName || localStorage.getItem('current_location_name') || t('productDetail.fallback_location'),
+);
 const productImages = computed(() => {
     const image = product.value?.thumbnail;
 
     return image ? [image, image, image, image] : [];
 });
+
+const formatCount = (value) => {
+    const count = Number(value || 0);
+
+    if (count >= 1000) {
+        return `${(count / 1000).toFixed(1)}K`;
+    }
+
+    return String(count);
+};
+
+const soldCountLabel = computed(() => t('productDetail.boughtInPastMonth', { count: formatCount(totalSold.value) }));
 
 const getVariantLabel = (variant, fallback = t('productDetail.fallback_defaultVariant')) => {
     const attributes = variant?.attributes || {};
@@ -75,6 +96,7 @@ const fetchProduct = async () => {
             product.value = response.data.data;
             selectedImage.value = response.data.data.thumbnail || '';
             selectedVariantId.value = response.data.data.variants?.[0]?.id || null;
+            fetchShippingFee();
         } else {
             product.value = null;
             errorMessage.value = t('productDetail.errors_fetchProduct');
@@ -88,12 +110,8 @@ const fetchProduct = async () => {
     }
 };
 
-const formatPrice = (price) => {
+const formatCurrency = (price) => {
     const numericPrice = Number(price || 0);
-
-    if (!numericPrice) {
-        return t('productDetail.contact');
-    }
 
     return new Intl.NumberFormat('vi-VN', {
         style: 'currency',
@@ -101,6 +119,62 @@ const formatPrice = (price) => {
         maximumFractionDigits: 0,
     }).format(numericPrice);
 };
+
+const formatPrice = (price) => {
+    const numericPrice = Number(price || 0);
+
+    if (!numericPrice) {
+        return t('productDetail.contact');
+    }
+
+    return formatCurrency(numericPrice);
+};
+
+const fetchShippingFee = async () => {
+    const provinceId = locationStore.currentProvinceId || localStorage.getItem('current_location_province_id');
+
+    shippingFee.value = null;
+    shippingFeeError.value = '';
+
+    if (!provinceId) {
+        shippingFeeError.value = t('productDetail.shippingUnavailable');
+        return;
+    }
+
+    isShippingFeeLoading.value = true;
+
+    try {
+        const response = await api.get('/locations/shipping-fee', {
+            params: {
+                province_id: provinceId,
+                weight: 1000,
+            },
+        });
+
+        shippingFee.value = response.data?.data?.total ?? null;
+
+        if (shippingFee.value === null) {
+            shippingFeeError.value = t('productDetail.shippingUnavailable');
+        }
+    } catch (error) {
+        shippingFeeError.value = t('productDetail.shippingUnavailable');
+        console.error(t('productDetail.errors_fetchShippingFeeLog'), error);
+    } finally {
+        isShippingFeeLoading.value = false;
+    }
+};
+
+const shippingFeeLabel = computed(() => {
+    if (isShippingFeeLoading.value) {
+        return t('productDetail.shippingCalculating');
+    }
+
+    if (shippingFee.value !== null) {
+        return formatCurrency(shippingFee.value);
+    }
+
+    return shippingFeeError.value || t('productDetail.shippingUnavailable');
+});
 
 const addToCart = async () => {
     cartMessage.value = '';
@@ -126,6 +200,8 @@ const addToCart = async () => {
 onMounted(fetchProduct);
 
 watch(() => route.params.slug, fetchProduct);
+
+watch(() => locationStore.currentProvinceId, fetchShippingFee);
 </script>
 
 <template>
@@ -166,17 +242,15 @@ watch(() => route.params.slug, fetchProduct);
                     <span>4.7</span>
                     <span class="pdp-stars">★★★★★</span>
                     <a href="#">{{ t('productDetail.ratings', { count: 121 }) }}</a>
-                    <span>|</span>
-                    <a href="#">{{ t('productDetail.searchThisPage') }}</a>
                 </div>
 
-                <p class="pdp-bought" v-html="t('productDetail.boughtInPastMonth', { count: '10K+' })"></p>
+                <p class="pdp-bought" v-html="soldCountLabel"></p>
 
                 <hr />
 
                 <div class="pdp-price">{{ formatPrice(activePrice) }}</div>
+                <p class="pdp-muted">{{ t('productDetail.shippingFee', { fee: shippingFeeLabel }) }}</p>
                 <p class="pdp-shipping">{{ t('productDetail.freeReturns') }}</p>
-                <p class="pdp-muted">{{ t('productDetail.shippingFee', { fee: '$55.87' }) }}</p>
 
                 <section v-if="variantLabels.length" class="pdp-options">
                     <h2>{{ t('productDetail.options') }}</h2>
@@ -212,9 +286,9 @@ watch(() => route.params.slug, fetchProduct);
 
             <aside class="pdp-buybox" :aria-label="t('productDetail.aria_purchaseOptions')">
                 <div class="pdp-buybox__price">{{ formatPrice(activePrice) }}</div>
-                <p class="pdp-muted">{{ t('productDetail.shipping', { fee: '$55.87' }) }}</p>
+                <p class="pdp-muted">{{ t('productDetail.shippingFee', { fee: shippingFeeLabel }) }}</p>
                 <p class="pdp-delivery" v-html="t('productDetail.delivery', { date: 'Wednesday, June 24' })"></p>
-                <a href="#" class="pdp-location">{{ t('productDetail.deliverTo') }}</a>
+                <a href="#" class="pdp-location">{{ t('productDetail.deliverTo', { location: deliveryLocationName }) }}</a>
                 <p class="pdp-stock">{{ t('productDetail.inStock') }}</p>
 
                 <label class="pdp-qty">

@@ -61,6 +61,7 @@ Route::prefix('v1')->group(function () {
         Route::get('/provinces', [LocationController::class, 'getProvinces']);
         Route::get('/districts', [LocationController::class, 'getDistricts']);
         Route::get('/wards', [LocationController::class, 'getWards']);
+        Route::get('/shipping-fee', [LocationController::class, 'calculateShippingFee']);
     });
 
 
