@@ -41,6 +41,8 @@ class ProductResource extends JsonResource
             'product_variant_id' => $this->whenLoaded('cheapestVariant', function () {
                 return $this->cheapestVariant?->id;
             }),
+
+            'total_sold' => (int) ($this->total_sold ?? 0),
         ];
     }
 

@@ -50,6 +50,33 @@ class ProductController extends Controller
             ]
         ]);
     }
+
+    public function bestSellers(Request $request)
+    {
+        $limit = $request->get('limit', 10);
+
+        $products = Cache::remember('products_best_sellers_' . $limit, now()->addHour(), function () use ($limit) {
+            return Product::query()
+                ->select('products.*')
+                ->selectRaw('SUM(order_items.quantity) as total_sold')
+                ->join('order_items', 'products.id', '=', 'order_items.product_id')
+                ->join('orders', 'orders.id', '=', 'order_items.order_id')
+                ->where('orders.status', 'completed')
+                ->where('products.status', 'published')
+                ->groupBy('products.id')
+                ->orderByDesc('total_sold')
+                ->limit($limit)
+                ->with(['brand', 'category', 'cheapestVariant'])
+                ->get();
+        });
+
+        return ProductResource::collection($products)
+            ->additional([
+                'success' => true,
+                'message' => 'Get best sellers products successfully.'
+            ]);
+    }
+
     public function newArrivals(Request $request)
     {
         $products = Cache::remember('api_new_arrivals', now()->addMinutes(30), function () {

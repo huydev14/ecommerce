@@ -14,19 +14,9 @@ import 'swiper/css/pagination';
 const cartStore = useCartStore();
 const { t } = useI18n();
 
-const bestSellers = computed(() => [
-    { icon: '💻', name: t('home.bestSellers_items_workProLaptop'), discount: '-18%', rating: '★★★★★ 2,143', price: '₫18.990.000' },
-    { icon: '🎧', name: t('home.bestSellers_items_noiseCancelingHeadphones'), discount: '-25%', rating: '★★★★☆ 871', price: '₫1.290.000' },
-    { icon: '🪑', name: t('home.bestSellers_items_ergonomicChair'), discount: '-12%', rating: '★★★★★ 654', price: '₫2.690.000' },
-    { icon: '📷', name: t('home.bestSellers_items_officeCamera'), discount: '-10%', rating: '★★★★☆ 342', price: '₫990.000' },
-    { icon: '⌚', name: t('home.bestSellers_items_activeSmartwatch'), discount: '-30%', rating: '★★★★☆ 1,120', price: '₫1.790.000' },
-    { icon: '🖨', name: t('home.bestSellers_items_wifiLaserPrinter'), discount: '-8%', rating: '★★★★★ 431', price: '₫3.190.000' },
-    { icon: '🧴', name: t('home.bestSellers_items_homeCareCombo'), discount: '-22%', rating: '★★★★☆ 221', price: '₫259.000' },
-    { icon: '💡', name: t('home.bestSellers_items_ledDeskLamp'), discount: '-15%', rating: '★★★★★ 588', price: '₫399.000' },
-]);
-
 const banners = ref([]);
 const categories = ref([]);
+const bestSellers = ref([]);
 const featuredProducts = ref([]);
 const newProducts = ref([]);
 const addingProductIds = ref(new Set());
@@ -201,6 +191,20 @@ const newProductRows = computed(() => {
     return rows;
 });
 
+const fetchBestSellers = async () => {
+    try {
+        const response = await api.get('/products/best-sellers', {
+            params: {
+                limit: 8,
+            },
+        });
+
+        bestSellers.value = normalizeProducts(response.data);
+    } catch (error) {
+        console.error(t('home.errors_fetchBestSellers'), error);
+    }
+};
+
 const fetchFeaturedProducts = async () => {
     try {
         const response = await api.get('/products/featured-products');
@@ -235,6 +239,7 @@ const scrollFeatured = (direction) => {
 onMounted(() => {
     fetchHomeData();
     fetchCategories();
+    fetchBestSellers();
     fetchFeaturedProducts();
     fetchNewArrivals();
 });
@@ -374,24 +379,24 @@ onMounted(() => {
         </section>
 
         <div class="home__content">
-            <section class="rail" :aria-label="t('home.bestSellers_aria')">
+            <section class="rail best-sellers" :aria-label="t('home.bestSellers_aria')">
                 <div class="section-heading">
                     <h2>{{ t('home.bestSellers_title') }}</h2>
                     <a href="#" class="link">{{ t('home.links_seeMore') }}</a>
                 </div>
 
-                <div class="product-row">
-                    <article v-for="product in bestSellers" :key="product.name" class="product">
-                        <a href="#" class="product__image">{{ product.icon }}</a>
-                        <div class="product__deal">
-                            <span>{{ product.discount }}</span>
-                            <b>{{ t('home.bestSellers_deal') }}</b>
-                        </div>
-                        <a href="#" class="product__name">{{ product.name }}</a>
-                        <div class="product__rating">{{ product.rating }}</div>
-                        <div class="product__price">{{ product.price }}</div>
-                    </article>
+                <div class="product-row best-sellers__row">
+                    <ProductCard
+                        v-for="product in bestSellers"
+                        :key="product.id || product.slug || product.name"
+                        :product="product"
+                        :is-adding="isAddingToCart(product)"
+                        compact
+                        @add-to-cart="addProductToCart"
+                    />
                 </div>
+
+                <p v-if="bestSellers.length === 0" class="best-sellers__empty">{{ t('home.empty_bestSellers') }}</p>
             </section>
 
             <section class="rail featured-products" :aria-label="t('home.featuredProducts_aria')">
@@ -464,7 +469,7 @@ onMounted(() => {
 }
 
 .home-category-menu {
-    position: relative; /* ĐÂY CHÍNH LÀ ĐIỂM NEO MỚI CHO FLYOUT */
+    position: relative;
     z-index: 5;
     align-self: start;
     height: 600px;
@@ -481,7 +486,6 @@ onMounted(() => {
     list-style: none;
 }
 
-/* ĐÃ XÓA position: relative; Ở ĐÂY ĐỂ TRÁNH LỖI ĐIỂM NEO */
 .home-category-menu__item {
     position: static;
 }
@@ -492,7 +496,7 @@ onMounted(() => {
     gap: 10px;
     align-items: center;
     min-height: 36px;
-    padding: 7px 16px; /* Tăng padding 2 bên một chút cho thoáng */
+    padding: 7px 16px;
     color: #111827;
     font-size: 14px;
     line-height: 18px;
@@ -518,7 +522,7 @@ onMounted(() => {
 
 .home-category-menu__icon svg,
 .home-category-menu__icon img {
-    width: 18px; /* Thu nhỏ icon lại một chút cho thanh lịch */
+    width: 18px;
     height: 18px;
     object-fit: contain;
 }
@@ -528,7 +532,7 @@ onMounted(() => {
     font-weight: 500;
     text-overflow: ellipsis;
     white-space: nowrap;
-    text-transform: capitalize; /* TỰ ĐỘNG VIẾT HOA CHỮ CÁI ĐẦU */
+    text-transform: capitalize;
 }
 
 .home-category-menu__arrow {
@@ -536,7 +540,7 @@ onMounted(() => {
     height: 16px;
     color: #6b7280;
     opacity: 0;
-    transition: transform 0.2s ease; /* Thêm hiệu ứng di chuyển mũi tên */
+    transition: transform 0.2s ease;
 }
 
 .home-category-menu__item--has-children .home-category-menu__arrow {
@@ -544,19 +548,18 @@ onMounted(() => {
 }
 
 .home-category-menu__item--has-children:hover .home-category-menu__arrow {
-    transform: translateX(3px); /* Hover vào mũi tên nhích sang phải 1 chút */
+    transform: translateX(3px);
 }
 
-/* KHỐI FLYOUT (MEGA MENU) */
 .home-category-flyout {
     position: absolute;
-    top: 0; /* Neo chặt vào mép trên của menu chính */
-    left: 100%; /* Nằm sát mép phải */
+    top: 0;
+    left: 100%;
     z-index: 20;
-    margin-left: 2px; /* Tạo khe hở siêu nhỏ */
+    margin-left: 2px;
 
     width: min(650px, calc(100vw - 300px)); /* Cho to ra một chút */
-    min-height: 100%; /* Bằng luôn chiều cao menu cha (600px) để nhìn cân đối */
+    min-height: 100%;
     max-height: 100%;
     overflow-y: auto;
 
@@ -566,7 +569,6 @@ onMounted(() => {
     box-shadow: 10px 10px 30px rgba(15, 23, 42, 0.1);
     padding: 24px;
 
-    /* ANIMATION THAY CHO DISPLAY: NONE */
     visibility: hidden;
     opacity: 0;
     transform: translateX(-10px);
@@ -576,7 +578,6 @@ onMounted(() => {
         visibility 0.25s ease;
 }
 
-/* BẬT FLYOUT KHI HOVER */
 .home-category-menu__item--has-children:hover > .home-category-flyout,
 .home-category-menu__item--has-children:focus-within > .home-category-flyout {
     visibility: visible;
@@ -584,7 +585,6 @@ onMounted(() => {
     transform: translateX(0);
 }
 
-/* CẦU NỐI TÀNG HÌNH (TRÁNH LỖI MẤT HOVER KHI RẼ CHUỘT) */
 .home-category-flyout::before {
     content: '';
     position: absolute;
@@ -595,7 +595,6 @@ onMounted(() => {
     background: transparent;
 }
 
-/* TÙY CHỈNH THANH CUỘN (SCROLLBAR) CHO FLYOUT ĐỂ NHÌN XỊN HƠN */
 .home-category-flyout::-webkit-scrollbar {
     width: 6px;
 }
@@ -640,7 +639,7 @@ onMounted(() => {
 .home-category-flyout__child {
     margin-top: 6px;
     color: #4b5563;
-    font-size: 14px; /* Tăng từ 13px lên 14px cho dễ đọc */
+    font-size: 14px;
     line-height: 20px;
     text-transform: capitalize;
     transition: color 0.15s ease;
@@ -925,6 +924,11 @@ onMounted(() => {
     gap: 18px;
 }
 
+.best-sellers__row {
+    grid-template-columns: repeat(5, minmax(170px, 1fr));
+    gap: 14px;
+}
+
 .product {
     min-width: 0;
 }
@@ -1183,6 +1187,13 @@ onMounted(() => {
     line-height: 20px;
 }
 
+.best-sellers__empty {
+    margin: 10px 0 0;
+    color: #565959;
+    font-size: 14px;
+    line-height: 20px;
+}
+
 .new-products__rows {
     display: grid;
     gap: 14px;
@@ -1198,28 +1209,37 @@ onMounted(() => {
     padding: 18px 18px 20px;
 }
 
+.best-sellers {
+    padding: 18px 18px 20px;
+}
+
+.best-sellers .product-card,
 .new-products .product-card {
     border: 1px solid #f0f2f2;
     border-radius: 2px;
 }
 
+.best-sellers .product-card__image,
 .new-products .product-card__image {
     height: 190px;
     aspect-ratio: auto;
     padding: 14px;
 }
 
+.best-sellers .product-card__body,
 .new-products .product-card__body {
     min-height: 236px;
     padding: 12px 12px 14px;
 }
 
+.best-sellers .product-card__brand,
 .new-products .product-card__brand {
     margin-bottom: 3px;
     font-size: 14px;
     line-height: 18px;
 }
 
+.best-sellers .product-card__name,
 .new-products .product-card__name {
     min-height: 40px;
     font-size: 14px;
@@ -1227,47 +1247,57 @@ onMounted(() => {
     -webkit-line-clamp: 2;
 }
 
+.best-sellers .product-card__rating,
 .new-products .product-card__rating {
     margin-top: 8px;
     font-size: 12px;
     line-height: 16px;
 }
 
+.best-sellers .product-card__stars,
 .new-products .product-card__stars {
     font-size: 13px;
 }
 
+.best-sellers .product-card__chevron,
 .new-products .product-card__chevron {
     font-size: 14px;
 }
 
+.best-sellers .product-card__meta,
+.best-sellers .product-card__ship,
 .new-products .product-card__meta,
 .new-products .product-card__ship {
     font-size: 13px;
     line-height: 18px;
 }
 
+.best-sellers .product-card__price,
 .new-products .product-card__price {
     margin-top: 10px;
 }
 
+.best-sellers .product-card__price span,
 .new-products .product-card__price span {
     padding-top: 4px;
     font-size: 12px;
     line-height: 14px;
 }
 
+.best-sellers .product-card__price strong,
 .new-products .product-card__price strong {
     font-size: 26px;
     line-height: 30px;
 }
 
+.best-sellers .product-card__delivery,
 .new-products .product-card__delivery {
     margin-top: 8px;
     font-size: 13px;
     line-height: 18px;
 }
 
+.best-sellers .product-card__cart,
 .new-products .product-card__cart {
     min-height: 38px;
     font-size: 14px;
@@ -1355,12 +1385,14 @@ onMounted(() => {
         grid-template-columns: repeat(3, minmax(150px, 1fr));
     }
 
+    .best-sellers__row,
     .new-products__row {
         grid-template-columns: repeat(3, minmax(0, 1fr));
     }
 }
 
 @media (max-width: 1024px) {
+    .best-sellers__row,
     .new-products__row {
         grid-template-columns: repeat(2, minmax(0, 1fr));
     }
@@ -1419,6 +1451,7 @@ onMounted(() => {
     }
 
     .product-row,
+    .best-sellers__row,
     .new-products__row,
     .category-row {
         grid-template-columns: 1fr;
