@@ -264,7 +264,7 @@ onMounted(async () => {
                     <p class="addresses-eyebrow">{{ t('addresses.account') }}</p>
                     <h1 id="addresses-title">{{ t('addresses.title') }}</h1>
                 </div>
-                <router-link :to="{ name: 'MyAccountOrders' }" class="addresses-header__link">{{ t('addresses.viewOrders') }}</router-link>
+                <router-link :to="{ name: 'MyOrders' }" class="addresses-header__link">{{ t('addresses.viewOrders') }}</router-link>
             </header>
 
             <div v-if="errorMessage" class="address-alert is-error" role="alert">{{ errorMessage }}</div>
@@ -276,7 +276,12 @@ onMounted(async () => {
                     <div v-else-if="!addresses.length" class="addresses-empty">{{ t('addresses.empty') }}</div>
 
                     <template v-else>
-                        <article v-for="address in addresses" :key="address.id" class="address-card" :class="{ 'is-default': address.is_default }">
+                        <article
+                            v-for="address in addresses"
+                            :key="address.id"
+                            class="address-card"
+                            :class="{ 'is-default': address.is_default }"
+                        >
                             <div class="address-card__top">
                                 <div>
                                     <h2>{{ addressTitle(address) }}</h2>
@@ -301,7 +306,9 @@ onMounted(async () => {
                                 <button v-if="!address.is_default" type="button" @click="setDefaultAddress(address)">
                                     {{ t('addresses.actions_setDefault') }}
                                 </button>
-                                <button type="button" class="is-danger" @click="removeAddress(address)">{{ t('addresses.actions_delete') }}</button>
+                                <button type="button" class="is-danger" @click="removeAddress(address)">
+                                    {{ t('addresses.actions_delete') }}
+                                </button>
                             </div>
                         </article>
                     </template>
@@ -316,7 +323,13 @@ onMounted(async () => {
                     <div class="address-form__row">
                         <label>
                             {{ t('addresses.form_label') }}
-                            <input v-model.trim="form.label" type="text" maxlength="50" :placeholder="t('addresses.form_labelPlaceholder')" required />
+                            <input
+                                v-model.trim="form.label"
+                                type="text"
+                                maxlength="50"
+                                :placeholder="t('addresses.form_labelPlaceholder')"
+                                required
+                            />
                         </label>
                         <label>
                             {{ t('addresses.form_receiverName') }}
@@ -331,7 +344,12 @@ onMounted(async () => {
                         </label>
                         <label>
                             {{ t('addresses.form_deliveryNote') }}
-                            <input v-model.trim="form.delivery_note" type="text" maxlength="255" :placeholder="t('addresses.form_deliveryNotePlaceholder')" />
+                            <input
+                                v-model.trim="form.delivery_note"
+                                type="text"
+                                maxlength="255"
+                                :placeholder="t('addresses.form_deliveryNotePlaceholder')"
+                            />
                         </label>
                     </div>
 
@@ -376,7 +394,13 @@ onMounted(async () => {
                     </label>
 
                     <button type="submit" class="address-form__submit" :disabled="isSaving">
-                        {{ isSaving ? t('addresses.actions_saving') : isEditing ? t('addresses.actions_saveChanges') : t('addresses.actions_addAddress') }}
+                        {{
+                            isSaving
+                                ? t('addresses.actions_saving')
+                                : isEditing
+                                  ? t('addresses.actions_saveChanges')
+                                  : t('addresses.actions_addAddress')
+                        }}
                     </button>
                 </form>
             </div>

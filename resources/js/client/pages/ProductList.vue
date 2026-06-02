@@ -131,6 +131,7 @@ const fetchProducts = async () => {
     try {
         const response = await api.get('/products', {
             params: {
+                brandLimit: 10,
                 page: currentPage.value,
                 ...(categorySlug.value ? { category: categorySlug.value } : {}),
                 ...(selectedBrands.value.length ? { brand: selectedBrands.value.join(',') } : {}),

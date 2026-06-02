@@ -181,7 +181,7 @@ const fetchCategories = async () => {
 };
 
 const newProductRows = computed(() => {
-    const chunkSize = 5;
+    const chunkSize = 6;
     const rows = [];
 
     for (let index = 0; index < newProducts.value.length; index += chunkSize) {
@@ -195,7 +195,7 @@ const fetchBestSellers = async () => {
     try {
         const response = await api.get('/products/best-sellers', {
             params: {
-                limit: 8,
+                limit: 3,
             },
         });
 
@@ -381,7 +381,7 @@ onMounted(() => {
         <div class="home__content">
             <section class="rail best-sellers" :aria-label="t('home.bestSellers_aria')">
                 <div class="section-heading">
-                    <h2>{{ t('home.bestSellers_title') }}</h2>
+                    <h2 class="tw-font-bold tw-text-lg">{{ t('home.bestSellers_title') }}</h2>
                     <a href="#" class="link">{{ t('home.links_seeMore') }}</a>
                 </div>
 
@@ -402,8 +402,7 @@ onMounted(() => {
             <section class="rail featured-products" :aria-label="t('home.featuredProducts_aria')">
                 <div class="section-heading">
                     <div>
-                        <span class="featured-products__eyebrow">{{ t('home.featuredProducts_eyebrow') }}</span>
-                        <h2>{{ t('home.featuredProducts_title') }}</h2>
+                        <h2 class=" tw-font-bold tw-text-lg">{{ t('home.featuredProducts_title') }}</h2>
                     </div>
 
                     <div class="slider-controls" :aria-label="t('home.featuredProducts_controls')">
@@ -428,7 +427,7 @@ onMounted(() => {
 
             <section class="rail new-products" :aria-label="t('home.newProducts_aria')">
                 <div class="section-heading">
-                    <h2>{{ t('home.newProducts_title') }}</h2>
+                    <h2 class=" tw-font-bold tw-text-lg">{{ t('home.newProducts_title') }}</h2>
                     <a href="#" class="link">{{ t('home.links_seeNewArrivals') }}</a>
                 </div>
 
@@ -556,9 +555,8 @@ onMounted(() => {
     top: 0;
     left: 100%;
     z-index: 20;
-    margin-left: 2px;
-
-    width: min(650px, calc(100vw - 300px)); /* Cho to ra một chút */
+    margin-left: 4px;
+    width: min(420px, calc(100vw - 300px));
     min-height: 100%;
     max-height: 100%;
     overflow-y: auto;
@@ -566,12 +564,12 @@ onMounted(() => {
     border: 1px solid #e5e7eb;
     border-radius: 8px;
     background: #fff;
-    box-shadow: 10px 10px 30px rgba(15, 23, 42, 0.1);
-    padding: 24px;
+    box-shadow: 0 10px 24px rgba(15, 23, 42, 0.12);
+    padding: 16px;
 
     visibility: hidden;
     opacity: 0;
-    transform: translateX(-10px);
+    transform: translateX(-8px);
     transition:
         opacity 0.25s ease,
         transform 0.25s ease,
@@ -589,8 +587,8 @@ onMounted(() => {
     content: '';
     position: absolute;
     top: 0;
-    left: -15px;
-    width: 15px;
+    left: -12px;
+    width: 12px;
     height: 100%;
     background: transparent;
 }
@@ -606,42 +604,50 @@ onMounted(() => {
     border-radius: 10px;
 }
 
-/* TYPOGRAPHY BÊN TRONG FLYOUT */
 .home-category-flyout__heading {
     display: block;
-    margin-bottom: 16px;
+    margin-bottom: 12px;
     color: #111827;
-    font-size: 16px;
+    font-size: 15px;
     font-weight: 700;
-    line-height: 22px;
+    line-height: 20px;
     text-decoration: none;
     text-transform: capitalize;
-    border-bottom: 1px solid #f3f4f6; /* Thêm đường gạch chân nhẹ */
-    padding-bottom: 8px;
+    border-bottom: 1px solid #f3f4f6;
+    padding-bottom: 9px;
 }
 
 .home-category-flyout__grid {
     display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr)); /* Có thể đổi thành repeat(3, ...) nếu nhiều mục con */
-    gap: 24px;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    column-gap: 18px;
+    row-gap: 12px;
 }
 
 .home-category-flyout__parent {
-    margin-bottom: 8px;
-    color: #111827;
-    font-size: 14px;
-    font-weight: 700;
-    line-height: 20px;
+    display: block;
+    overflow: hidden;
+    margin-bottom: 5px;
+    font-size: 13px;
+    line-height: 18px;
+    text-decoration: none;
+    text-overflow: ellipsis;
     text-transform: capitalize;
+    white-space: nowrap;
     transition: color 0.15s ease;
 }
 
 .home-category-flyout__child {
-    margin-top: 6px;
+    display: block;
+    overflow: hidden;
+    margin-top: 4px;
     color: #4b5563;
-    font-size: 14px;
-    line-height: 20px;
+    font-size: 13px;
+    line-height: 18px;
+    text-decoration: none;
+    text-overflow: ellipsis;
     text-transform: capitalize;
+    white-space: nowrap;
     transition: color 0.15s ease;
 }
 
@@ -824,7 +830,6 @@ onMounted(() => {
 }
 
 .card h2,
-.section-heading h2,
 .feature-band h2 {
     margin: 0;
     color: #0f1111;
@@ -1019,7 +1024,7 @@ onMounted(() => {
 
 .featured-slider {
     display: grid;
-    grid-auto-columns: 320px;
+    grid-auto-columns: 220px;
     grid-auto-flow: column;
     gap: 16px;
     overflow-x: auto;
@@ -1201,7 +1206,7 @@ onMounted(() => {
 
 .new-products__row {
     display: grid;
-    grid-template-columns: repeat(5, minmax(170px, 1fr));
+    grid-template-columns: repeat(6, minmax(170px, 1fr));
     gap: 14px;
 }
 

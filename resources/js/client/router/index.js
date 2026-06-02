@@ -39,8 +39,8 @@ const routes = [
             },
             {
                 path: 'my-orders',
-                name: 'MyAccountOrders',
-                component: () => import('@/pages/MyAccountOrders.vue'),
+                name: 'MyOrders',
+                component: () => import('@/pages/MyOrders.vue'),
                 meta: { requiresAuth: true },
             },
             {

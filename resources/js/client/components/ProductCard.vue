@@ -119,7 +119,7 @@ const freeshipLabel = computed(() => t('productCard.badge_freeship'));
 
         <div class="client-product-card__body">
             <RouterLink :to="productRoute" class="client-product-card__name">{{ product.name }}</RouterLink>
-            <div class="client-product-card__brand tw-capitalize tw-text-sm tw-text-gray-500">Brand: {{ brandName }}</div>
+            <div class="client-product-card__brand tw-text-sm tw-capitalize tw-text-gray-500">Brand: {{ brandName }}</div>
             <div class="client-product-card__rating">
                 <span>{{ rating }}</span>
                 <span class="client-product-card__stars">★★★★★</span>
@@ -157,7 +157,12 @@ const freeshipLabel = computed(() => t('productCard.badge_freeship'));
                     stroke-width="2"
                     d="M3 3h2l2.4 12.2a2 2 0 0 0 2 1.6h7.8a2 2 0 0 0 1.9-1.4L21 8H6"
                 />
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 21a1 1 0 1 0 0-2 1 1 0 0 0 0 2ZM18 21a1 1 0 1 0 0-2 1 1 0 0 0 0 2Z" />
+                <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="2"
+                    d="M10 21a1 1 0 1 0 0-2 1 1 0 0 0 0 2ZM18 21a1 1 0 1 0 0-2 1 1 0 0 0 0 2Z"
+                />
             </svg>
         </button>
     </article>
@@ -165,23 +170,22 @@ const freeshipLabel = computed(() => t('productCard.badge_freeship'));
 
 <style scoped>
 .client-product-card {
+    border-width: 2px;
+    border-style: solid;
+    border-color: #f3f4f6;
     position: relative;
     display: flex;
-    min-width: 0;
     flex-direction: column;
     overflow: hidden;
-    border: 1px solid #f0f2f2;
-    border-radius: 2px;
+    border-radius: 5px;
     background: #fff;
     transition:
-        border-color 0.2s ease,
         box-shadow 0.2s ease,
         transform 0.2s ease;
 }
 
 .client-product-card:hover {
-    border-color: #d5d9d9;
-    box-shadow: 0 8px 24px rgba(15, 17, 17, 0.12);
+    box-shadow: 0 2px 5px rgba(15, 17, 17, 0.12);
     transform: translateY(-2px);
 }
 

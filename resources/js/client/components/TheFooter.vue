@@ -10,7 +10,7 @@ const footerSections = computed(() => [
     {
         title: t('footer.sections_help_title'),
         links: [
-            { label: t('footer.sections_help_links_orders'), to: { name: 'MyAccountOrders' } },
+            { label: t('footer.sections_help_links_orders'), to: { name: 'MyOrders' } },
             { label: t('footer.sections_help_links_addresses'), to: { name: 'CustomerAddresses' } },
             { label: t('footer.sections_help_links_security'), href: '#' },
             { label: t('footer.sections_help_links_cart'), to: { name: 'Cart' } },

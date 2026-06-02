@@ -26,7 +26,7 @@ const accountMenuItems = computed(() => [
     {
         title: t('header.account_orders'),
         iconPath: 'M9 5h6m-8 4h10m-10 4h10M7 3h10a2 2 0 012 2v14l-4-2-3 2-3-2-4 2V5a2 2 0 012-2z',
-        to: { name: 'MyAccountOrders' },
+        to: { name: 'MyOrders' },
     },
     {
         title: t('header.account_security'),
@@ -36,8 +36,7 @@ const accountMenuItems = computed(() => [
     },
     {
         title: t('header.account_addresses'),
-        iconPath:
-            'M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z M15 11a3 3 0 11-6 0 3 3 0 016 0z',
+        iconPath: 'M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z M15 11a3 3 0 11-6 0 3 3 0 016 0z',
         to: { name: 'CustomerAddresses' },
     },
     {
@@ -129,7 +128,11 @@ onBeforeUnmount(unlockBodyScroll);
                 @keydown.space.prevent="isLocationModalOpen = true"
             >
                 <span class="tw-pl-4 tw-text-[12px] tw-leading-3 tw-text-[#cccccc]">
-                    {{ t('header.location_deliverTo', { name: authStore.isLoggedIn && authStore.user ? authStore.user.name : t('header.location_guestName') }) }}
+                    {{
+                        t('header.location_deliverTo', {
+                            name: authStore.isLoggedIn && authStore.user ? authStore.user.name : t('header.location_guestName'),
+                        })
+                    }}
                 </span>
                 <div class="tw-flex tw-items-center">
                     <svg
@@ -198,7 +201,11 @@ onBeforeUnmount(unlockBodyScroll);
                     class="tw-flex tw-h-full tw-cursor-pointer tw-flex-col tw-justify-center tw-rounded-sm tw-border tw-border-transparent tw-bg-transparent tw-px-2 tw-py-1 tw-text-left hover:tw-border-white focus:tw-border-white focus:tw-outline-none"
                 >
                     <span class="tw-text-[12px] tw-leading-3 tw-text-white">
-                        {{ t('header.account_greeting', { name: authStore.isLoggedIn && authStore.user ? authStore.user.name : t('header.account_signIn') }) }}
+                        {{
+                            t('header.account_greeting', {
+                                name: authStore.isLoggedIn && authStore.user ? authStore.user.name : t('header.account_signIn'),
+                            })
+                        }}
                     </span>
                     <span class="tw-flex tw-items-center tw-text-[14px] tw-font-bold tw-leading-4 tw-text-white">
                         {{ t('header.account_label') }}
@@ -220,7 +227,9 @@ onBeforeUnmount(unlockBodyScroll);
                 <div
                     class="tw-invisible tw-absolute tw-right-0 tw-top-[48px] tw-z-[90] tw-w-60 tw-rounded-md tw-border tw-border-gray-200 tw-bg-white tw-p-2 tw-text-[#111827] tw-opacity-0 tw-shadow-2xl tw-transition-all tw-duration-200 group-hover:tw-visible group-hover:tw-opacity-100"
                 >
-                <div class="tw-absolute -tw-top-2 tw-right-7 tw-h-4 tw-w-4 tw-rotate-45 tw-border-l tw-border-t tw-border-gray-200 tw-bg-white"></div>
+                    <div
+                        class="tw-absolute -tw-top-2 tw-right-7 tw-h-4 tw-w-4 tw-rotate-45 tw-border-l tw-border-t tw-border-gray-200 tw-bg-white"
+                    ></div>
                     <div
                         class="tw-absolute -tw-top-2 tw-right-7 tw-h-4 tw-w-4 tw-rotate-45 tw-border-l tw-border-t tw-border-gray-200 tw-bg-white"
                     ></div>
@@ -253,15 +262,12 @@ onBeforeUnmount(unlockBodyScroll);
                                     viewBox="0 0 24 24"
                                     stroke="currentColor"
                                 >
-                                    <path
-                                        stroke-linecap="round"
-                                        stroke-linejoin="round"
-                                        stroke-width="2"
-                                        :d="item.iconPath"
-                                    />
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" :d="item.iconPath" />
                                 </svg>
                             </span>
-                            <span class="tw-min-w-0 tw-flex-1 tw-truncate tw-text-[14px] tw-font-medium tw-leading-5">{{ item.title }}</span>
+                            <span class="tw-min-w-0 tw-flex-1 tw-truncate tw-text-[14px] tw-font-medium tw-leading-5">{{
+                                item.title
+                            }}</span>
                             <svg
                                 xmlns="http://www.w3.org/2000/svg"
                                 class="tw-h-4 tw-w-4 tw-flex-none tw-text-gray-400"
@@ -282,7 +288,9 @@ onBeforeUnmount(unlockBodyScroll);
                             class="tw-mt-2 tw-flex tw-w-full tw-items-center tw-gap-3 tw-border-t tw-border-gray-100 tw-text-left tw-text-[#111827] tw-transition-colors hover:tw-bg-[#f7fafa] hover:tw-text-[#c45500]"
                             @click="authStore.logout()"
                         >
-                            <span class="tw-flex tw-items-center tw-gap-3 tw-rounded-md tw-px-3 tw-py-2.5 hover:tw-bg-gray-50 hover:tw-text-[#c45500]">
+                            <span
+                                class="tw-flex tw-items-center tw-gap-3 tw-rounded-md tw-px-3 tw-py-2.5 hover:tw-bg-gray-50 hover:tw-text-[#c45500]"
+                            >
                                 <svg
                                     xmlns="http://www.w3.org/2000/svg"
                                     class="tw-h-5 tw-w-5"
@@ -356,7 +364,9 @@ onBeforeUnmount(unlockBodyScroll);
                     <div class="tw-mb-3 tw-flex tw-items-center tw-justify-between tw-border-b tw-border-gray-200 tw-pb-3">
                         <div>
                             <h3 class="tw-m-0 tw-text-[18px] tw-font-bold">{{ t('header.cart_title') }}</h3>
-                            <p class="tw-m-0 tw-text-[12px] tw-text-gray-600">{{ t('header.cart_itemCount', { count: cartStore.totalItems }) }}</p>
+                            <p class="tw-m-0 tw-text-[12px] tw-text-gray-600">
+                                {{ t('header.cart_itemCount', { count: cartStore.totalItems }) }}
+                            </p>
                         </div>
                         <div class="tw-text-right tw-text-[14px] tw-font-bold">{{ formatPrice(cartStore.subtotal) }}</div>
                     </div>
@@ -393,7 +403,9 @@ onBeforeUnmount(unlockBodyScroll);
                                     >
                                         {{ item.product_name }}
                                     </router-link>
-                                    <p class="tw-m-0 tw-text-[12px] tw-text-gray-600">{{ t('header.cart_quantity', { quantity: item.quantity }) }}</p>
+                                    <p class="tw-m-0 tw-text-[12px] tw-text-gray-600">
+                                        {{ t('header.cart_quantity', { quantity: item.quantity }) }}
+                                    </p>
                                     <p class="tw-m-0 tw-text-[13px] tw-font-bold">{{ formatPrice(item.line_total) }}</p>
                                 </div>
                             </div>

@@ -31,7 +31,11 @@ const categoryUrl = (category) => (category.slug ? `/products?category=${categor
 
 const fetchCategories = async () => {
     try {
-        const response = await axios.get('/api/v1/categories/tree');
+        const response = await axios.get('/api/v1/categories/tree', {
+            params: {
+                limit: 3,
+            },
+        });
         if (response.data && response.data.success) {
             categories.value = getCategoryItems(response.data);
         }
@@ -92,7 +96,7 @@ onBeforeUnmount(() => {
                 class="tw-hidden tw-flex-none tw-items-center tw-rounded-sm tw-border tw-border-transparent tw-px-2 tw-py-1 hover:tw-border-white sm:tw-flex"
                 >{{ t('subNav.links_registry') }}</a
             >
-         
+
             <a
                 href="#"
                 class="tw-hidden tw-flex-none tw-items-center tw-rounded-sm tw-border tw-border-transparent tw-px-2 tw-py-1 hover:tw-border-white md:tw-flex"
@@ -203,7 +207,7 @@ onBeforeUnmount(() => {
 
                         <div class="tw-space-y-1 tw-pb-2">
                             <router-link
-                                :to="{ name: 'MyAccountOrders' }"
+                                :to="{ name: 'MyOrders' }"
                                 class="tw-block tw-px-5 tw-py-2.5 tw-text-[14px] tw-font-medium tw-text-[#111827] hover:tw-bg-gray-50"
                                 @click="closeMenu"
                             >

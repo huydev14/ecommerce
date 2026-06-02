@@ -31,10 +31,13 @@ class ProductController extends Controller
             ->latest()
             ->paginate(24);
 
+        $brandLimit = $request->integer('brandLimit', 10);
+
         $availableBrands = Brand::where('is_active', true)
             ->when(!empty($categoryIds), function ($q) use ($categoryIds) {
                 $q->whereHas('products', fn($p) => $p->whereIn('category_id', $categoryIds));
             })
+            ->limit($brandLimit)
             ->get(['name', 'slug']);
 
         return response()->json([

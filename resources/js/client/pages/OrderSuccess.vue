@@ -75,7 +75,8 @@ onMounted(fetchOrder);
                         <h1>{{ t('orderSuccess.title', { name: order.customerName }) }}</h1>
                         <p>
                             {{ t('orderSuccess.confirmationPrefix') }}
-                            <strong>{{ order.email }}</strong>.
+                            <strong>{{ order.email }}</strong
+                            >.
                         </p>
                     </div>
                 </div>
@@ -154,8 +155,12 @@ onMounted(fetchOrder);
                 </section>
 
                 <div class="order-success-actions">
-                    <RouterLink :to="{ name: 'MyAccountOrders' }" class="order-success-primary">{{ t('orderSuccess.actions_viewOrders') }}</RouterLink>
-                    <RouterLink :to="{ name: 'Home' }" class="order-success-secondary">{{ t('orderSuccess.actions_continueShopping') }}</RouterLink>
+                    <RouterLink :to="{ name: 'MyOrders' }" class="order-success-primary">{{
+                        t('orderSuccess.actions_viewOrders')
+                    }}</RouterLink>
+                    <RouterLink :to="{ name: 'Home' }" class="order-success-secondary">{{
+                        t('orderSuccess.actions_continueShopping')
+                    }}</RouterLink>
                 </div>
             </main>
         </div>

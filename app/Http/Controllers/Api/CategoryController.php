@@ -10,9 +10,10 @@ use Illuminate\Support\Facades\Cache;
 
 class CategoryController extends Controller
 {
-    public function tree()
+    public function tree(Request $request)
     {
-        $categories = Cache::rememberForever('api_category_tree', function () {
+        $limit = $request->get('limit', 15);
+        $categories = Cache::rememberForever('api_category_tree', function () use ($limit) {
             return Category::query()
                 ->whereNull('parent_id')
                 ->where('is_active', true)
@@ -25,7 +26,7 @@ class CategoryController extends Controller
                     }
                 ])
                 ->orderBy('sort_order')
-                ->take(15)
+                ->limit($limit)
                 ->get();
         });
 
