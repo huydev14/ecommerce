@@ -1,9 +1,17 @@
+<script>
+const shippingFeeCache = new Map();
+const shippingFeeRequests = new Map();
+</script>
+
 <script setup>
-import { computed } from 'vue';
+import { computed, ref, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { APP_CONFIG } from '@/config';
+import api from '@/services/api';
+import { useLocationStore } from '@/stores/location';
 
 const { t } = useI18n();
+const locationStore = useLocationStore();
 
 const props = defineProps({
     product: { type: Object, required: true },
@@ -17,6 +25,9 @@ const props = defineProps({
 });
 
 const emit = defineEmits(['add-to-cart']);
+const shippingFee = ref(null);
+const isShippingFeeLoading = ref(false);
+const shippingFeeError = ref('');
 
 const productRoute = computed(() =>
     props.product.slug ? { name: 'ProductDetail', params: { slug: props.product.slug } } : { name: 'ProductList' },
@@ -72,6 +83,68 @@ const formatPrice = (value) => {
     }).format(amount);
 };
 
+const formatCurrency = (value) => `${formatPrice(value)}đ`;
+
+const fetchShippingFee = async () => {
+    const provinceId = locationStore.currentProvinceId || localStorage.getItem('current_location_province_id');
+
+    shippingFee.value = null;
+    shippingFeeError.value = '';
+
+    if (!provinceId) {
+        shippingFeeError.value = t('productCard.shippingUnavailable');
+        return;
+    }
+
+    if (shippingFeeCache.has(provinceId)) {
+        shippingFee.value = shippingFeeCache.get(provinceId);
+        return;
+    }
+
+    isShippingFeeLoading.value = true;
+
+    try {
+        if (!shippingFeeRequests.has(provinceId)) {
+            shippingFeeRequests.set(
+                provinceId,
+                api.get('/locations/shipping-fee', {
+                    params: {
+                        province_id: provinceId,
+                        weight: 1000,
+                    },
+                }),
+            );
+        }
+
+        const response = await shippingFeeRequests.get(provinceId);
+        const fee = response.data?.data?.total ?? null;
+
+        shippingFeeCache.set(provinceId, fee);
+        shippingFee.value = fee;
+
+        if (fee === null) {
+            shippingFeeError.value = t('productCard.shippingUnavailable');
+        }
+    } catch (error) {
+        shippingFeeError.value = t('productCard.shippingUnavailable');
+    } finally {
+        shippingFeeRequests.delete(provinceId);
+        isShippingFeeLoading.value = false;
+    }
+};
+
+const shippingFeeLabel = computed(() => {
+    if (isShippingFeeLoading.value) {
+        return t('productCard.shippingCalculating');
+    }
+
+    if (shippingFee.value !== null) {
+        return t('productCard.shippingFee', { fee: formatCurrency(shippingFee.value) });
+    }
+
+    return shippingFeeError.value || t('productCard.shippingUnavailable');
+});
+
 const imageUrl = computed(() => {
     return props.product.thumbnail;
 });
@@ -80,6 +153,8 @@ const displayBadgeText = computed(() => props.badgeText || t('productCard.badge_
 const displayCartLabel = computed(() => props.cartLabel || t('productCard.actions_addToCart'));
 const displayAddingLabel = computed(() => props.addingLabel || t('productCard.actions_adding'));
 const freeshipLabel = computed(() => t('productCard.badge_freeship'));
+
+watch(() => locationStore.currentProvinceId, fetchShippingFee, { immediate: true });
 </script>
 
 <template>
@@ -105,13 +180,15 @@ const freeshipLabel = computed(() => t('productCard.badge_freeship'));
 
             <div v-if="hasCompareAtPrice" class="client-product-card__discount">
                 <span>-{{ discountPercent }}%</span>
-                <del>VND {{ formatPrice(compareAtPrice) }}</del>
+                <del> {{ formatPrice(compareAtPrice) }} VND</del>
             </div>
 
             <div class="client-product-card__price">
-                <span>VND</span>
                 <strong>{{ formatPrice(price) }}</strong>
+                <span>VND</span>
             </div>
+
+            <div class="client-product-card__shipping">{{ shippingFeeLabel }}</div>
 
             <p v-if="message" class="client-product-card__message" :class="{ 'is-error': messageType === 'error' }">
                 {{ message }}
@@ -300,6 +377,13 @@ const freeshipLabel = computed(() => t('productCard.badge_freeship'));
     font-size: 22px;
     font-weight: 700;
     line-height: 28px;
+}
+
+.client-product-card__shipping {
+    margin-top: 3px;
+    color: #565959;
+    font-size: 12px;
+    line-height: 17px;
 }
 
 .client-product-card__cart {
