@@ -183,6 +183,7 @@ onMounted(() => {
     height: 180px;
     place-items: center;
     background: #f7f7f7;
+    overflow: hidden;
 }
 
 .cart-item__image img {

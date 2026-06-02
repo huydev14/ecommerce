@@ -292,7 +292,7 @@ class CheckoutController extends Controller
                     'name' => $item->product_name,
                     'quantity' => $item->quantity,
                     'price' => $item->total_price,
-                    'image' => $item->product->thumbnail ?? '/img/default-image.jpg',
+                    'image' => $item->product->thumbnail,
                 ])->values(),
             ],
         ]);
@@ -326,7 +326,7 @@ class CheckoutController extends Controller
                     'name' => $item->product_name,
                     'quantity' => $item->quantity,
                     'price' => $item->total_price,
-                    'image' => $item->product->thumbnail ?? '/img/default-image.jpg',
+                    'image' => $item->product->thumbnail,
                 ])->values(),
             ])->values(),
         ]);

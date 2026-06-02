@@ -73,7 +73,7 @@ const fetchProduct = async () => {
 
         if (response.data?.success) {
             product.value = response.data.data;
-            selectedImage.value = response.data.data.thumbnail;
+            selectedImage.value = response.data.data.thumbnail || '';
             selectedVariantId.value = response.data.data.variants?.[0]?.id || null;
         } else {
             product.value = null;
@@ -136,7 +136,7 @@ watch(() => route.params.slug, fetchProduct);
         <div v-else-if="product" class="pdp-shell">
             <aside class="pdp-gallery" :aria-label="t('productDetail.aria_images')">
                 <div class="pdp-gallery__main">
-                    <img :src="selectedImage" :alt="product.name" />
+                    <img v-if="selectedImage" :src="selectedImage" :alt="product.name" />
                 </div>
 
                 <div class="pdp-gallery__thumbs">

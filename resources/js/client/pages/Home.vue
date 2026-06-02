@@ -131,7 +131,7 @@ const addProductToCart = async (product) => {
 
 const bannerImageUrl = (imageUrl) => {
     if (!imageUrl) {
-        return '/img/default-image.jpg';
+        return null;
     }
 
     if (/^https?:\/\//i.test(imageUrl) || imageUrl.startsWith('/')) {
@@ -326,10 +326,18 @@ onMounted(() => {
                     >
                         <swiper-slide v-for="banner in sliderBanners" :key="banner.id">
                             <a v-if="banner.link" :href="banner.link" class="home-banner-slide">
-                                <img :src="bannerImageUrl(banner.image_url)" :alt="banner.title || t('home.banner_alt', { appName: APP_CONFIG.appName })" />
+                                <img
+                                    v-if="bannerImageUrl(banner.image_url)"
+                                    :src="bannerImageUrl(banner.image_url)"
+                                    :alt="banner.title || t('home.banner_alt', { appName: APP_CONFIG.appName })"
+                                />
                             </a>
                             <div v-else class="home-banner-slide">
-                                <img :src="bannerImageUrl(banner.image_url)" :alt="banner.title || t('home.banner_alt', { appName: APP_CONFIG.appName })" />
+                                <img
+                                    v-if="bannerImageUrl(banner.image_url)"
+                                    :src="bannerImageUrl(banner.image_url)"
+                                    :alt="banner.title || t('home.banner_alt', { appName: APP_CONFIG.appName })"
+                                />
                             </div>
                         </swiper-slide>
                     </swiper>
@@ -346,7 +354,12 @@ onMounted(() => {
                     class="home-banner-tile"
                     :aria-label="banner.title || t('home.aria_promoBanner')"
                 >
-                    <img :src="bannerImageUrl(banner.image_url)" :alt="banner.title || t('home.banner_alt', { appName: APP_CONFIG.appName })" loading="lazy" />
+                    <img
+                        v-if="bannerImageUrl(banner.image_url)"
+                        :src="bannerImageUrl(banner.image_url)"
+                        :alt="banner.title || t('home.banner_alt', { appName: APP_CONFIG.appName })"
+                        loading="lazy"
+                    />
                 </a>
 
                 <div

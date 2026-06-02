@@ -63,7 +63,7 @@ const checkoutItems = computed(() =>
             name: item.product_name || t('checkout.fallback_productName'),
             variant: item.sku ? `SKU: ${item.sku}` : '',
             brand: item.brand.name || APP_CONFIG.appName,
-            image: item.thumbnail || '/img/default-image.jpg',
+            image: item.thumbnail || null,
             price,
             quantity,
             lineTotal: Number(item.line_total || price * quantity),
@@ -274,7 +274,7 @@ watch(selectedAddressId, (addressId, previousAddressId) => {
                         <template v-else>
                             <article v-for="item in checkoutItems" :key="item.id" class="checkout-item">
                                 <RouterLink :to="{ name: 'ProductList' }" class="checkout-item__image">
-                                    <img :src="item.image" :alt="item.name" />
+                                    <img v-if="item.image" :src="item.image" :alt="item.name" />
                                 </RouterLink>
 
                                 <div class="checkout-item__details">

@@ -19,7 +19,7 @@ class ProductDetailResource extends JsonResource
             'name' => $this->name,
             'slug' => $this->slug,
             'description' => $this->description,
-            'thumbnail' => $this->thumbnail ? asset('storage/' . $this->thumbnail) : asset('img/default-image.jpg'),
+            'thumbnail' => $this->thumbnail,
 
             // Brands and categories
             'brand' => $this->whenLoaded('brand', function () {
@@ -43,11 +43,14 @@ class ProductDetailResource extends JsonResource
                         'id' => $variant->id,
                         'sku' => $variant->sku,
                         'price' => (float) $variant->price,
-                        'compare_at_price' => (float) $variant->compare_at_price ?? $variant->price > 0 ? round($variant->price / 0.9, 2) : null,
+                        'compare_at_price' => $variant->compare_at_price
+                            ? (float) $variant->compare_at_price
+                            : ($variant->price > 0 ? round($variant->price / 0.9, 2) : null),
                         'attributes' => $variant->attributes ?: [],
                     ];
                 });
             }),
         ];
     }
+
 }

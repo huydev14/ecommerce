@@ -22,7 +22,7 @@ const formatCurrency = (value) =>
 
 const imageUrl = (image) => {
     if (!image) {
-        return '/img/default-image.jpg';
+        return null;
     }
 
     if (/^https?:\/\//i.test(image) || image.startsWith('/')) {
@@ -140,7 +140,7 @@ onMounted(fetchOrders);
 
                         <div class="orders-card__items">
                             <div v-for="item in order.items.slice(0, 3)" :key="item.id" class="orders-card__item">
-                                <img :src="imageUrl(item.image)" :alt="item.name" />
+                                <img v-if="imageUrl(item.image)" :src="imageUrl(item.image)" :alt="item.name" />
                                 <div>
                                     <strong>{{ item.name }}</strong>
                                     <span>{{ t('orders.card_quantity', { quantity: item.quantity, price: formatCurrency(item.price) }) }}</span>

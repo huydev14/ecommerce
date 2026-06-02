@@ -18,9 +18,7 @@ class ProductResource extends JsonResource
             'id' => $this->id,
             'name' => $this->name,
             'slug' => $this->slug,
-            'thumbnail' => $this->thumbnail
-                ? asset('storage/' . $this->thumbnail)
-                : asset('img/default-image.jpg'),
+            'thumbnail' => $this->thumbnail,
 
             'brand' => $this->whenLoaded('brand', function () {
                 return [
@@ -45,4 +43,5 @@ class ProductResource extends JsonResource
             }),
         ];
     }
+
 }

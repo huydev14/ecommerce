@@ -93,7 +93,7 @@ const imageUrl = computed(() => {
     const thumbnail = props.product.thumbnail;
 
     if (!thumbnail) {
-        return '/img/default-image.jpg';
+        return null;
     }
 
     if (/^https?:\/\//i.test(thumbnail) || thumbnail.startsWith('/')) {
@@ -111,11 +111,9 @@ const freeshipLabel = computed(() => t('productCard.badge_freeship'));
 
 <template>
     <article class="client-product-card" :class="{ 'client-product-card--compact': compact }">
-    
-
         <div class="client-product-card__media">
             <RouterLink :to="productRoute" class="client-product-card__image">
-                <img :src="imageUrl" :alt="product.name" loading="lazy" />
+                <img v-if="imageUrl" :src="imageUrl" :alt="product.name" loading="lazy" />
             </RouterLink>
         </div>
 
@@ -189,9 +187,11 @@ const freeshipLabel = computed(() => t('productCard.badge_freeship'));
 
 .client-product-card__media {
     position: relative;
+    display: grid;
     width: 100%;
     height: 230px;
     overflow: hidden;
+    place-items: center;
     background: #f7f7f7;
 }
 
@@ -200,14 +200,16 @@ const freeshipLabel = computed(() => t('productCard.badge_freeship'));
     width: 100%;
     height: 100%;
     place-items: center;
-    padding: 16px;
+    line-height: 0;
     text-decoration: none;
 }
 
 .client-product-card__image img {
-    width: 100%;
-    height: 100%;
+    display: block;
+    max-width: 100%;
+    max-height: 100%;
     object-fit: contain;
+    object-position: center;
 }
 
 .client-product-card__ship-badge {
@@ -363,10 +365,6 @@ const freeshipLabel = computed(() => t('productCard.badge_freeship'));
 
 .client-product-card__message.is-error {
     color: #b42318;
-}
-
-.client-product-card--compact .client-product-card__image {
-    padding: 14px;
 }
 
 .client-product-card--compact .client-product-card__media {
