@@ -54,68 +54,87 @@ class ProcessImportBatchJob implements ShouldQueue
                     $parsedRows[$row->id] = is_array($row->data) ? $row->data : json_decode($row->data, true);
                 }
 
-                $productsToInsert = [];
-                $variantsToInsert = [];
+                $groupedProducts = [];
+                $groupedVariants = [];
 
                 foreach ($parsedRows as $payload) {
                     $productPayload = $payload['product'] ?? [];
                     $variantPayload = $payload['variant'] ?? [];
                     $stockPayload = $payload['stock'] ?? [];
-                    $slug = Str::slug($productPayload['name']) . '-' . uniqid();
 
-                    $productsToInsert[] = [
-                        'name' => $productPayload['name'],
-                        'slug' => $slug,
-                        'description' => $productPayload['description'] ?? null,
-                        'category_id' => $productPayload['category_id'],
-                        'brand_id' => $productPayload['brand_id'] ?? null,
-                        'status' => $productPayload['status'],
-                        'created_at' => now(),
-                        'updated_at' => now(),
-                    ];
+                    $identityKey = md5(
+                        strtolower(trim($productPayload['name'])) . '|' .
+                        $productPayload['category_id'] . '|' .
+                        ($productPayload['brand_id'] ?? '')
+                    );
+
+                    if (!isset($groupedProducts[$identityKey])) {
+                        $slug = Str::slug(trim($productPayload['name'])) . '-' . uniqid();
+
+                        $groupedProducts[$identityKey] = [
+                            'name' => trim($productPayload['name']),
+                            'slug' => $slug,
+                            'description' => $productPayload['description'] ?? null,
+                            'category_id' => $productPayload['category_id'],
+                            'brand_id' => $productPayload['brand_id'] ?? null,
+                            'status' => $productPayload['status'],
+                            'created_at' => now(),
+                            'updated_at' => now(),
+                        ];
+                    }
 
                     $variantPayload['_import_quantity'] = $stockPayload['quantity'] ?? 0;
-                    $variantsToInsert[$slug] = $variantPayload;
+                    $groupedVariants[$identityKey][] = $variantPayload;
                 }
 
                 try {
-                    DB::transaction(function () use ($productsToInsert, $variantsToInsert, $targetWarehouseId) {
+                    DB::transaction(function () use ($groupedProducts, $groupedVariants, $targetWarehouseId) {
+                        $productsToInsert = array_values($groupedProducts);
                         Product::insert($productsToInsert);
 
-                        $slugs = array_keys($variantsToInsert);
-                        $insertedProducts = Product::whereIn('slug', $slugs)
-                            ->pluck('id', 'slug');
+                        $slugs = array_column($productsToInsert, 'slug');
+                        $insertedProducts = Product::whereIn('slug', $slugs)->pluck('id', 'slug')->toArray();
 
                         $finalVariants = [];
-                        foreach ($variantsToInsert as $slug => $variantPayload) {
+                        foreach ($groupedProducts as $identityKey => $productData) {
+                            $slug = $productData['slug'];
+
                             if (!isset($insertedProducts[$slug]))
                                 continue;
+                            $productId = $insertedProducts[$slug];
 
-                            $finalVariants[] = [
-                                'product_id' => $insertedProducts[$slug],
-                                'attributes' => !empty($variantPayload['attributes']) ? json_encode(json_decode($variantPayload['attributes'], true)) : null,
-                                'sku' => $variantPayload['sku'],
-                                'price' => $variantPayload['price'],
-                                'compare_at_price' => $variantPayload['compare_at_price'] ?? null,
-                                'cost_price' => $variantPayload['cost_price'] ?? null,
-                                'unit_id' => $variantPayload['unit_id'] ?? null,
-                                'tax_id' => $variantPayload['tax_id'] ?? null,
-                                'is_active' => $variantPayload['is_active'] ?? true,
-                                'created_at' => now(),
-                                'updated_at' => now(),
-                            ];
+                            foreach ($groupedVariants[$identityKey] as $variantPayload) {
+                                $finalVariants[] = [
+                                    'product_id' => $productId,
+                                    'attributes' => !empty($variantPayload['attributes']) ? json_encode(json_decode($variantPayload['attributes'], true)) : null,
+                                    'sku' => $variantPayload['sku'],
+                                    'price' => $variantPayload['price'],
+                                    'compare_at_price' => $variantPayload['compare_at_price'] ?? null,
+                                    'cost_price' => $variantPayload['cost_price'] ?? null,
+                                    'unit_id' => $variantPayload['unit_id'] ?? null,
+                                    'tax_id' => $variantPayload['tax_id'] ?? null,
+                                    'is_active' => $variantPayload['is_active'] ?? true,
+                                    'created_at' => now(),
+                                    'updated_at' => now(),
+                                    '_import_quantity' => $variantPayload['_import_quantity'],
+                                ];
+                            }
                         }
 
-                        ProductVariant::insert($finalVariants);
+                        $variantsForDb = array_map(function ($variant) {
+                            unset($variant['_import_quantity']);
+                            return $variant;
+                        }, $finalVariants);
 
-                        $skus = array_column($finalVariants, 'sku');
-                        $insertedVariants = ProductVariant::whereIn('sku', $skus)
-                            ->pluck('id', 'sku');
+                        ProductVariant::insert($variantsForDb);
+
+                        $skus = array_column($variantsForDb, 'sku');
+                        $insertedVariants = ProductVariant::whereIn('sku', $skus)->pluck('id', 'sku');
 
                         $stocksToInsert = [];
                         $movementsDataMap = [];
 
-                        foreach ($variantsToInsert as $variantPayload) {
+                        foreach ($finalVariants as $variantPayload) {
                             $variantId = $insertedVariants[$variantPayload['sku']] ?? null;
                             $importQuantity = $variantPayload['_import_quantity'] ?? 0;
 
@@ -189,15 +208,15 @@ class ProcessImportBatchJob implements ShouldQueue
         $batch->update(['status' => $failedRows > 0 ? 'completed_with_errors' : 'completed']);
     }
 
-    private function updateImportProgress(ImportBatch $batch, int $processedRows, int $totalRows, string $status): void
+    private function updateImportProgress(ImportBatch $batch, int $processedRows, int $totalRows, string $progressStatus): void
     {
         $result = $batch->master_data_resolution_result ?? [];
 
         $batch->update([
-            'status' => 'importing',
+            'status' => $progressStatus === 'completed' ? $batch->status : 'importing',
             'master_data_resolution_result' => array_merge($result, [
                 'import_progress' => [
-                    'status' => $status,
+                    'status' => $progressStatus,
                     'processed_rows' => $processedRows,
                     'total_rows' => $totalRows,
                     'percentage' => $totalRows > 0 ? min(100, (int) round(($processedRows / $totalRows) * 100)) : 100,
