@@ -6,7 +6,8 @@ echo ">>> Pulling latest code from Git..."
 git pull origin main
 
 echo ">>> Restarting Docker containers..."
-docker compose up -d
+docker compose down
+docker compose up -d --build
 
 echo ">>> Running database migrations..."
 docker compose exec -T web php artisan migrate --force
@@ -15,7 +16,7 @@ echo ">>> Optimizing Laravel Cache..."
 docker compose exec -T web php artisan optimize
 docker compose exec -T web php artisan view:cache
 
-echo ">>> Restarting Queue Workers gracefully..."
+echo ">>> Restarting Queue..."
 
 docker compose exec -T web php artisan queue:restart
 
