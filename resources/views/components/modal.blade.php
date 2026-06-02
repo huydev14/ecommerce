@@ -1,7 +1,7 @@
 <div id="modal"
     class="tw-fixed tw-inset-0 tw-z-50 tw-hidden tw-items-center tw-justify-center tw-bg-gray-900/40 tw-backdrop-blur-sm tw-transition-opacity tw-p-4">
     <div
-        class="tw-relative tw-w-full tw-max-w-3xl tw-rounded-sm tw-bg-gray-50/95 tw-shadow-[0_16px_48px_rgba(0,0,0,0.12)] tw-border tw-border-gray-200 tw-overflow-hidden tw-flex tw-flex-col tw-max-h-[90vh]">
+        class="tw-relative tw-w-full tw-max-w-3xl tw-rounded-sm tw-bg-gray-50/95 tw-shadow-[0_16px_48px_rgba(0,0,0,0.12)] tw-border tw-border-gray-200 tw-flex tw-flex-col tw-max-h-[90vh]">
 
         {{ $slot }}
 

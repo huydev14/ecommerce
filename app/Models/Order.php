@@ -24,6 +24,12 @@ class Order extends Model
         'payment_status',
     ];
 
+    protected $casts = [
+        'subtotal' => 'decimal:2',
+        'shipping_fee' => 'decimal:2',
+        'total_amount' => 'decimal:2',
+    ];
+
     public function customer(): BelongsTo
     {
         return $this->belongsTo(Customer::class);

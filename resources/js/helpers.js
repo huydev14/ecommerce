@@ -7,7 +7,7 @@ globalThis.loadingHtml = `
 
 $(function () {
     $(
-        '#f_status, #f_department, #f_employment_type, #f_role, #f_logName, #f_causer, #f_brandName, #f_categoryName, #f_isActive, #f_productName, #f_category, #f_brand, #f_product, #f_taxName, #f_unitName, #f_warehouse,#f_variant, #f_stock, #f_type',
+        '#f_status, #f_department, #f_employment_type, #f_role, #f_logName, #f_causer, #f_brandName, #f_categoryName, #f_isActive, #f_productName, #f_category, #f_brand, #f_product, #f_taxName, #f_unitName, #f_warehouse,#f_variant, #f_stock, #f_type, #f_orderStatus, #f_paymentStatus, #f_paymentMethod, #f_customer',
     ).select2({
         theme: 'bootstrap4',
         minimumResultsForSearch: 5,

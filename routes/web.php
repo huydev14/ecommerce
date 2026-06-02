@@ -6,6 +6,7 @@ use App\Http\Controllers\BrandController;
 use App\Http\Controllers\CategoryController;
 use App\Http\Controllers\BannerController;
 use App\Http\Controllers\CustomerAddressController;
+use App\Http\Controllers\OrderController;
 use App\Http\Controllers\ProductController;
 use App\Http\Controllers\ProductImportController;
 use App\Http\Controllers\ProductVariantController;
@@ -18,6 +19,7 @@ use App\Http\Controllers\TaxController;
 use App\Http\Controllers\UnitController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\WarehouseController;
+use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Session;
 
@@ -39,6 +41,18 @@ Route::get('lang/{locale}', function ($locale) {
 })->name('lang.switch');
 
 Route::prefix('admin')->middleware('auth')->group(function () {
+
+    Route::get('/test-mail', function () {
+    try {
+        Mail::raw('email test', function ($message) {
+            $message->to('giahuy.codes@gmail.com')
+                    ->subject('Test Brevo SMTP');
+        });
+        return 'Gửi email thành công';
+    } catch (\Exception $e) {
+        return 'Lỗi gửi mail: ' . $e->getMessage();
+    }
+});
     // ---- Dashboard -----------------------------------
     Route::get('/', function () {
         return view('dashboard.index');
@@ -156,6 +170,13 @@ Route::prefix('admin')->middleware('auth')->group(function () {
         Route::post('/{id}/restore', [StockMovementController::class, 'restore'])->name('restore');
     });
     Route::resource('stock-movements', StockMovementController::class)->only(['index', 'create', 'store', 'destroy']);
+
+    // --- Orders -----------------------------------
+    Route::prefix('orders')->name('orders.')->group(function () {
+        Route::get('/data', [OrderController::class, 'data'])->name('data');
+        Route::get('/filter-data', [OrderController::class, 'getFilterData'])->name('filter_data');
+    });
+    Route::resource('orders', OrderController::class)->only(['index', 'show', 'update']);
 
     // --- Product imports --------------------------
     Route::prefix('product-imports')->name('product-imports.')->group(function () {

@@ -9,7 +9,7 @@
         </li>
 
         {{-- Bán hàng --}}
-        <li class="nav-item menu-open {{ request()->routeIs('brands.*') || request()->routeIs('categories.*') || request()->routeIs('products.*') || request()->routeIs('product-variants.*') || request()->routeIs('units.*') || request()->routeIs('taxes.*') || request()->routeIs('warehouses.*') || request()->routeIs('stocks.*') || request()->routeIs('stock-movements.*') || request()->routeIs('product-imports.*') ? 'menu-is-opening ' : '' }}">
+        <li class="nav-item menu-open {{ request()->routeIs('brands.*') || request()->routeIs('categories.*') || request()->routeIs('products.*') || request()->routeIs('product-variants.*') || request()->routeIs('orders.*') || request()->routeIs('units.*') || request()->routeIs('taxes.*') || request()->routeIs('warehouses.*') || request()->routeIs('stocks.*') || request()->routeIs('stock-movements.*') || request()->routeIs('product-imports.*') ? 'menu-is-opening ' : '' }}">
             <a href="#" class="nav-link">
                 <x-icon-shopping class="nav-icon" />
                 <p> {{ __('header.sales') }}
@@ -35,6 +35,11 @@
                 <li class="nav-item">
                     <a href="{{ route('product-variants.index') }}" class="nav-link {{ request()->routeIs('product-variants.index') ? 'active' : '' }}">
                         <p>{{ __('product.variant_management_title') }}</p>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="{{ route('orders.index') }}" class="nav-link {{ request()->routeIs('orders.*') ? 'active' : '' }}">
+                        <p>{{ __('order.management_title') }}</p>
                     </a>
                 </li>
                 <li class="nav-item">
