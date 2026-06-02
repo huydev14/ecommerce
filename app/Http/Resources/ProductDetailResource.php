@@ -20,6 +20,7 @@ class ProductDetailResource extends JsonResource
             'slug' => $this->slug,
             'description' => $this->description,
             'thumbnail' => $this->thumbnail,
+            'total_sold' => (int) ($this->total_sold ?? 0),
 
             // Brands and categories
             'brand' => $this->whenLoaded('brand', function () {

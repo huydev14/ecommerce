@@ -20,7 +20,10 @@ class ProductController extends Controller
             $categoryIds = $category->getAllChildIds();
         }
 
-        $products = Product::with(['cheapestVariant', 'brand'])
+        $products = Product::query()
+            ->select('products.*')
+            ->withTotalSoldPastMonth()
+            ->with(['cheapestVariant', 'brand'])
             ->where('status', 'published')
             ->when(!empty($categoryIds), fn($q) => $q->whereIn('category_id', $categoryIds))
 
@@ -84,6 +87,8 @@ class ProductController extends Controller
     {
         $products = Cache::remember('api_new_arrivals', now()->addMinutes(30), function () {
             return Product::query()
+                ->select('products.*')
+                ->withTotalSoldPastMonth()
                 ->where('status', 'published')
                 ->with(['cheapestVariant', 'brand'])
                 ->orderBy('created_at', 'desc')
@@ -103,6 +108,8 @@ class ProductController extends Controller
 
         $products = Cache::remember($cacheKey, 3600, function () {
             return Product::query()
+                ->select('products.*')
+                ->withTotalSoldPastMonth()
                 ->where('status', 'published')
                 ->where('is_featured', true)
                 ->with([
@@ -110,7 +117,6 @@ class ProductController extends Controller
                     'category:id,name,slug',
                     'cheapestVariant'
                 ])
-                ->select(['id', 'brand_id', 'category_id', 'name', 'slug', 'thumbnail', 'created_at'])
                 ->latest()
                 ->take(8)
                 ->get()
@@ -136,6 +142,7 @@ class ProductController extends Controller
                         'price' => $price,
                         'compare_at_price' => $displayCompareAtPrice,
                         'product_variant_id' => $variant?->id,
+                        'total_sold' => (int) ($product->total_sold ?? 0),
                     ];
                 });
         });
@@ -150,6 +157,8 @@ class ProductController extends Controller
     public function show(string $slug)
     {
         $product = Product::query()
+            ->select('products.*')
+            ->withTotalSoldPastMonth()
             ->where('slug', $slug)
             ->where('status', 'published')
             ->with(['brand', 'category', 'variants'])

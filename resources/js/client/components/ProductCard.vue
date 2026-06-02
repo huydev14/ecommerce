@@ -6,39 +6,14 @@ import { APP_CONFIG } from '@/config';
 const { t } = useI18n();
 
 const props = defineProps({
-    product: {
-        type: Object,
-        required: true,
-    },
-    isAdding: {
-        type: Boolean,
-        default: false,
-    },
-    compact: {
-        type: Boolean,
-        default: false,
-    },
-
-    badgeText: {
-        type: String,
-        default: '',
-    },
-    cartLabel: {
-        type: String,
-        default: '',
-    },
-    addingLabel: {
-        type: String,
-        default: '',
-    },
-    message: {
-        type: String,
-        default: '',
-    },
-    messageType: {
-        type: String,
-        default: 'success',
-    },
+    product: { type: Object, required: true },
+    isAdding: { type: Boolean, default: false },
+    compact: { type: Boolean, default: false },
+    badgeText: { type: String, default: '' },
+    cartLabel: { type: String, default: '' },
+    addingLabel: { type: String, default: '' },
+    message: { type: String, default: '' },
+    messageType: { type: String, default: 'success' },
 });
 
 const emit = defineEmits(['add-to-cart']);
@@ -61,10 +36,18 @@ const reviewCount = computed(() => {
     return count >= 1000 ? `${(count / 1000).toFixed(1)}K` : String(count);
 });
 
-const boughtCount = computed(() => {
-    const count = Number(props.product.sold_count || props.product.orders_count || props.product.total_sold || 500);
-    return `${count}+ bought in past month`;
-});
+const formatCount = (value) => {
+    const count = Number(value || 0);
+
+    if (count >= 1000) {
+        return `${(count / 1000).toFixed(1)}K`;
+    }
+
+    return String(count);
+};
+
+const totalSold = computed(() => Number(props.product.total_sold || props.product.sold_count || props.product.orders_count || 0));
+const soldCountLabel = computed(() => t('productCard.soldCount', { count: formatCount(totalSold.value) }));
 
 const price = computed(() => Number(props.product.price || 0));
 const compareAtPrice = computed(() => Number(props.product.compare_at_price || 0));
@@ -90,17 +73,7 @@ const formatPrice = (value) => {
 };
 
 const imageUrl = computed(() => {
-    const thumbnail = props.product.thumbnail;
-
-    if (!thumbnail) {
-        return null;
-    }
-
-    if (/^https?:\/\//i.test(thumbnail) || thumbnail.startsWith('/')) {
-        return thumbnail;
-    }
-
-    return `/storage/${thumbnail}`;
+    return props.product.thumbnail;
 });
 
 const displayBadgeText = computed(() => props.badgeText || t('productCard.badge_new'));
@@ -119,14 +92,16 @@ const freeshipLabel = computed(() => t('productCard.badge_freeship'));
 
         <div class="client-product-card__body">
             <RouterLink :to="productRoute" class="client-product-card__name">{{ product.name }}</RouterLink>
-            <div class="client-product-card__brand tw-text-sm tw-capitalize tw-text-gray-500">Brand: {{ brandName }}</div>
+            <div class="client-product-card__brand tw-text-sm tw-capitalize tw-text-gray-500">
+                {{ t('productCard.brandLabel') }}: {{ brandName }}
+            </div>
             <div class="client-product-card__rating">
                 <span>{{ rating }}</span>
                 <span class="client-product-card__stars">★★★★★</span>
                 <span class="client-product-card__reviews">({{ reviewCount }})</span>
             </div>
 
-            <div class="client-product-card__meta">{{ boughtCount }}</div>
+            <div class="client-product-card__meta">{{ soldCountLabel }}</div>
 
             <div v-if="hasCompareAtPrice" class="client-product-card__discount">
                 <span>-{{ discountPercent }}%</span>

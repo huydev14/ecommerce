@@ -48,8 +48,12 @@ class Product extends Model
         return $this->hasOne(ProductVariant::class)->ofMany('price', 'min');
     }
 
-    public function inventories()
-    {
-        return $this->hasManyThrough(Inventory::class, ProductVariant::class, 'product_id', 'variant_id');
+    public function scopeWithTotalSoldPastMonth($query){
+        return $query->addSelect([
+            'total_sold' => OrderItem::selectRaw('COALESCE(SUM(quantity), 0)')
+            ->join('orders', 'orders.id', '=', 'order_items.order_id')
+            ->whereColumn('order_items.product_id', 'products.id')
+            ->where('orders.status', 'completed')
+        ]);
     }
 }

@@ -124,6 +124,8 @@
     },
     "productCard": {
         "contact": "Contact us",
+        "brandLabel": "Brand",
+        "soldCount": "{count} sold",
         "badge_new": "New",
         "badge_freeship": "Freeship",
         "actions_addToCart": "Add to cart",
@@ -148,7 +150,6 @@
         "resultRange": "{start}-{end} of {total} products",
         "resultsFor": "{range} for \"{query}\"",
         "title": "Product list",
-        "description": "Products are loaded from the API and shown by category when the URL includes a category parameter.",
         "loading": "Loading products...",
         "showMore": "See more",
         "sort_label": "Sort by:",
