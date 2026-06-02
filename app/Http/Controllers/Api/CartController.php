@@ -49,7 +49,7 @@ class CartController extends Controller
             $formattedItems[] = [
                 'product_variant_id' => $variant->id,
                 'product_name' => $variant->product->name,
-                'variant_name' => $variant->name ?? null,
+                'variant_name' => $variant->attributes['variant_name'] ?? $variant->sku,
                 'thumbnail'    => $variant->product->thumbnail,
                 'price'    => (float) $variant->price,
                 'quantity' => $quantity,
