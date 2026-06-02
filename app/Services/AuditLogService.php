@@ -2,7 +2,6 @@
 
 namespace App\Services;
 
-use App\Events\AuditLogEvent;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Auth;
 
@@ -24,6 +23,17 @@ class AuditLogService
 
         $final_properties = array_merge($default_properties, $extra_properties);
 
-        AuditLogEvent::dispatch($description, $model,  $logName, $final_properties, $causer);
+        $activity = activity($logName);
+
+        if ($causer) {
+            $activity->causedBy($causer);
+        }
+
+        if ($model) {
+            $activity->performedOn($model);
+        }
+
+        $activity->withProperties($final_properties)
+            ->log($description);
     }
 }
