@@ -6,10 +6,11 @@ import { Autoplay, Navigation, Pagination } from 'swiper/modules';
 import api from '../services/api';
 import { APP_CONFIG } from '@/config';
 import { useCartStore } from '@/stores/cart';
-import ProductCard from '@/components/ProductCard.vue';
+import BestSellersSlider from '@/components/BestSellersSlider.vue';
+import FeaturedProductsSlider from '@/components/FeaturedProductsSlider.vue';
+import NewProductsSection from '@/components/NewProductsSection.vue';
 import 'swiper/css';
 import 'swiper/css/navigation';
-import 'swiper/css/pagination';
 
 const cartStore = useCartStore();
 const { t } = useI18n();
@@ -23,8 +24,6 @@ const addingProductIds = ref(new Set());
 const isHomeDataLoading = ref(true);
 const swiperModules = [Autoplay, Pagination, Navigation];
 const STATIC_BANNER_SLOT_COUNT = 5;
-
-const featuredSlider = ref(null);
 
 const normalizeProducts = (payload) => {
     if (Array.isArray(payload?.data?.data)) {
@@ -175,17 +174,6 @@ const fetchCategories = async () => {
     }
 };
 
-const newProductRows = computed(() => {
-    const chunkSize = 6;
-    const rows = [];
-
-    for (let index = 0; index < newProducts.value.length; index += chunkSize) {
-        rows.push(newProducts.value.slice(index, index + chunkSize));
-    }
-
-    return rows;
-});
-
 const fetchBestSellers = async () => {
     try {
         const response = await api.get('/products/best-sellers', {
@@ -222,13 +210,6 @@ const fetchNewArrivals = async () => {
     } catch (error) {
         console.error(t('home.errors_fetchNewArrivals'), error);
     }
-};
-
-const scrollFeatured = (direction) => {
-    featuredSlider.value?.scrollBy({
-        left: direction * 360,
-        behavior: 'smooth',
-    });
 };
 
 onMounted(() => {
@@ -374,73 +355,11 @@ onMounted(() => {
         </section>
 
         <div class="home__content">
-            <section class="rail best-sellers" :aria-label="t('home.bestSellers_aria')">
-                <div class="section-heading">
-                    <h2 class="tw-text-lg tw-font-bold">{{ t('home.bestSellers_title') }}</h2>
-                    <a href="#" class="link">{{ t('home.links_seeMore') }}</a>
-                </div>
+            <BestSellersSlider :products="bestSellers" :is-product-adding="isAddingToCart" @add-to-cart="addProductToCart" />
 
-                <div class="product-row best-sellers__row">
-                    <ProductCard
-                        v-for="product in bestSellers"
-                        :key="product.id || product.slug || product.name"
-                        :product="product"
-                        :is-adding="isAddingToCart(product)"
-                        compact
-                        @add-to-cart="addProductToCart"
-                    />
-                </div>
+            <FeaturedProductsSlider :products="featuredProducts" :is-product-adding="isAddingToCart" @add-to-cart="addProductToCart" />
 
-                <p v-if="bestSellers.length === 0" class="best-sellers__empty">{{ t('home.empty_bestSellers') }}</p>
-            </section>
-
-            <section class="rail featured-products" :aria-label="t('home.featuredProducts_aria')">
-                <div class="section-heading">
-                    <div>
-                        <h2 class="tw-text-lg tw-font-bold">{{ t('home.featuredProducts_title') }}</h2>
-                    </div>
-
-                    <div class="slider-controls" :aria-label="t('home.featuredProducts_controls')">
-                        <button type="button" :aria-label="t('home.actions_scrollLeft')" @click="scrollFeatured(-1)">‹</button>
-                        <button type="button" :aria-label="t('home.actions_scrollRight')" @click="scrollFeatured(1)">›</button>
-                    </div>
-                </div>
-
-                <div ref="featuredSlider" class="featured-slider">
-                    <ProductCard
-                        v-for="product in featuredProducts"
-                        :key="product.id || product.slug || product.name"
-                        :product="product"
-                        :is-adding="isAddingToCart(product)"
-                        compact
-                        @add-to-cart="addProductToCart"
-                    />
-                </div>
-
-                <p v-if="featuredProducts.length === 0" class="featured-products__empty">{{ t('home.empty_featuredProducts') }}</p>
-            </section>
-
-            <section class="rail new-products" :aria-label="t('home.newProducts_aria')">
-                <div class="section-heading">
-                    <h2 class="tw-text-lg tw-font-bold">{{ t('home.newProducts_title') }}</h2>
-                    <a href="#" class="link">{{ t('home.links_seeNewArrivals') }}</a>
-                </div>
-
-                <div class="new-products__rows">
-                    <div v-for="(row, rowIndex) in newProductRows" :key="rowIndex" class="new-products__row">
-                        <ProductCard
-                            v-for="product in row"
-                            :key="product.id || product.slug || product.name"
-                            :product="product"
-                            :is-adding="isAddingToCart(product)"
-                            compact
-                            @add-to-cart="addProductToCart"
-                        />
-                    </div>
-
-                    <p v-if="newProductRows.length === 0" class="new-products__empty">{{ t('home.empty_newProducts') }}</p>
-                </div>
-            </section>
+            <NewProductsSection :products="newProducts" :is-product-adding="isAddingToCart" @add-to-cart="addProductToCart" />
         </div>
     </div>
 </template>
@@ -926,11 +845,6 @@ onMounted(() => {
     gap: 18px;
 }
 
-.best-sellers__row {
-    grid-template-columns: repeat(6, minmax(170px, 1fr));
-    gap: 14px;
-}
-
 .product {
     min-width: 0;
 }
@@ -983,334 +897,6 @@ onMounted(() => {
     margin-top: 4px;
     font-size: 20px;
     line-height: 24px;
-}
-
-.featured-products__eyebrow {
-    display: block;
-    margin-bottom: 3px;
-    color: #cc0c39;
-    font-size: 13px;
-    font-weight: 700;
-    line-height: 18px;
-}
-
-.slider-controls {
-    display: flex;
-    flex: none;
-    gap: 8px;
-}
-
-.slider-controls button {
-    display: grid;
-    width: 38px;
-    height: 38px;
-    place-items: center;
-    border: 1px solid #d5d9d9;
-    border-radius: 50%;
-    background: #fff;
-    box-shadow: 0 1px 2px rgba(15, 17, 17, 0.12);
-    color: #0f1111;
-    cursor: pointer;
-    font-size: 28px;
-    line-height: 1;
-}
-
-.slider-controls button:hover {
-    background: #f7fafa;
-}
-
-.featured-slider {
-    display: grid;
-    grid-auto-columns: 220px;
-    grid-auto-flow: column;
-    gap: 16px;
-    overflow-x: auto;
-    scroll-behavior: smooth;
-    scroll-snap-type: x proximity;
-    padding: 2px 2px 12px;
-}
-
-.featured-slider::-webkit-scrollbar {
-    height: 8px;
-}
-
-.featured-slider::-webkit-scrollbar-thumb {
-    border-radius: 999px;
-    background: #c7c7c7;
-}
-
-.product-card {
-    display: flex;
-    scroll-snap-align: start;
-    min-width: 0;
-    flex-direction: column;
-    overflow: hidden;
-    background: #fff;
-}
-
-.product-card__image {
-    display: grid;
-    width: 100%;
-    aspect-ratio: 1 / 1.05;
-    place-items: center;
-    overflow: hidden;
-    background: #f7f7f7;
-    text-decoration: none;
-}
-
-.product-card__image img {
-    width: 100%;
-    height: 100%;
-    object-fit: contain;
-}
-
-.product-card__body {
-    display: flex;
-    min-height: 330px;
-    flex: 1;
-    flex-direction: column;
-    padding: 18px 14px 16px;
-}
-
-.product-card__brand {
-    margin-bottom: 4px;
-    color: #0f1111;
-    font-size: 16px;
-    font-weight: 700;
-    line-height: 20px;
-}
-
-.product-card__name {
-    display: -webkit-box;
-    overflow: hidden;
-    color: #0f1111;
-    font-size: 16px;
-    line-height: 22px;
-    text-decoration: none;
-    -webkit-box-orient: vertical;
-    -webkit-line-clamp: 4;
-}
-
-.product-card__name:hover {
-    color: #c7511f;
-    text-decoration: underline;
-}
-
-.product-card__rating {
-    display: flex;
-    align-items: center;
-    gap: 3px;
-    margin-top: 12px;
-    color: #0f1111;
-    font-size: 13px;
-    line-height: 18px;
-}
-
-.product-card__stars {
-    color: #ff8f00;
-    font-size: 15px;
-    letter-spacing: 0;
-}
-
-.product-card__chevron {
-    color: #007185;
-    font-size: 16px;
-    line-height: 1;
-}
-
-.product-card__reviews {
-    color: #007185;
-}
-
-.product-card__meta,
-.product-card__ship {
-    color: #565959;
-    font-size: 14px;
-    line-height: 20px;
-}
-
-.product-card__price {
-    display: flex;
-    align-items: flex-start;
-    gap: 3px;
-    margin-top: 18px;
-    color: #0f1111;
-}
-
-.product-card__price span {
-    padding-top: 6px;
-    font-size: 13px;
-    line-height: 16px;
-}
-
-.product-card__price strong {
-    font-size: 34px;
-    font-weight: 400;
-    line-height: 36px;
-}
-
-.product-card__delivery {
-    margin-top: 14px;
-    color: #0f1111;
-    font-size: 14px;
-    line-height: 20px;
-}
-
-.product-card__delivery strong {
-    font-weight: 700;
-}
-
-.product-card__cart {
-    width: 100%;
-    min-height: 46px;
-    margin-top: auto;
-    border: 0;
-    border-radius: 999px;
-    background: #ffd814;
-    color: #0f1111;
-    cursor: pointer;
-    font-size: 16px;
-    line-height: 20px;
-}
-
-.product-card__cart:hover:not(:disabled) {
-    background: #f7ca00;
-}
-
-.product-card__cart:disabled {
-    cursor: not-allowed;
-    opacity: 0.55;
-}
-
-.featured-products__empty {
-    margin: 10px 0 0;
-    color: #565959;
-    font-size: 14px;
-    line-height: 20px;
-}
-
-.best-sellers__empty {
-    margin: 10px 0 0;
-    color: #565959;
-    font-size: 14px;
-    line-height: 20px;
-}
-
-.new-products__rows {
-    display: grid;
-    gap: 14px;
-}
-
-.new-products__row {
-    display: grid;
-    grid-template-columns: repeat(6, minmax(170px, 1fr));
-    gap: 14px;
-}
-
-.new-products {
-    padding: 18px 18px 20px;
-}
-
-.best-sellers {
-    padding: 18px 18px 20px;
-}
-
-.best-sellers .product-card,
-.new-products .product-card {
-    border: 1px solid #f0f2f2;
-    border-radius: 2px;
-}
-
-.best-sellers .product-card__image,
-.new-products .product-card__image {
-    height: 190px;
-    aspect-ratio: auto;
-    padding: 14px;
-}
-
-.best-sellers .product-card__body,
-.new-products .product-card__body {
-    min-height: 236px;
-    padding: 12px 12px 14px;
-}
-
-.best-sellers .product-card__brand,
-.new-products .product-card__brand {
-    margin-bottom: 3px;
-    font-size: 14px;
-    line-height: 18px;
-}
-
-.best-sellers .product-card__name,
-.new-products .product-card__name {
-    min-height: 40px;
-    font-size: 14px;
-    line-height: 20px;
-    -webkit-line-clamp: 2;
-}
-
-.best-sellers .product-card__rating,
-.new-products .product-card__rating {
-    margin-top: 8px;
-    font-size: 12px;
-    line-height: 16px;
-}
-
-.best-sellers .product-card__stars,
-.new-products .product-card__stars {
-    font-size: 13px;
-}
-
-.best-sellers .product-card__chevron,
-.new-products .product-card__chevron {
-    font-size: 14px;
-}
-
-.best-sellers .product-card__meta,
-.best-sellers .product-card__ship,
-.new-products .product-card__meta,
-.new-products .product-card__ship {
-    font-size: 13px;
-    line-height: 18px;
-}
-
-.best-sellers .product-card__price,
-.new-products .product-card__price {
-    margin-top: 10px;
-}
-
-.best-sellers .product-card__price span,
-.new-products .product-card__price span {
-    padding-top: 4px;
-    font-size: 12px;
-    line-height: 14px;
-}
-
-.best-sellers .product-card__price strong,
-.new-products .product-card__price strong {
-    font-size: 26px;
-    line-height: 30px;
-}
-
-.best-sellers .product-card__delivery,
-.new-products .product-card__delivery {
-    margin-top: 8px;
-    font-size: 13px;
-    line-height: 18px;
-}
-
-.best-sellers .product-card__cart,
-.new-products .product-card__cart {
-    min-height: 38px;
-    font-size: 14px;
-    line-height: 18px;
-}
-
-.new-products__empty {
-    margin: 0;
-    color: #566;
-    font-size: 14px;
-    line-height: 20px;
 }
 
 .feature-band {
@@ -1387,17 +973,6 @@ onMounted(() => {
         grid-template-columns: repeat(3, minmax(150px, 1fr));
     }
 
-    .best-sellers__row,
-    .new-products__row {
-        grid-template-columns: repeat(3, minmax(0, 1fr));
-    }
-}
-
-@media (max-width: 1024px) {
-    .best-sellers__row,
-    .new-products__row {
-        grid-template-columns: repeat(2, minmax(0, 1fr));
-    }
 }
 
 @media (max-width: 768px) {
@@ -1453,8 +1028,6 @@ onMounted(() => {
     }
 
     .product-row,
-    .best-sellers__row,
-    .new-products__row,
     .category-row {
         grid-template-columns: 1fr;
     }
@@ -1475,23 +1048,6 @@ onMounted(() => {
         grid-row: span 4;
         height: 120px;
         margin-bottom: 0;
-    }
-
-    .slider-controls button {
-        width: 34px;
-        height: 34px;
-    }
-
-    .featured-slider {
-        grid-auto-columns: 76%;
-    }
-
-    .new-products .product-card__image {
-        height: 180px;
-    }
-
-    .new-products .product-card__body {
-        min-height: auto;
     }
 
     .feature-band {
