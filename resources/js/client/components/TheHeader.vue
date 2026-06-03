@@ -13,7 +13,7 @@ const cartStore = useCartStore();
 const locationStore = useLocationStore();
 const router = useRouter();
 const { locale, t } = useI18n();
-const searchTerm = ref('fitness clothing');
+const searchTerm = ref('');
 const isLocationModalOpen = ref(false);
 const cartPreviewItems = computed(() => cartStore.items.slice(0, 3));
 const currentLocationName = computed(() => locationStore.currentLocationName);
@@ -48,8 +48,8 @@ const accountMenuItems = computed(() => [
 ]);
 
 const submitSearch = () => {
-    const query = searchTerm.value.trim() || 'fitness clothing';
-    router.push({ name: 'ProductList', query: { q: query } });
+    const keyword = searchTerm.value.trim();
+    router.push({ name: 'ProductList', query: keyword ? { keyword } : {} });
 };
 
 const toggleLanguage = () => {
@@ -133,11 +133,7 @@ onBeforeUnmount(unlockBodyScroll);
                 @keydown.space.prevent="isLocationModalOpen = true"
             >
                 <span class="tw-pl-4 tw-text-[12px] tw-leading-3 tw-text-[#cccccc]">
-                    {{
-                        t('header.location_deliverTo', {
-                            name: authStore.isLoggedIn && authStore.user ? authStore.user.fullname : t('header.location_guestName'),
-                        })
-                    }}
+                    {{ t('header.location_deliverTo') }}
                 </span>
                 <div class="tw-flex tw-items-center">
                     <svg
@@ -207,7 +203,7 @@ onBeforeUnmount(unlockBodyScroll);
                     <span class="tw-text-[12px] tw-leading-3 tw-text-white">
                         {{ t('header.account_greeting') }}
                     </span>
-                    <span class="tw-flex tw-items-center tw-text-5 tw-font-bold tw-leading-4 tw-text-white">
+                    <span class="tw-text-5 tw-flex tw-items-center tw-font-bold tw-leading-4 tw-text-white">
                         {{ accountDisplayName }}
                         <svg
                             xmlns="http://www.w3.org/2000/svg"

@@ -43,7 +43,8 @@ const addingProductIds = ref(new Set());
 const cartMessages = ref({});
 
 const categorySlug = computed(() => route.query.category || '');
-const searchQuery = computed(() => route.query.q || categorySlug.value || t('productList.allProducts'));
+const keyword = computed(() => String(route.query.keyword || route.query.q || '').trim());
+const searchQuery = computed(() => keyword.value || categorySlug.value || t('productList.allProducts'));
 const currentPage = computed(() => Number(route.query.page || 1));
 const hasProducts = computed(() => products.value.length > 0);
 const selectedBrands = computed(() => parseCommaQuery(route.query.brand));
@@ -133,6 +134,7 @@ const fetchProducts = async () => {
             params: {
                 brandLimit: 10,
                 page: currentPage.value,
+                ...(keyword.value ? { keyword: keyword.value } : {}),
                 ...(categorySlug.value ? { category: categorySlug.value } : {}),
                 ...(selectedBrands.value.length ? { brand: selectedBrands.value.join(',') } : {}),
             },
@@ -161,7 +163,7 @@ const fetchProducts = async () => {
 
 onMounted(fetchProducts);
 
-watch(() => [route.query.category, route.query.page, route.query.brand], fetchProducts);
+watch(() => [route.query.category, route.query.keyword, route.query.q, route.query.page, route.query.brand], fetchProducts);
 </script>
 
 <template>

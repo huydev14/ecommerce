@@ -927,7 +927,7 @@ onMounted(() => {
 }
 
 .best-sellers__row {
-    grid-template-columns: repeat(5, minmax(170px, 1fr));
+    grid-template-columns: repeat(6, minmax(170px, 1fr));
     gap: 14px;
 }
 

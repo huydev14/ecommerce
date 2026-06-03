@@ -56,7 +56,7 @@
         "terms_privacy": "Thông báo bảo mật"
     },
     "header": {
-        "location_deliverTo": "Giao đến {name}",
+        "location_deliverTo": "Giao đến ",
         "location_guestName": "Bạn",
         "search_placeholder": "Tìm kiếm sản phẩm...",
         "search_categories_all": "Tất cả",

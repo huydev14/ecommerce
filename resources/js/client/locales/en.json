@@ -56,7 +56,7 @@
         "terms_privacy": "Privacy Notice"
     },
     "header": {
-        "location_deliverTo": "Deliver to {name}",
+        "location_deliverTo": "Deliver to ",
         "location_guestName": "You",
         "search_placeholder": "Search products...",
         "search_categories_all": "All",

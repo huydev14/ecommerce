@@ -20,13 +20,25 @@ class ProductController extends Controller
             $categoryIds = $category->getAllChildIds();
         }
 
+        $keyword = $request->input('keyword');
+
         $products = Product::query()
             ->select('products.*')
             ->withTotalSoldPastMonth()
             ->with(['cheapestVariant', 'brand'])
             ->where('status', 'published')
+
+            // Filter by categories
             ->when(!empty($categoryIds), fn($q) => $q->whereIn('category_id', $categoryIds))
 
+            // Filter by keyword
+            ->when($keyword, function ($query, $keyword){
+                $query->where(function ($q) use ($keyword){
+                    $q->where('name' , 'LIKE', $keyword . '%');
+                });
+            })
+
+            // Filter by brands
             ->when($request->input('brand', $request->input('brands')), function ($q, $brands) {
                 $brandSlugs = is_array($brands) ? $brands : explode(',', str_replace(' ', '', $brands));
                 $q->whereHas('brand', fn($q) => $q->whereIn('slug', $brandSlugs));
