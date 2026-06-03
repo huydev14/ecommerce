@@ -5,11 +5,31 @@ const STORAGE_KEYS = {
     provinceId: 'current_location_province_id',
 };
 
+const DEFAULT_LOCATION = {
+    name: 'Hồ Chí Minh',
+    provinceId: '202',
+};
+
+const getInitialLocationState = () => {
+    const storedName = localStorage.getItem(STORAGE_KEYS.name);
+    const storedProvinceId = localStorage.getItem(STORAGE_KEYS.provinceId);
+
+    if (!storedName) {
+        localStorage.setItem(STORAGE_KEYS.name, DEFAULT_LOCATION.name);
+    }
+
+    if (!storedProvinceId) {
+        localStorage.setItem(STORAGE_KEYS.provinceId, DEFAULT_LOCATION.provinceId);
+    }
+
+    return {
+        currentLocationName: storedName || DEFAULT_LOCATION.name,
+        currentProvinceId: storedProvinceId || DEFAULT_LOCATION.provinceId,
+    };
+};
+
 export const useLocationStore = defineStore('location', {
-    state: () => ({
-        currentLocationName: localStorage.getItem(STORAGE_KEYS.name) || 'TP. Hồ Chí Minh',
-        currentProvinceId: localStorage.getItem(STORAGE_KEYS.provinceId) || null,
-    }),
+    state: getInitialLocationState,
 
     actions: {
         setProvince(province) {

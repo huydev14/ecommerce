@@ -63,7 +63,7 @@
         "search_categories_tech": "Tech",
         "search_categories_fashion": "Fashion",
         "search_categories_home": "Home",
-        "account_greeting": "Hello, {name}",
+        "account_greeting": "Hello, ",
         "account_signIn": "Sign in",
         "account_label": "Account",
         "account_aria": "Account",

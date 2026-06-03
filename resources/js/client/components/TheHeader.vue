@@ -19,6 +19,7 @@ const cartPreviewItems = computed(() => cartStore.items.slice(0, 3));
 const currentLocationName = computed(() => locationStore.currentLocationName);
 const currentLanguageLabel = computed(() => locale.value.toUpperCase());
 const nextLanguageLabel = computed(() => (locale.value === 'vi' ? 'EN' : 'VI'));
+const accountDisplayName = computed(() => authStore.user?.fullname || t('header.account_label'));
 let originalBodyOverflow = '';
 let isBodyScrollLockedByLocationModal = false;
 
@@ -110,13 +111,17 @@ onBeforeUnmount(unlockBodyScroll);
         <div class="tw-flex tw-min-w-0 tw-items-center tw-gap-1 tw-px-2 tw-py-2 md:tw-gap-2 md:tw-px-4 xl:tw-gap-4">
             <router-link
                 :to="{ name: 'Home' }"
-                class="tw-flex-none tw-cursor-pointer tw-rounded-sm tw-border tw-border-transparent tw-px-2 tw-py-1 hover:tw-border-white"
+                class="tw-grid tw-min-h-[42px] tw-flex-none tw-cursor-pointer tw-place-items-center tw-rounded-sm tw-border tw-border-transparent tw-px-2 tw-py-1 tw-text-white tw-no-underline hover:tw-border-white"
+                :aria-label="APP_CONFIG.appName"
             >
-                <img
-                    src="https://upload.wikimedia.org/wikipedia/commons/a/a9/Amazon_logo.svg"
-                    :alt="`${APP_CONFIG.appName} Logo`"
-                    class="tw-mt-2 tw-h-7 tw-object-contain tw-invert tw-filter md:tw-h-8"
-                />
+                <span class="tw-grid tw-w-fit tw-leading-none">
+                    <span class="tw-text-[22px] tw-font-bold tw-leading-6 tw-tracking-normal md:tw-text-[26px] md:tw-leading-7">
+                        {{ APP_CONFIG.appName }}
+                    </span>
+                    <span
+                        class="tw-ml-auto tw-mr-1 tw-h-1.5 tw-w-14 tw-rounded-[50%] tw-border-b-[3px] tw-border-[#ff9900] md:tw-w-16"
+                    ></span>
+                </span>
             </router-link>
 
             <div
@@ -130,7 +135,7 @@ onBeforeUnmount(unlockBodyScroll);
                 <span class="tw-pl-4 tw-text-[12px] tw-leading-3 tw-text-[#cccccc]">
                     {{
                         t('header.location_deliverTo', {
-                            name: authStore.isLoggedIn && authStore.user ? authStore.user.name : t('header.location_guestName'),
+                            name: authStore.isLoggedIn && authStore.user ? authStore.user.fullname : t('header.location_guestName'),
                         })
                     }}
                 </span>
@@ -158,15 +163,6 @@ onBeforeUnmount(unlockBodyScroll);
                 @submit.prevent="submitSearch"
                 class="tw-hidden tw-h-[40px] tw-min-w-0 tw-flex-grow tw-overflow-hidden tw-rounded-md tw-bg-white focus-within:tw-ring-2 focus-within:tw-ring-[#f3a847] md:tw-flex"
             >
-                <select
-                    class="tw-hidden tw-cursor-pointer tw-border-r tw-border-gray-300 tw-bg-[#f3f3f3] tw-px-3 tw-text-xs tw-text-gray-700 hover:tw-bg-[#dadada] focus:tw-outline-none md:tw-block"
-                >
-                    <option>{{ t('header.search_categories_all') }}</option>
-                    <option>{{ t('header.search_categories_tech') }}</option>
-                    <option>{{ t('header.search_categories_fashion') }}</option>
-                    <option>{{ t('header.search_categories_home') }}</option>
-                </select>
-
                 <input
                     v-model="searchTerm"
                     type="text"
@@ -196,19 +192,23 @@ onBeforeUnmount(unlockBodyScroll);
             </form>
 
             <div class="tw-group tw-relative tw-hidden tw-h-[50px] lg:tw-flex">
+                <router-link
+                    v-if="!authStore.isLoggedIn"
+                    :to="{ name: 'Login' }"
+                    class="tw-flex tw-h-full tw-cursor-pointer tw-items-center tw-rounded-sm tw-border tw-border-transparent tw-bg-transparent tw-px-2 tw-py-1 tw-text-[14px] tw-font-bold tw-leading-4 tw-text-white tw-no-underline hover:tw-border-white focus:tw-border-white focus:tw-outline-none"
+                >
+                    {{ t('header.account_signIn') }}
+                </router-link>
                 <button
+                    v-else
                     type="button"
                     class="tw-flex tw-h-full tw-cursor-pointer tw-flex-col tw-justify-center tw-rounded-sm tw-border tw-border-transparent tw-bg-transparent tw-px-2 tw-py-1 tw-text-left hover:tw-border-white focus:tw-border-white focus:tw-outline-none"
                 >
                     <span class="tw-text-[12px] tw-leading-3 tw-text-white">
-                        {{
-                            t('header.account_greeting', {
-                                name: authStore.isLoggedIn && authStore.user ? authStore.user.name : t('header.account_signIn'),
-                            })
-                        }}
+                        {{ t('header.account_greeting') }}
                     </span>
-                    <span class="tw-flex tw-items-center tw-text-[14px] tw-font-bold tw-leading-4 tw-text-white">
-                        {{ t('header.account_label') }}
+                    <span class="tw-flex tw-items-center tw-text-5 tw-font-bold tw-leading-4 tw-text-white">
+                        {{ accountDisplayName }}
                         <svg
                             xmlns="http://www.w3.org/2000/svg"
                             class="tw-ml-1 tw-h-3 tw-w-3 tw-text-gray-400"
@@ -225,6 +225,7 @@ onBeforeUnmount(unlockBodyScroll);
                 </button>
 
                 <div
+                    v-if="authStore.isLoggedIn"
                     class="tw-invisible tw-absolute tw-right-0 tw-top-[48px] tw-z-[90] tw-w-60 tw-rounded-md tw-border tw-border-gray-200 tw-bg-white tw-p-2 tw-text-[#111827] tw-opacity-0 tw-shadow-2xl tw-transition-all tw-duration-200 group-hover:tw-visible group-hover:tw-opacity-100"
                 >
                     <div
@@ -233,15 +234,6 @@ onBeforeUnmount(unlockBodyScroll);
                     <div
                         class="tw-absolute -tw-top-2 tw-right-7 tw-h-4 tw-w-4 tw-rotate-45 tw-border-l tw-border-t tw-border-gray-200 tw-bg-white"
                     ></div>
-
-                    <div v-if="!authStore.isLoggedIn" class="tw-border-b tw-border-gray-100 tw-px-4 tw-py-3">
-                        <router-link
-                            :to="{ name: 'Login' }"
-                            class="tw-flex tw-h-9 tw-w-full tw-items-center tw-justify-center tw-rounded-full tw-bg-[#ffd814] tw-text-[14px] tw-font-medium tw-text-[#111827] hover:tw-bg-[#f7ca00]"
-                        >
-                            {{ t('header.account_signIn') }}
-                        </router-link>
-                    </div>
 
                     <nav class="tw-text-3" :aria-label="t('header.account_aria')">
                         <component
@@ -328,17 +320,17 @@ onBeforeUnmount(unlockBodyScroll);
             <div class="tw-group tw-relative tw-h-[50px]">
                 <router-link
                     :to="{ name: 'Cart' }"
-                    class="tw-flex tw-h-[50px] tw-cursor-pointer tw-items-end tw-rounded-sm tw-border tw-border-transparent tw-px-2 tw-py-1 hover:tw-border-white"
+                    class="tw-flex tw-h-[50px] tw-cursor-pointer tw-items-center tw-rounded-sm tw-border tw-border-transparent tw-px-2 tw-py-1 hover:tw-border-white"
                 >
                     <div class="tw-relative tw-flex tw-items-end tw-pr-1">
                         <span
-                            class="tw-absolute tw-left-[10px] tw-top-[-5px] tw-w-full tw-text-center tw-text-[16px] tw-font-bold tw-leading-none tw-text-[#f59e0b]"
+                            class="tw-absolute tw-left-[10px] tw-top-[-11px] tw-w-full tw-text-center tw-text-[16px] tw-font-bold tw-leading-none tw-text-[#f59e0b]"
                         >
                             {{ cartStore.totalItems }}
                         </span>
                         <svg
                             xmlns="http://www.w3.org/2000/svg"
-                            class="tw-h-8 tw-w-8 tw-text-white"
+                            class="tw-h-7 tw-w-7 tw-text-white"
                             fill="none"
                             viewBox="0 0 24 24"
                             stroke="currentColor"
