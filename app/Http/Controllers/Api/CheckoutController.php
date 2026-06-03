@@ -308,7 +308,6 @@ class CheckoutController extends Controller
         $paymentLabels = [
             'cod' => 'Thanh toán khi nhận hàng',
             'vnpay' => 'VNPay',
-            'momo' => 'MoMo',
         ];
 
         return response()->json([

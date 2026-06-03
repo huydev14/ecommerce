@@ -128,7 +128,7 @@
         "soldCount": "{count} sold",
         "shippingFee": "{fee} shipping",
         "shippingCalculating": "Calculating shipping...",
-        "shippingUnavailable": "Shipping fee unavailable",
+        "shippingUnavailable": "~29.500đ shipping fee",
         "badge_new": "New",
         "badge_freeship": "Freeship",
         "actions_addToCart": "Add to cart",

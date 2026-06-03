@@ -123,12 +123,7 @@ const bannerImageUrl = (imageUrl) => {
     if (!imageUrl) {
         return null;
     }
-
-    if (/^https?:\/\//i.test(imageUrl) || imageUrl.startsWith('/')) {
-        return imageUrl;
-    }
-
-    return `/storage/${imageUrl}`;
+    return imageUrl;
 };
 
 const categoryIconUrl = (icon) => {
@@ -195,7 +190,7 @@ const fetchBestSellers = async () => {
     try {
         const response = await api.get('/products/best-sellers', {
             params: {
-                limit: 3,
+                limit: 15,
             },
         });
 
@@ -381,7 +376,7 @@ onMounted(() => {
         <div class="home__content">
             <section class="rail best-sellers" :aria-label="t('home.bestSellers_aria')">
                 <div class="section-heading">
-                    <h2 class="tw-font-bold tw-text-lg">{{ t('home.bestSellers_title') }}</h2>
+                    <h2 class="tw-text-lg tw-font-bold">{{ t('home.bestSellers_title') }}</h2>
                     <a href="#" class="link">{{ t('home.links_seeMore') }}</a>
                 </div>
 
@@ -402,7 +397,7 @@ onMounted(() => {
             <section class="rail featured-products" :aria-label="t('home.featuredProducts_aria')">
                 <div class="section-heading">
                     <div>
-                        <h2 class=" tw-font-bold tw-text-lg">{{ t('home.featuredProducts_title') }}</h2>
+                        <h2 class="tw-text-lg tw-font-bold">{{ t('home.featuredProducts_title') }}</h2>
                     </div>
 
                     <div class="slider-controls" :aria-label="t('home.featuredProducts_controls')">
@@ -427,7 +422,7 @@ onMounted(() => {
 
             <section class="rail new-products" :aria-label="t('home.newProducts_aria')">
                 <div class="section-heading">
-                    <h2 class=" tw-font-bold tw-text-lg">{{ t('home.newProducts_title') }}</h2>
+                    <h2 class="tw-text-lg tw-font-bold">{{ t('home.newProducts_title') }}</h2>
                     <a href="#" class="link">{{ t('home.links_seeNewArrivals') }}</a>
                 </div>
 
@@ -479,7 +474,6 @@ onMounted(() => {
 }
 
 .home-category-menu__list {
-    display: grid;
     margin: 0;
     padding: 8px 0;
     list-style: none;
@@ -490,8 +484,10 @@ onMounted(() => {
 }
 
 .home-category-menu__link {
-    display: grid;
-    grid-template-columns: 24px minmax(0, 1fr) 16px;
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
     gap: 10px;
     align-items: center;
     min-height: 36px;
@@ -527,10 +523,11 @@ onMounted(() => {
 }
 
 .home-category-menu__name {
-    overflow: hidden;
-    font-weight: 500;
-    text-overflow: ellipsis;
+    flex: 1;
+    text-align: left;
     white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
     text-transform: capitalize;
 }
 

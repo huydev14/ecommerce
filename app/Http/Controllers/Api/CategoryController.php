@@ -12,7 +12,7 @@ class CategoryController extends Controller
 {
     public function tree(Request $request)
     {
-        $limit = $request->get('limit', 15);
+        $limit = $request->input('limit', 15);
         $categories = Cache::rememberForever('api_category_tree', function () use ($limit) {
             return Category::query()
                 ->whereNull('parent_id')
