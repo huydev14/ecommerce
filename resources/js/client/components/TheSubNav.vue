@@ -33,7 +33,7 @@ const fetchCategories = async () => {
     try {
         const response = await axios.get('/api/v1/categories/tree', {
             params: {
-                limit: 3,
+                limit: 15,
             },
         });
         if (response.data && response.data.success) {
