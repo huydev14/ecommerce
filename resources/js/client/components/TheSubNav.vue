@@ -8,11 +8,13 @@ const authStore = useAuthStore();
 const { t, locale } = useI18n();
 const isMenuOpen = ref(false);
 const categories = ref([]);
+const trendingKeywords = ref([]);
 
 const userName = computed(() => authStore.user?.name || authStore.user?.fullname || t('subNav.accountFallback'));
 const userAvatar = computed(() => authStore.user?.avatar || authStore.user?.photo_url || authStore.user?.image || '');
 const userInitial = computed(() => userName.value.trim().charAt(0).toUpperCase() || 'U');
 const languageLabel = computed(() => (locale.value === 'vi' ? t('subNav.language_vi') : t('subNav.language_en')));
+const hasTrendingKeywords = computed(() => trendingKeywords.value.length > 0);
 
 const getCategoryItems = (payload) => {
     if (Array.isArray(payload?.data?.data)) {
@@ -28,6 +30,12 @@ const getCategoryItems = (payload) => {
 
 const hasChildren = (category) => Array.isArray(category.children) && category.children.length > 0;
 const categoryUrl = (category) => (category.slug ? `/products?category=${category.slug}` : '#');
+const keywordRoute = (keyword) => ({
+    name: 'ProductList',
+    query: {
+        keyword,
+    },
+});
 
 const fetchCategories = async () => {
     try {
@@ -44,8 +52,20 @@ const fetchCategories = async () => {
     }
 };
 
+const fetchTrendingKeywords = async () => {
+    try {
+        const response = await axios.get('/api/v1/trending-keywords');
+        const keywords = response.data?.data;
+
+        trendingKeywords.value = Array.isArray(keywords) ? keywords.filter(Boolean) : [];
+    } catch (error) {
+        trendingKeywords.value = [];
+    }
+};
+
 onMounted(() => {
     fetchCategories();
+    fetchTrendingKeywords();
 });
 
 const openMenu = () => {
@@ -75,38 +95,28 @@ onBeforeUnmount(() => {
                 @click="openMenu"
                 class="tw-flex tw-flex-none tw-items-center tw-rounded-sm tw-border tw-border-transparent tw-px-2 tw-py-1 hover:tw-border-white"
             >
-                <svg xmlns="http://www.w3.org/2000/svg" class="tw-mr-1 tw-h-5 tw-w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <svg xmlns="http://www.w3.org/2000/svg" class="tw-mr-2 tw-h-6 tw-w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
                 </svg>
                 {{ t('subNav.links_all') }}
             </button>
 
-            <a
-                href="#"
-                class="tw-flex tw-flex-none tw-items-center tw-rounded-sm tw-border tw-border-transparent tw-px-2 tw-py-1 hover:tw-border-white"
-                >{{ t('subNav.links_deals') }}</a
-            >
-            <a
-                href="#"
-                class="tw-flex tw-flex-none tw-items-center tw-rounded-sm tw-border tw-border-transparent tw-px-2 tw-py-1 hover:tw-border-white"
-                >{{ t('subNav.links_customerService') }}</a
-            >
-            <a
-                href="#"
-                class="tw-hidden tw-flex-none tw-items-center tw-rounded-sm tw-border tw-border-transparent tw-px-2 tw-py-1 hover:tw-border-white sm:tw-flex"
-                >{{ t('subNav.links_registry') }}</a
-            >
+            <span class="tw-text-gray-100" v-if="hasTrendingKeywords"> | </span>
 
-            <a
-                href="#"
-                class="tw-hidden tw-flex-none tw-items-center tw-rounded-sm tw-border tw-border-transparent tw-px-2 tw-py-1 hover:tw-border-white md:tw-flex"
-                >{{ t('subNav.links_sell') }}</a
-            >
-            <a
-                href="#"
-                class="tw-hidden tw-flex-none tw-items-center tw-rounded-sm tw-border tw-border-transparent tw-px-2 tw-py-1 hover:tw-border-white xl:tw-flex"
-                >{{ t('subNav.links_buyAgain') }}</a
-            >
+            <span v-if="hasTrendingKeywords" class="tw-flex tw-flex-none tw-items-center tw-px-1 tw-py-1 tw-text-gray-100">
+                {{ t('subNav.trending_label') }}
+            </span>
+
+            <template v-if="hasTrendingKeywords">
+                <router-link
+                    v-for="keyword in trendingKeywords"
+                    :key="keyword"
+                    :to="keywordRoute(keyword)"
+                    class="tw-flex tw-flex-none tw-items-center tw-rounded-sm tw-border tw-border-transparent tw-px-2 tw-py-1 tw-text-gray-100 tw-no-underline hover:tw-border-white hover:tw-text-[#febd69]"
+                >
+                    {{ keyword }}
+                </router-link>
+            </template>
         </div>
 
         <transition name="nav-overlay">

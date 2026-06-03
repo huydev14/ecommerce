@@ -10,6 +10,7 @@ use App\Models\Category;
 use App\Models\Product;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Redis;
 
 class ProductController extends Controller
 {
@@ -21,6 +22,14 @@ class ProductController extends Controller
         }
 
         $keyword = $request->input('keyword');
+
+        if($keyword) {
+            $normalized_keyword = mb_strtolower(trim($keyword));
+
+            if(mb_strlen($normalized_keyword) >= 3) {
+                Redis::zIncrBy('trending_keywords', 1, $normalized_keyword);
+            }
+        }
 
         $products = Product::query()
             ->select('products.*')
@@ -66,6 +75,15 @@ class ProductController extends Controller
                     'brands' => $availableBrands,
                 ],
             ]
+        ]);
+    }
+
+    public function getTrendingKeywords () {
+        $trending_keywords = Redis::zRevRange('trending_keywords', 0, 8);
+
+        return response()->json([
+            'success' => true,
+            'data' => $trending_keywords
         ]);
     }
 

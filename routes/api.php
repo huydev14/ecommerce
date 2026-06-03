@@ -43,6 +43,9 @@ Route::prefix('v1')->group(function () {
     // ----- Homepage API -------------------------
     Route::get('/home', [HomeController::class, 'index']);
 
+    // ----- Trending keywords API -------------------------
+    Route::get('/trending-keywords', [ProductController::class, 'getTrendingKeywords']);
+
     // ----- Products API -------------------------
     Route::get('/products', [ProductController::class, 'index']);
     Route::get('products/best-sellers', [ProductController::class, 'bestSellers']);
@@ -63,7 +66,6 @@ Route::prefix('v1')->group(function () {
         Route::get('/wards', [LocationController::class, 'getWards']);
         Route::get('/shipping-fee', [LocationController::class, 'calculateShippingFee']);
     });
-
 
     Route::middleware('auth:api')->group(function () {
         // ----- Customer addresses API -------------------------
