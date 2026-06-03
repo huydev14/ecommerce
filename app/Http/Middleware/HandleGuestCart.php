@@ -11,7 +11,7 @@ class HandleGuestCart
 {
     public function handle(Request $request, Closure $next): Response
     {
-        // Case 1: User is authenticated
+        // Case 1: User is authenticated or already has guest cart cookie
         if (auth('api')->check() || $request->hasCookie('guest_cart_token')) {
             return $next($request);
         }

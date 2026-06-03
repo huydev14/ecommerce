@@ -4,13 +4,19 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Models\ProductVariant;
+use App\Services\CartService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Redis;
 
 class CartController extends Controller
 {
-    private const CART_TTL = 2592000;
+    protected $cartService;
+
+    public function __construct(CartService $cartService)
+    {
+        $this->cartService = $cartService;
+    }
 
     /**
      * API: GET /api/v1/cart
@@ -18,12 +24,12 @@ class CartController extends Controller
      */
     public function index(Request $request)
     {
-        $cartKey = $this->getRedisCartKey($request);
+        $cartKey = $this->cartService->getCartKey($request);
 
-        $redisItems = Redis::hGetAll($cartKey);
+        $cartItems = Redis::hGetAll($cartKey);
         // return ['variant_id' => 'quantity']
 
-        if (empty($redisItems)) {
+        if (empty($cartItems)) {
             return response()->json([
                 'items' => [],
                 'subtotal' => 0,
@@ -32,7 +38,7 @@ class CartController extends Controller
         }
 
         // Get variants info from DB
-        $variantIds = array_keys($redisItems);
+        $variantIds = array_keys($cartItems);
         $variants = ProductVariant::with(['product', 'stocks'])
             ->whereIn('id', $variantIds)
             ->get();
@@ -42,7 +48,7 @@ class CartController extends Controller
         $totalItems = 0;
 
         foreach ($variants as $variant) {
-            $quantity = (int) $redisItems[$variant->id];
+            $quantity = (int) $cartItems[$variant->id];
             $availableStock = $variant->available_stock;
             $lineTotal = $variant->price * $quantity;
 
@@ -50,11 +56,11 @@ class CartController extends Controller
                 'product_variant_id' => $variant->id,
                 'product_name' => $variant->product->name,
                 'variant_name' => $variant->attributes['variant_name'] ?? $variant->sku,
-                'thumbnail'    => $variant->product->thumbnail,
-                'price'    => (float) $variant->price,
+                'thumbnail' => $variant->product->thumbnail,
+                'price' => (float) $variant->price,
                 'quantity' => $quantity,
-                'max_stock'=> $availableStock,
-                'line_total'   => $lineTotal,
+                'max_stock' => $availableStock,
+                'line_total' => $lineTotal,
                 'is_available' => $availableStock > 0,
             ];
 
@@ -73,85 +79,38 @@ class CartController extends Controller
      * API: POST /api/v1/cart/items
      * Add to Cart
      */
-    public function store(Request $request): JsonResponse
+    public function store(Request $request)
     {
-        $request->validate([
+       $request->validate([
             'product_variant_id' => 'required|integer',
             'quantity' => 'required|integer|min:1'
         ]);
 
+        $cartKey = $this->cartService->getCartKey($request);
+
         $variantId = $request->input('product_variant_id');
         $quantity = $request->input('quantity');
 
-        // Check stocks
-        $variant = ProductVariant::with('stocks')->find($variantId);
-
-        if (!$variant) {
-            return response()->json(['message' => 'Sản phẩm không tồn tại.'], 404);
-        }
-
-        $availableStock = $variant->available_stock;
-
-        if ($availableStock <= 0) {
-            return response()->json(['message' => 'Sản phẩm này hiện tại đã hết hàng.'], 400);
-        }
-
-        $cartKey = $this->getRedisCartKey($request);
-
-        // Check current quantity before increment
-        $currentQuantity = (int) Redis::hGet($cartKey, $variantId);
-
-        // --- Increase --------------
-        $newQuantity = $currentQuantity + $quantity;
-
-        if ($newQuantity > $availableStock) {
-            return response()->json([
-                'message' => "Bạn chỉ có thể thêm tối đa {$availableStock} sản phẩm này vào giỏ hàng.",
-                'current_stock' => $availableStock
-            ], 400);
-        }
-        Redis::hIncrBy($cartKey, $variantId, $quantity);
-
-        Redis::expire($cartKey, self::CART_TTL);
-
-        return response()->json(['message' => 'Đã thêm sản phẩm vào giỏ hàng thành công.'], 201);
+        $result = $this->cartService->addToCart($cartKey, $variantId, $quantity);
+        return response()->json($result['data'], $result['status']);
     }
 
     /**
      * API: PUT /api/v1/cart/items/{variant_id}
      * Update quantity
      */
-    public function update(Request $request, $variantId): JsonResponse
+    public function update(Request $request, $variantId)
     {
         $request->validate([
             'quantity' => 'required|integer|min:1'
         ]);
 
-        $requestedQuantity = $request->input('quantity');
+        $cartKey = $this->cartService->getCartKey($request);
+        $quantity = $request->input('quantity');
 
-        // Check stocks
-        $variant = ProductVariant::with('stocks')->find($variantId);
+        $result = $this->cartService->updateItemQuantity($cartKey,$variantId,$quantity);
 
-        if (!$variant) {
-            return response()->json(['message' => 'Sản phẩm không tồn tại.'], 404);
-        }
-
-        if ($requestedQuantity > $variant->available_stock) {
-            return response()->json(['message' => 'Số lượng yêu cầu vượt quá tồn kho cho phép.'], 400);
-        }
-
-        $cartKey = $this->getRedisCartKey($request);
-
-        // Check if item still exists in cart
-        if (!Redis::hExists($cartKey, $variantId)) {
-            return response()->json(['message' => 'Không tìm thấy sản phẩm trong giỏ.'], 404);
-        }
-
-        // Overwrite quantity with new value
-        Redis::hSet($cartKey, $variantId, $requestedQuantity);
-        Redis::expire($cartKey, self::CART_TTL);
-
-        return response()->json(['message' => 'Cập nhật số lượng thành công.']);
+        return response()->json($result['data'], $result['status']);
     }
 
     /**
@@ -160,27 +119,11 @@ class CartController extends Controller
      */
     public function destroy(Request $request, $variantId): JsonResponse
     {
-        $cartKey = $this->getRedisCartKey($request);
+        $cartKey = $this->cartService->getCartKey($request);
 
         // remove item from main hash
         Redis::hDel($cartKey, $variantId);
 
         return response()->json(['message' => 'Đã xóa sản phẩm khỏi giỏ hàng.']);
-    }
-
-    /* --- HELPER ------------------ */
-
-    /**
-     * Get the Redis key based on user auth or guest token.
-     */
-    private function getRedisCartKey(Request $request): string
-    {
-        // Case 1: user is authenticated
-        if (auth('api')->check()) {
-            return 'cart:user:' . auth('api')->id();
-        }
-        // Case 2: guest user - use token from cookie
-        $guestToken = $request->cookie('guest_cart_token') ?? $request->input('guest_cart_token');
-        return 'cart:guest:' . $guestToken;
     }
 }

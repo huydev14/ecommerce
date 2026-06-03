@@ -7,6 +7,7 @@ use App\Http\Requests\CheckoutRequest;
 use App\Models\CustomerAddress;
 use App\Models\Order;
 use App\Models\ProductVariant;
+use App\Services\CartService;
 use App\Services\GhnService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -17,15 +18,17 @@ use Illuminate\Support\Str;
 class CheckoutController extends Controller
 {
     protected $ghnService;
-    public function __construct(GhnService $ghnService)
+    protected $cartService;
+    public function __construct(GhnService $ghnService, CartService $cartService)
     {
         $this->ghnService = $ghnService;
+        $this->cartService = $cartService;
     }
 
     public function reviewCheckout(Request $request)
     {
         $user = $request->user();
-        $cartKey = $this->getRedisCartKey($request);
+        $cartKey = $this->cartService->getCartKey($request);
 
         $cartItems = Redis::hGetAll($cartKey);
 
@@ -112,7 +115,7 @@ class CheckoutController extends Controller
         $user = $request->user();
         $validated = $request->validated();
 
-        $cartKey = $this->getRedisCartKey($request);
+        $cartKey = $this->cartService->getCartKey($request);
         $cartItems = Redis::hGetAll($cartKey);
 
         if (empty($cartItems)) {
@@ -329,14 +332,5 @@ class CheckoutController extends Controller
                 ])->values(),
             ])->values(),
         ]);
-    }
-
-    private function getRedisCartKey(Request $request): string
-    {
-        if ($request->user()) {
-            return 'cart:user:' . $request->user()->id;
-        }
-        $guestToken = $request->cookie('guest_cart_token');
-        return 'cart:guest:' . $guestToken;
     }
 }

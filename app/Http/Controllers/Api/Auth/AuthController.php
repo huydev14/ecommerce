@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api\Auth;
 use App\Http\Controllers\Controller;
 use App\Mail\CustomerOTPMail;
 use App\Models\Customer;
+use App\Services\CartService;
 use Exception;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -44,8 +45,10 @@ class AuthController extends Controller
         ]);
     }
 
-    public function login(Request $request)
+    public function login(Request $request, CartService $cartService)
     {
+        $guestCartKey = $cartService->getCartKey($request);
+
         $credentials = $request->validate([
             'email' => 'required|email',
             'password' => 'required'
@@ -66,7 +69,6 @@ class AuthController extends Controller
 
         if (!$token) {
             RateLimiter::hit($key, 60);
-
             $remaining = RateLimiter::remaining($key, self::MAX_ATTEMPTS);
 
             return response()->json([
@@ -86,6 +88,10 @@ class AuthController extends Controller
                 'require_verify' => true,
             ], 403);
         }
+
+        $userCartKey = $cartService->getCartKey($request);
+        $cartService->mergeCartAfterLogin($guestCartKey, $userCartKey);
+
         return $this->responseWithToken($token);
     }
 
