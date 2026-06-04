@@ -18,7 +18,7 @@ class ProductResource extends JsonResource
             'id' => $this->id,
             'name' => $this->name,
             'slug' => $this->slug,
-            'thumbnail' => $this->thumbnail,
+            'thumbnail' => $this->optimized_thumbnail_url,
 
             'brand' => $this->whenLoaded('brand', function () {
                 return [

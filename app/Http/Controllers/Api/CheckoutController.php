@@ -78,7 +78,7 @@ class CheckoutController extends Controller
                 'quantity' => $quantity,
                 'line_total' => $lineTotal,
                 'stock' => $variant->stocks ?? 0,
-                'thumbnail' => $product->thumbnail,
+                'thumbnail' => $product->optimized_thumbnail_url,
                 'estimate_shipping_date' => $estimate_shipping_date,
             ];
         }
@@ -293,7 +293,7 @@ class CheckoutController extends Controller
                     'name' => $item->product_name,
                     'quantity' => $item->quantity,
                     'price' => $item->total_price,
-                    'image' => $item->product->thumbnail,
+                    'image' => $item->product?->optimized_thumbnail_url,
                 ])->values(),
             ],
         ]);
@@ -328,7 +328,7 @@ class CheckoutController extends Controller
                     'name' => $item->product_name,
                     'quantity' => $item->quantity,
                     'price' => $item->total_price,
-                    'image' => $item->product->thumbnail,
+                    'image' => $item->product?->optimized_thumbnail_url,
                 ])->values(),
             ])->values(),
         ]);

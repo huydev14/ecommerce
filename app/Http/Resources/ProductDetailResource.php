@@ -19,7 +19,7 @@ class ProductDetailResource extends JsonResource
             'name' => $this->name,
             'slug' => $this->slug,
             'description' => $this->description,
-            'thumbnail' => $this->thumbnail,
+            'thumbnail' => $this->optimized_thumbnail_url,
             'total_sold' => (int) ($this->total_sold ?? 0),
 
             // Brands and categories

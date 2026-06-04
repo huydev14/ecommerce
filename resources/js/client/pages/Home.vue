@@ -118,10 +118,13 @@ const addProductToCart = async (product) => {
     }
 };
 
-const bannerImageUrl = (imageUrl) => {
+const bannerImageUrl = (banner) => {
+    const imageUrl = banner?.optimized_image_url;
+
     if (!imageUrl) {
         return null;
     }
+
     return imageUrl;
 };
 
@@ -308,15 +311,15 @@ onMounted(() => {
                         <swiper-slide v-for="banner in sliderBanners" :key="banner.id">
                             <a v-if="banner.link" :href="banner.link" class="home-banner-slide">
                                 <img
-                                    v-if="bannerImageUrl(banner.image_url)"
-                                    :src="bannerImageUrl(banner.image_url)"
+                                    v-if="bannerImageUrl(banner)"
+                                    :src="bannerImageUrl(banner)"
                                     :alt="banner.title || t('home.banner_alt', { appName: APP_CONFIG.appName })"
                                 />
                             </a>
                             <div v-else class="home-banner-slide">
                                 <img
-                                    v-if="bannerImageUrl(banner.image_url)"
-                                    :src="bannerImageUrl(banner.image_url)"
+                                    v-if="bannerImageUrl(banner)"
+                                    :src="bannerImageUrl(banner)"
                                     :alt="banner.title || t('home.banner_alt', { appName: APP_CONFIG.appName })"
                                 />
                             </div>
@@ -336,8 +339,8 @@ onMounted(() => {
                     :aria-label="banner.title || t('home.aria_promoBanner')"
                 >
                     <img
-                        v-if="bannerImageUrl(banner.image_url)"
-                        :src="bannerImageUrl(banner.image_url)"
+                        v-if="bannerImageUrl(banner)"
+                        :src="bannerImageUrl(banner)"
                         :alt="banner.title || t('home.banner_alt', { appName: APP_CONFIG.appName })"
                         loading="lazy"
                     />
