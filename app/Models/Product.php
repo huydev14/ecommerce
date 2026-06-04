@@ -5,6 +5,7 @@ namespace App\Models;
 use App\Observers\ProductObserver;
 use Illuminate\Database\Eloquent\Attributes\ObservedBy;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
@@ -18,6 +19,7 @@ class Product extends Model
         'slug',
         'description',
         'thumbnail',
+        'thumbnail_public_id',
         'category_id',
         'brand_id',
         'status',
@@ -27,6 +29,23 @@ class Product extends Model
     protected $casts = [
         'is_featured' => 'boolean',
     ];
+
+    protected $appends = ['optimized_thumbnail_url'];
+
+    protected $hidden = ['thumbnail'];
+
+    protected function optimizedThumbnailUrl(): Attribute
+    {
+        return Attribute::make(
+            get: function () {
+                if ($this->thumbnail) {
+                    return str_replace('/image/upload/', '/image/upload/q_auto,f_auto/', $this->thumbnail);
+                }
+
+                return null;
+            }
+        );
+    }
 
     public function category(): BelongsTo
     {

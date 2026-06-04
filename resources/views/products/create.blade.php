@@ -1,4 +1,4 @@
-<form id="form-create-product" action="{{ route('products.store') }}" method="POST"
+<form id="form-create-product" action="{{ route('products.store') }}" method="POST" enctype="multipart/form-data"
     class="tw-flex tw-flex-col tw-h-full" novalidate>
     @csrf
 
@@ -29,6 +29,22 @@
             <label for="description" class="tw-block tw-text-sm tw-font-medium tw-text-gray-700 tw-mb-1.5">{{ __('product.description') }}</label>
             <textarea name="description" id="description" rows="3" placeholder="{{ __('product.description_placeholder') }}"
                 class="tw-w-full tw-rounded-md tw-border-gray-300 tw-shadow-sm focus:tw-border-[#0078D4] focus:tw-ring-[#0078D4] tw-text-sm tw-px-3 tw-py-2 tw-transition-colors tw-outline-none"></textarea>
+        </div>
+
+        <div>
+            <label for="thumbnail" class="tw-block tw-text-sm tw-font-medium tw-text-gray-700 tw-mb-1.5">{{ __('product.thumbnail_label') }}</label>
+            <div
+                class="tw-flex tw-items-center tw-gap-4 tw-p-3 tw-border tw-border-dashed tw-border-gray-300 tw-rounded-md tw-bg-gray-50 hover:tw-bg-gray-100 tw-transition-colors">
+                <div
+                    class="tw-w-16 tw-h-16 tw-shrink-0 tw-rounded tw-border tw-border-gray-200 tw-bg-white tw-flex tw-items-center tw-justify-center tw-overflow-hidden">
+                    <i class="fas fa-image tw-text-gray-300 tw-text-xl"></i>
+                </div>
+                <div class="tw-flex-1">
+                    <input type="file" name="thumbnail" id="thumbnail" accept="image/png, image/jpeg, image/webp"
+                        class="tw-block tw-w-full tw-text-sm tw-text-gray-500 file:tw-mr-4 file:tw-py-1.5 file:tw-px-4 file:tw-rounded-sm file:tw-border-0 file:tw-text-sm file:tw-font-medium file:tw-bg-[#0078D4] file:tw-text-white hover:file:tw-bg-[#106ebe] file:tw-cursor-pointer tw-cursor-pointer tw-transition-colors">
+                    <p class="tw-mt-1.5 tw-text-[11px] tw-text-gray-500">{{ __('product.thumbnail_hint') }}</p>
+                </div>
+            </div>
         </div>
 
         <div class="tw-grid tw-grid-cols-1 md:tw-grid-cols-2 tw-gap-4">

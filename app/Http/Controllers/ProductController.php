@@ -15,6 +15,8 @@ use Yajra\DataTables\DataTables;
 
 class ProductController extends Controller
 {
+    private const CLOUD_FOLDER = 'products/thumbnails';
+
     public function index()
     {
         return view('products.index');
@@ -129,16 +131,17 @@ class ProductController extends Controller
             'status.required' => __('product.status_required'),
         ]);
 
-        $path = null;
-        if ($request->hasFile('thumbnail')) {
-            $path = $request->file('thumbnail')->store('products/thumbnails', 'public');
-        }
-
         $data['slug'] = Str::slug($request->name);
-        $data['thumbnail'] = $path;
         $data['is_featured'] = $request->boolean('is_featured');
+        $thumbnailPublicId = null;
 
         try {
+            if ($request->hasFile('thumbnail')) {
+                $thumbnailPublicId = $request->file('thumbnail')->store(self::CLOUD_FOLDER, 'cloudinary');
+                $data['thumbnail'] = Storage::disk('cloudinary')->url($thumbnailPublicId);
+                $data['thumbnail_public_id'] = $thumbnailPublicId;
+            }
+
             Product::create($data);
             $this->clearProductApiCaches();
 
@@ -152,6 +155,10 @@ class ProductController extends Controller
             return redirect()->route('products.index')->with('success', __('product.create_success'));
 
         } catch (\Exception $e) {
+            if ($thumbnailPublicId) {
+                Storage::disk('cloudinary')->delete($thumbnailPublicId);
+            }
+
             Log::error('Create product failed: ' . $e->getMessage(), [
                 'trace' => $e->getTraceAsString(),
             ]);
@@ -192,21 +199,30 @@ class ProductController extends Controller
             'status.required' => __('product.status_required'),
         ]);
 
-        $path = $product->thumbnail;
-
-        if ($request->hasFile('thumbnail')) {
-            if ($product->thumbnail && Storage::disk('public')->exists($product->thumbnail)) {
-                Storage::disk('public')->delete($product->thumbnail);
-            }
-            $path = $request->file('thumbnail')->store('products/thumbnails', 'public');
-        }
-
         $data['slug'] = Str::slug($request->name);
-        $data['thumbnail'] = $path;
         $data['is_featured'] = $request->boolean('is_featured');
+        $thumbnailPublicId = $product->thumbnail_public_id;
+        $oldThumbnailPublicId = null;
+        $oldThumbnailPath = $product->thumbnail;
 
         try {
+            if ($request->hasFile('thumbnail')) {
+                $newThumbnailPublicId = $request->file('thumbnail')->store(self::CLOUD_FOLDER, 'cloudinary');
+
+                $data['thumbnail'] = Storage::disk('cloudinary')->url($newThumbnailPublicId);
+                $data['thumbnail_public_id'] = $newThumbnailPublicId;
+                $oldThumbnailPublicId = $product->thumbnail_public_id;
+                $thumbnailPublicId = $newThumbnailPublicId;
+            }
+
             $product->update($data);
+
+            if ($oldThumbnailPublicId) {
+                Storage::disk('cloudinary')->delete($oldThumbnailPublicId);
+            } elseif ($oldThumbnailPath && Storage::disk('public')->exists($oldThumbnailPath)) {
+                Storage::disk('public')->delete($oldThumbnailPath);
+            }
+
             $this->clearProductApiCaches();
 
             return response()->json([
@@ -214,6 +230,10 @@ class ProductController extends Controller
                 'msg' => __('product.update_success'),
             ], 200);
         } catch (Exception $e) {
+            if ($request->hasFile('thumbnail') && $thumbnailPublicId && $thumbnailPublicId !== $product->getOriginal('thumbnail_public_id')) {
+                Storage::disk('cloudinary')->delete($thumbnailPublicId);
+            }
+
             Log::error('Update product failed: ' . $e->getMessage(), [
                 'trace' => $e->getTraceAsString(),
             ]);
