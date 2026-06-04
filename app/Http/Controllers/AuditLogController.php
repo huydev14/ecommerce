@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 
+use App\Models\Customer;
 use App\Models\User;
 use Spatie\Activitylog\Models\Activity;
 use Yajra\DataTables\DataTables;
@@ -23,6 +24,10 @@ class AuditLogController extends Controller
 
             if ($request->filled('log_name')) {
                 $logs->where('log_name', $request->log_name);
+            }
+
+            if ($request->filled('causer_type')) {
+                $logs->where('causer_type', $request->causer_type);
             }
 
             if ($request->filled('causer_id')) {
@@ -68,10 +73,13 @@ class AuditLogController extends Controller
             ];
         })->values();
 
-        // Get causers
-        $causerIds = Activity::whereNotNull('causer_id')->distinct()->pluck('causer_id');
+        // Get user causers
+        $userCauserIds = Activity::where('causer_type', User::class)
+            ->whereNotNull('causer_id')
+            ->distinct()
+            ->pluck('causer_id');
 
-        $causerData = User::whereIn('id', $causerIds)
+        $userCauserData = User::whereIn('id', $userCauserIds)
             ->select('id', 'name')
             ->get()
             ->map(function ($user) {
@@ -81,9 +89,26 @@ class AuditLogController extends Controller
                 ];
             })->values();
 
+        // Get customer causers
+        $customerCauserIds = Activity::where('causer_type', Customer::class)
+            ->whereNotNull('causer_id')
+            ->distinct()
+            ->pluck('causer_id');
+
+        $customerCauserData = Customer::whereIn('id', $customerCauserIds)
+            ->select('id', 'name', 'email')
+            ->get()
+            ->map(function ($customer) {
+                return [
+                    'id' => $customer->id,
+                    'text' => $customer->name ?: $customer->email
+                ];
+            })->values();
+
         return response()->json([
             'logNameData' => $logNameData,
-            'causerData'  => $causerData,
+            'userCauserData' => $userCauserData,
+            'customerCauserData' => $customerCauserData,
         ]);
     }
 

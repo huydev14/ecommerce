@@ -8,6 +8,8 @@ return [
 
     'time' => 'Time',
     'actor' => 'Actor / Causer',
+    'user_tab' => 'Users',
+    'customer_tab' => 'Customers',
     'description' => 'Description',
     'target' => 'Target',
     'module' => 'Module',

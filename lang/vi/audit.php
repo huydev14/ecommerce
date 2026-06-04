@@ -8,6 +8,8 @@ return [
 
     'time' => 'Thời gian',
     'actor' => 'Người thực hiện',
+    'user_tab' => 'Nhân sự',
+    'customer_tab' => 'Khách hàng',
     'description' => 'Mô tả',
     'target' => 'Đối tượng',
     'module' => 'Phân hệ',

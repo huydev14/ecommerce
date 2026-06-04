@@ -6,6 +6,19 @@
             {{-- Toolbar --}}
             <x-toolbar dataTableInstance="auditLogTable" />
 
+            <div class="tw-mt-3 tw-flex tw-gap-2 tw-border-b tw-border-gray-200">
+                <button type="button"
+                    class="audit-causer-tab tw-border-b-2 tw-border-blue-600 tw-px-4 tw-py-2 tw-text-sm tw-font-semibold tw-text-blue-600"
+                    data-causer-type="{{ App\Models\User::class }}">
+                    {{ __('audit.user_tab') }}
+                </button>
+                <button type="button"
+                    class="audit-causer-tab tw-border-b-2 tw-border-transparent tw-px-4 tw-py-2 tw-text-sm tw-font-semibold tw-text-gray-500 hover:tw-text-gray-800"
+                    data-causer-type="{{ App\Models\Customer::class }}">
+                    {{ __('audit.customer_tab') }}
+                </button>
+            </div>
+
             <div id="filter-panel" class="tw-pt-3 tw-pb-5">
 
 
@@ -46,6 +59,26 @@
     @push('scripts')
         <script type="module">
             $(function() {
+                const causerTypes = {
+                    user: @js(App\Models\User::class),
+                    customer: @js(App\Models\Customer::class),
+                };
+                let activeCauserType = causerTypes.user;
+                let filterData = {
+                    logNameData: [],
+                    userCauserData: [],
+                    customerCauserData: [],
+                };
+
+                const currentCauserOptions = function() {
+                    return activeCauserType === causerTypes.customer ? filterData.customerCauserData : filterData.userCauserData;
+                };
+
+                const renderCauserOptions = function() {
+                    $('#f_causer').val('').trigger('change.select2');
+                    renderOptions('#f_causer', currentCauserOptions());
+                };
+
                 // ---- RENDER TABLE --------------------------
                 window.auditLogTable = new DataTable('#audit-log-table', {
                     processing: true,
@@ -56,6 +89,7 @@
                         data: function(d) {
                             d.log_name = $('#f_logName').val() || '';
                             d.causer_id = $('#f_causer').val() || '';
+                            d.causer_type = activeCauserType;
                         },
                     },
                     order: [],
@@ -135,13 +169,29 @@
                 // ---- RENDER OPTIONS FOR SELECT FIELDs ----------------
                 $.getJSON('{!! route('audit-logs.filter_data') !!}')
                     .done(function(res) {
+                        filterData = res;
                         renderOptions('#f_logName', res.logNameData);
-                        renderOptions('#f_causer', res.causerData)
+                        renderCauserOptions();
                     })
                     .fail(function(xhr) {
                         console.error('Load error:', xhr.status)
                         console.error('Load error:', xhr.responseText)
                     });
+
+                $('.audit-causer-tab').on('click', function() {
+                    activeCauserType = $(this).data('causer-type');
+
+                    $('.audit-causer-tab')
+                        .removeClass('tw-border-blue-600 tw-text-blue-600')
+                        .addClass('tw-border-transparent tw-text-gray-500');
+
+                    $(this)
+                        .removeClass('tw-border-transparent tw-text-gray-500')
+                        .addClass('tw-border-blue-600 tw-text-blue-600');
+
+                    renderCauserOptions();
+                    auditLogTable.ajax.reload();
+                });
 
                 $('#audit-log-table').on('click', '.view-log-btn', function() {
                     ModalHelper.open('modal')
