@@ -308,6 +308,8 @@
         "status_cancelled": "Cancelled",
         "payment_status_paid": "Paid",
         "payment_status_unpaid": "Unpaid",
+        "payment_payNow": "Pay now",
+        "payment_processing": "Connecting...",
         "card_orderPlaced": "Order placed",
         "card_total": "Total",
         "card_payment": "Payment",

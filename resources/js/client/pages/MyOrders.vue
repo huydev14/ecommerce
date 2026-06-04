@@ -11,6 +11,7 @@ const orderTabs = computed(() => [
 const orders = ref([]);
 const searchQuery = ref('');
 const isLoading = ref(false);
+const payingOrderId = ref(null);
 
 const totalSpent = computed(() => orders.value.reduce((total, order) => total + Number(order.total || 0), 0));
 
@@ -49,6 +50,7 @@ const statusLabel = (status) => {
 const statusClass = (status) => `orders-status--${status || 'processing'}`;
 const paymentStatusLabel = (status) => (status === 'paid' ? t('orders.payment_status_paid') : t('orders.payment_status_unpaid'));
 const paymentStatusClass = (status) => `orders-payment-status--${status === 'paid' ? 'paid' : 'unpaid'}`;
+const canPayWithVnpay = (order) => order.payment_method_code === 'vnpay' && order.payment_status !== 'paid' && order.order_id;
 
 const filteredOrders = computed(() => {
     const keyword = searchQuery.value.trim().toLowerCase();
@@ -79,6 +81,25 @@ const fetchOrders = async () => {
         }));
     } finally {
         isLoading.value = false;
+    }
+};
+
+const payWithVnpay = async (order) => {
+    if (!canPayWithVnpay(order) || payingOrderId.value) {
+        return;
+    }
+
+    payingOrderId.value = order.order_id;
+
+    try {
+        const response = await api.post(`/payment/vnpay/${order.order_id}`);
+        const paymentUrl = response.data?.data?.payment_url;
+
+        if (response.data?.success && paymentUrl) {
+            window.location.href = paymentUrl;
+        }
+    } finally {
+        payingOrderId.value = null;
     }
 };
 
@@ -152,9 +173,19 @@ onMounted(fetchOrders);
                         </div>
                         <div class="orders-card__meta">
                             <span>{{ t('orders.card_payment') }}</span>
-                            <strong>{{ order.payment_method }}  </strong>
-                                <span :class="paymentStatusClass(order.payment_status)"> ({{ paymentStatusLabel(order.payment_status) }})
+                            <strong>{{ order.payment_method }} </strong>
+                            <span :class="paymentStatusClass(order.payment_status)">
+                                ({{ paymentStatusLabel(order.payment_status) }})
                             </span>
+                            <button
+                               v-if="canPayWithVnpay(order)"
+                                type="button"
+                                class="orders-pay-btn tw-bg-gray-200 tw-text-gray-600 tw-rounded-md hover:tw-bg-gray-300 tw-font-bold"
+                                :disabled="payingOrderId === order.order_id"
+                                @click="payWithVnpay(order)"
+                            >
+                                {{ payingOrderId === order.order_id ? t('orders.payment_processing') : t('orders.payment_payNow') }}
+                            </button>
                         </div>
                         <div class="orders-card__code">
                             <span>{{ t('orders.card_orderNumber', { number: order.order_number }) }}</span>
@@ -467,7 +498,7 @@ onMounted(fetchOrders);
 
 .orders-card__header {
     display: grid;
-     grid-template-columns: minmax(130px, 0.9fr) minmax(130px, 0.9fr) minmax(150px, 1fr) minmax(220px, 1.2fr);
+    grid-template-columns: minmax(130px, 0.9fr) minmax(130px, 0.9fr) minmax(150px, 1fr) minmax(220px, 1.2fr);
     gap: 16px;
     border-bottom: 1px solid #d5d9d9;
     background: #f7fafa;
@@ -489,6 +520,26 @@ onMounted(fetchOrders);
     color: #0f1111;
     font-size: 15px;
     line-height: 20px;
+}
+
+.orders-pay-btn {
+    display: inline-flex;
+    width: fit-content;
+    align-items: center;
+    justify-content: center;
+    min-height: 30px;
+    margin-top: 8px;
+    padding: 0 14px;
+
+    font-size: 13px;
+
+    line-height: 18px;
+    cursor: pointer;
+}
+
+.orders-pay-btn:disabled {
+    opacity: 0.65;
+    cursor: not-allowed;
 }
 
 .orders-card__code {

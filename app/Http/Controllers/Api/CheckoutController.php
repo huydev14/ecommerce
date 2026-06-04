@@ -314,9 +314,11 @@ class CheckoutController extends Controller
         return response()->json([
             'success' => true,
             'data' => $orders->map(fn($order) => [
+                'order_id' => $order->id,
                 'order_number' => $order->order_number,
                 'placed_at' => optional($order->created_at)->format('d M Y, H:i'),
                 'status' => $order->status,
+                'payment_method_code' => $order->payment_method,
                 'payment_method' => $paymentLabels[$order->payment_method] ?? $order->payment_method,
                 'payment_status' => $order->payment_status,
                 'total' => $order->total_amount,
