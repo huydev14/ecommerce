@@ -12,6 +12,7 @@ class RoleObserver
     {
         AuditLogService::log("Tạo mới vai trò: {$role->name}", $role, 'role', Auth::user());
     }
+
     public function deleted(Role $role): void
     {
         AuditLogService::log("Đã xóa vai trò: {$role->name}", $role, 'role', Auth::user());

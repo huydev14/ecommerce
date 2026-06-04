@@ -29,7 +29,7 @@ const orderId = computed(() => {
                     </svg>
                 </div>
                 <h1>Thanh toán thành công!</h1>
-                <p>Cảm ơn bạn đã mua sắm. Đơn hàng <strong>{{ orderId }}</strong> đang được xử lý.</p>
+                <p>Cảm ơn bạn. Đơn hàng đang được xử lý.</p>
                 <p v-if="transactionNumber" class="vnpay-return__meta">Mã giao dịch: {{ transactionNumber }}</p>
             </div>
 
