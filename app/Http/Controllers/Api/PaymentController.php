@@ -133,11 +133,13 @@ class PaymentController extends Controller
         }
 
         $vnp_Amount = $inputData['vnp_Amount'] / 100;
-        if ($order->total_amount != $vnp_Amount) {
+        if (floatval($order->total_amount) !== floatval($vnp_Amount)) {
+            \Log::error("VNPAY IPN: Sai số tiền. Đơn hàng: {$order->total_amount}, VNPAY gửi: {$vnp_Amount}");
             return response()->json(['RspCode' => '04', 'Message' => 'Invalid amount']);
         }
 
         if ($order->payment_status !== 'pending') {
+            \Log::warning("VNPAY IPN: Đơn hàng {$orderId} đã được xác nhận trước đó");
             return response()->json(['RspCode' => '02', 'Message' => 'Order already confirmed']);
         }
 
