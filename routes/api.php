@@ -10,6 +10,7 @@ use App\Http\Controllers\Api\HomeController;
 use App\Http\Controllers\Api\LocationController;
 use App\Http\Controllers\Api\ProductController;
 use App\Http\Controllers\Api\CustomerAddressController;
+use App\Http\Controllers\Api\PaymentController;
 use Illuminate\Support\Facades\Route;
 
 Route::prefix('v1')->group(function () {
@@ -81,4 +82,10 @@ Route::prefix('v1')->group(function () {
         Route::get('/orders', [CheckoutController::class, 'listOrders']);
         Route::get('/orders/{orderNumber}', [CheckoutController::class, 'showOrder']);
     });
+
+    // ----- VNPAY payment API -------------------------
+    Route::middleware('auth:api')->group(function () {
+        Route::post('/payment/vnpay/{orderId}', [PaymentController::class, 'createPayment']);
+    });
+    Route::get('/payment/vnpay-ipn', [PaymentController::class, 'vnpayIpn']);
 });
