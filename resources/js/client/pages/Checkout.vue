@@ -1,11 +1,16 @@
 <script setup>
 import { computed, onMounted, ref, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
-import { useRouter } from 'vue-router';
+import { useRoute, useRouter } from 'vue-router';
 import { APP_CONFIG } from '@/config';
 import api from '@/services/api';
+import { useAuthStore } from '@/stores/auth';
+import { useCartStore } from '@/stores/cart';
 
 const router = useRouter();
+const route = useRoute();
+const authStore = useAuthStore();
+const cartStore = useCartStore();
 const { t } = useI18n();
 const promoCode = ref('');
 const customerAddresses = ref([]);
@@ -98,6 +103,12 @@ const selectedAddressLines = computed(() => {
     ].filter(Boolean);
 });
 
+const redirectToLogin = () => {
+    authStore.user = null;
+    authStore.token = null;
+    router.replace({ name: 'Login', query: { redirect: route.fullPath } });
+};
+
 const createVnpayPayment = async (orderId) => {
     if (!orderId) {
         throw new Error('Missing VNPAY order id.');
@@ -139,6 +150,11 @@ const fetchCheckoutReview = async (addressId = selectedAddressId.value) => {
         isSyncingAddressFromApi = true;
         selectedAddressId.value = data.address?.id || customerAddresses.value[0]?.id || '';
     } catch (error) {
+        if (error.response?.status === 401) {
+            redirectToLogin();
+            return;
+        }
+
         checkoutError.value = error.response?.data?.message || t('checkout.errors_fetchCheckout');
     } finally {
         isSyncingAddressFromApi = false;
@@ -166,6 +182,7 @@ const placeOrder = async () => {
             note: orderNote.value,
         });
         const data = response.data.data || {};
+        cartStore.clearCart();
 
         if (selectedPaymentMethod.value === 'vnpay') {
             await createVnpayPayment(data.order_id);
@@ -182,6 +199,11 @@ const placeOrder = async () => {
             query: data.order_number ? { order: data.order_number } : {},
         });
     } catch (error) {
+        if (error.response?.status === 401) {
+            redirectToLogin();
+            return;
+        }
+
         checkoutError.value = error.response?.data?.message || t('checkout.errors_placeOrder');
     } finally {
         isProcessing.value = false;

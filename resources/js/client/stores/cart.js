@@ -31,6 +31,13 @@ export const useCartStore = defineStore('cart', {
     },
 
     actions: {
+        clearCart() {
+            this.items = [];
+            this.subtotal = 0;
+            this.totalItems = 0;
+            this.errorMessage = '';
+        },
+
         async fetchCart() {
             this.isLoading = true;
             this.errorMessage = '';

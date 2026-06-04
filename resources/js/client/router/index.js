@@ -102,7 +102,7 @@ router.beforeEach(async (to, from) => {
     }
 
     if (to.meta.requiresAuth && !isAuthenticated) {
-        return { name: 'Login' };
+        return { name: 'Login', query: { redirect: to.fullPath } };
     } else if (to.meta.guestOnly && isAuthenticated) {
         return { name: 'Home' };
     } else {
