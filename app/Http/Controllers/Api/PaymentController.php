@@ -89,7 +89,14 @@ class PaymentController extends Controller
     public function vnpayIpn(Request $request)
     {
         \Log::warning('VNPAY đã gọi IPN !!!');
-        $inputData = $request->all();
+        $inputData = [];
+        $allRequestData = $request->all();
+
+        foreach ($allRequestData as $key => $value) {
+            if (substr($key, 0, 4) == "vnp_") {
+                $inputData[$key] = $value;
+            }
+        }
         $vnp_SecureHash = $inputData['vnp_SecureHash'] ?? '';
 
         unset($inputData['vnp_SecureHash']);
