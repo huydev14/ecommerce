@@ -67,7 +67,7 @@ const checkoutItems = computed(() =>
             id: item.cart_item_id || item.product_variant_id,
             name: item.product_name || t('checkout.fallback_productName'),
             variant: item.sku ? `SKU: ${item.sku}` : '',
-            brand: item.brand.name || APP_CONFIG.appName,
+            brand: item.brand?.name || APP_CONFIG.appName,
             image: item.thumbnail || null,
             price,
             quantity,

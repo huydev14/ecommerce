@@ -76,13 +76,14 @@
 <script setup>
 import { ref, reactive, computed } from 'vue';
 import { useI18n } from 'vue-i18n';
-import { useRouter } from 'vue-router';
+import { useRoute, useRouter } from 'vue-router';
 import { useAuthStore } from '../stores/auth';
 import api from '../services/api';
 import AuthLayout from '@/layouts/AuthLayout.vue';
 import { APP_CONFIG } from '@/config';
 
 const router = useRouter();
+const route = useRoute();
 const authStore = useAuthStore();
 const { t } = useI18n();
 
@@ -106,6 +107,21 @@ const currentTitle = computed(() => {
 const actionText = computed(() => {
     return step.value === 'password' ? t('login.signInAction') : t('login.continueAction');
 });
+
+const getSafeRedirectPath = () => {
+    const redirect = typeof route.query.redirect === 'string' ? route.query.redirect : '';
+
+    if (!redirect || !redirect.startsWith('/') || redirect.startsWith('//')) {
+        return null;
+    }
+
+    return redirect;
+};
+
+const redirectAfterLogin = () => {
+    const redirectPath = getSafeRedirectPath();
+    router.push(redirectPath || { name: 'Home' });
+};
 
 const handleCheckEmail = async () => {
     if (!form.email) return;
@@ -140,7 +156,7 @@ const handleLogin = async () => {
         });
 
         if (response.success) {
-            router.push({ name: 'Home' });
+            redirectAfterLogin();
         }
     } catch (error) {
         if (error.response && error.response.data) {
@@ -181,7 +197,7 @@ const loginWithSocial = (provider) => {
             authStore.user = user;
 
             window.removeEventListener('message', handleMessage);
-            router.push({ name: 'Home' });
+            redirectAfterLogin();
         } else if (error) {
             errorMessage.value = error;
             window.removeEventListener('message', handleMessage);
