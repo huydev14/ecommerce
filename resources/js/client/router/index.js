@@ -33,6 +33,11 @@ const routes = [
                 meta: { requiresAuth: true },
             },
             {
+                path: 'checkout/vnpay-return',
+                name: 'VnpayReturn',
+                component: () => import('@/pages/VnpayReturn.vue'),
+            },
+            {
                 path: 'order-success',
                 name: 'OrderSuccess',
                 component: () => import('@/pages/OrderSuccess.vue'),

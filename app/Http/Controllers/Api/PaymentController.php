@@ -12,6 +12,14 @@ class PaymentController extends Controller
     {
         $order = Order::findOrFail($orderId);
 
+        if ((int) $order->customer_id !== (int) $request->user()->id) {
+            return response()->json(['success' => false, 'message' => 'Bạn không có quyền thanh toán đơn hàng này.'], 403);
+        }
+
+        if ($order->payment_method !== 'vnpay') {
+            return response()->json(['success' => false, 'message' => 'Đơn hàng không sử dụng phương thức VNPAY.'], 400);
+        }
+
         if ($order->payment_status === 'paid') {
             return response()->json(['success' => false, 'message' => 'Đơn hàng đã được thanh toán.'], 400);
         }
@@ -26,7 +34,7 @@ class PaymentController extends Controller
         $vnp_TxnRef = $order->id . '_' . time();
         $vnp_OrderInfo = "Thanh toan don hang " . $order->id;
         $vnp_OrderType = 'billpayment';
-        $vnp_Amount = $order->total_amount * 100;
+        $vnp_Amount = (int) round($order->total_amount) * 100;
         $vnp_Locale = 'vn';
         $vnp_IpAddr = $request->ip();
 
@@ -66,6 +74,13 @@ class PaymentController extends Controller
             $vnp_Url .= 'vnp_SecureHash=' . $vnpSecureHash;
         }
 
+        return response()->json([
+            'success' => true,
+            'message' => 'Tạo URL thanh toán VNPAY thành công.',
+            'data' => [
+                'payment_url' => $vnp_Url,
+            ],
+        ]);
     }
 
     /**

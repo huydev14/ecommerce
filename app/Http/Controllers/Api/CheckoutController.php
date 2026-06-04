@@ -231,14 +231,12 @@ class CheckoutController extends Controller
                     ]
                 ]);
             } else if ($validated['payment_method'] === 'vnpay') {
-                $paymentUrl = 'https://sandbox.vnpayment.vn/...';
-
                 return response()->json([
                     'success' => true,
-                    'message' => 'Đang chuyển hướng sang cổng thanh toán...',
+                    'message' => 'Đơn hàng đã được tạo. Vui lòng tiếp tục thanh toán qua VNPAY.',
                     'data' => [
+                        'order_id' => $order->id,
                         'order_number' => $order->order_number,
-                        'payment_url' => $paymentUrl
                     ]
                 ]);
             }

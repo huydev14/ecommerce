@@ -39,11 +39,11 @@ const paymentMethods = computed(() => [
         label: 'VNPay',
         note: t('checkout.payment_vnpay_note'),
     },
-    {
-        value: 'momo',
-        label: 'MoMo',
-        note: t('checkout.payment_momo_note'),
-    },
+    // {
+    //     value: 'momo',
+    //     label: 'MoMo',
+    //     note: t('checkout.payment_momo_note'),
+    // },
 ]);
 
 const formatCurrency = (value) =>
@@ -98,6 +98,21 @@ const selectedAddressLines = computed(() => {
     ].filter(Boolean);
 });
 
+const createVnpayPayment = async (orderId) => {
+    if (!orderId) {
+        throw new Error('Missing VNPAY order id.');
+    }
+
+    const response = await api.post(`/payment/vnpay/${orderId}`);
+    const paymentUrl = response.data?.data?.payment_url;
+
+    if (!response.data?.success || !paymentUrl) {
+        throw new Error(response.data?.message || 'Unable to create VNPAY payment.');
+    }
+
+    window.location.href = paymentUrl;
+};
+
 const fetchCheckoutReview = async (addressId = selectedAddressId.value) => {
     isLoadingCheckout.value = true;
     checkoutError.value = '';
@@ -151,6 +166,11 @@ const placeOrder = async () => {
             note: orderNote.value,
         });
         const data = response.data.data || {};
+
+        if (selectedPaymentMethod.value === 'vnpay') {
+            await createVnpayPayment(data.order_id);
+            return;
+        }
 
         if (data.payment_url) {
             window.location.href = data.payment_url;
@@ -327,6 +347,7 @@ watch(selectedAddressId, (addressId, previousAddressId) => {
 
                     <button @click="placeOrder" :disabled="isProcessing" class="amazon-checkout-btn">
                         <span v-if="isProcessing" class="spinner"></span>
+                        <span v-else-if="selectedPaymentMethod === 'vnpay'">Thanh toán qua VNPAY</span>
                         <span v-else>{{ t('checkout.placeOrder') }}</span>
                     </button>
                 </aside>
