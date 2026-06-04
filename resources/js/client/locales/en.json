@@ -306,6 +306,8 @@
         "status_processing": "Processing",
         "status_completed": "Completed",
         "status_cancelled": "Cancelled",
+        "payment_status_paid": "Paid",
+        "payment_status_unpaid": "Unpaid",
         "card_orderPlaced": "Order placed",
         "card_total": "Total",
         "card_payment": "Payment",

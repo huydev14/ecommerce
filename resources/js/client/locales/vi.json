@@ -305,6 +305,8 @@
         "status_processing": "Đang xử lý",
         "status_completed": "Hoàn tất",
         "status_cancelled": "Đã hủy",
+        "payment_status_paid": "Đã thanh toán",
+        "payment_status_unpaid": "Chưa thanh toán",
         "card_orderPlaced": "Ngày đặt",
         "card_total": "Tổng",
         "card_payment": "Thanh toán",

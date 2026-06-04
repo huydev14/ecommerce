@@ -14,9 +14,7 @@ const isLoading = ref(false);
 
 const totalSpent = computed(() => orders.value.reduce((total, order) => total + Number(order.total || 0), 0));
 
-const activeOrderCount = computed(() =>
-    orders.value.filter((order) => ['pending', 'processing'].includes(order.status)).length,
-);
+const activeOrderCount = computed(() => orders.value.filter((order) => ['pending', 'processing'].includes(order.status)).length);
 
 const formatCurrency = (value) =>
     new Intl.NumberFormat('vi-VN', {
@@ -49,6 +47,8 @@ const statusLabel = (status) => {
 };
 
 const statusClass = (status) => `orders-status--${status || 'processing'}`;
+const paymentStatusLabel = (status) => (status === 'paid' ? t('orders.payment_status_paid') : t('orders.payment_status_unpaid'));
+const paymentStatusClass = (status) => `orders-payment-status--${status === 'paid' ? 'paid' : 'unpaid'}`;
 
 const filteredOrders = computed(() => {
     const keyword = searchQuery.value.trim().toLowerCase();
@@ -59,7 +59,10 @@ const filteredOrders = computed(() => {
 
     return orders.value.filter((order) => {
         const orderNumber = String(order.order_number || '').toLowerCase();
-        const itemNames = (order.items || []).map((item) => item.name).join(' ').toLowerCase();
+        const itemNames = (order.items || [])
+            .map((item) => item.name)
+            .join(' ')
+            .toLowerCase();
 
         return orderNumber.includes(keyword) || itemNames.includes(keyword);
     });
@@ -149,7 +152,9 @@ onMounted(fetchOrders);
                         </div>
                         <div class="orders-card__meta">
                             <span>{{ t('orders.card_payment') }}</span>
-                            <strong>{{ order.payment_method }}</strong>
+                            <strong>{{ order.payment_method }}  </strong>
+                                <span :class="paymentStatusClass(order.payment_status)"> ({{ paymentStatusLabel(order.payment_status) }})
+                            </span>
                         </div>
                         <div class="orders-card__code">
                             <span>{{ t('orders.card_orderNumber', { number: order.order_number }) }}</span>
@@ -173,7 +178,9 @@ onMounted(fetchOrders);
                                 </div>
                                 <div>
                                     <strong>{{ item.name }}</strong>
-                                    <span>{{ t('orders.card_quantity', { quantity: item.quantity, price: formatCurrency(item.price) }) }}</span>
+                                    <span>{{
+                                        t('orders.card_quantity', { quantity: item.quantity, price: formatCurrency(item.price) })
+                                    }}</span>
                                 </div>
                             </div>
                         </div>
@@ -314,7 +321,7 @@ onMounted(fetchOrders);
 }
 
 .orders-summary__item {
-    flex:1;
+    flex: 1;
     min-width: 0;
     background: #ffffff;
     box-shadow: 0 1px 2px rgba(15, 17, 17, 0.08);
@@ -460,7 +467,7 @@ onMounted(fetchOrders);
 
 .orders-card__header {
     display: grid;
-    grid-template-columns: minmax(130px, 0.9fr) minmax(130px, 0.9fr) minmax(150px, 1fr) minmax(220px, 1.2fr);
+     grid-template-columns: minmax(130px, 0.9fr) minmax(130px, 0.9fr) minmax(150px, 1fr) minmax(220px, 1.2fr);
     gap: 16px;
     border-bottom: 1px solid #d5d9d9;
     background: #f7fafa;
