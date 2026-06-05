@@ -1,59 +1,47 @@
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
+# E-commerce Platform
 
-<p align="center">
-<a href="https://github.com/laravel/framework/actions"><img src="https://github.com/laravel/framework/workflows/tests/badge.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
-</p>
+An e-commerce platform with product management, shopping cart, order processing, authentication, authorization, shipping integration, and payment processing.
 
-## About Laravel
+**Website:** [ecommerce.giahuy.tech](https://ecommerce.giahuy.tech)  
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+## Tech Stack
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
+- **Backend:** Laravel, RESTful API, JWT, OAuth 2.0
+- **Frontend:** Vue.js, Tailwind CSS, scss
+- **Database & Storage:** MySQL, Redis
+- **Async Processing:** Queue, Mail Queue
+- **Integrations:** Cloudinary, Giaohangnhanh API, Vnpay API
+- **DevOps:** Docker, GitHub Actions, VPS Hosting
 
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
+## Features
 
-## Learning Laravel
+- Product, category, brand, variant, unit, tax, warehouse, stock, and stock movement management.
+- Shopping cart with fast read/write operations using Redis Hashes.
+- JWT authentication for customer, using Redis to blacklist revoked tokens .session-based authentication for admin.
+- Integration OAuth 2.0: Google and Microsoft.
+- Dynamic RBAC system for flexible user role and permission management.
+- OTP verification emails and order notification emails processed through Mail Queue.
+- Excel/CSV import optimized with chunking, bulk insert, queue processing, and real-time progress tracking.
+- Caching for high-traffic APIs.
+- Product image optimization with Cloudinary.
+- Giaohangnhanh API integration for address selection, shipping fee calculation, and order creation.
+- VNPAY payment gateway integration with IPN/Webhook for automatic order status updates.
+- API rate limiting to protect against brute-force and excessive requests.
+- Localization support for Vietnamese and English interfaces.
 
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework. You can also check out [Laravel Learn](https://laravel.com/learn), where you will be guided through building a modern Laravel application.
+## ERD
 
-If you don't feel like reading, [Laracasts](https://laracasts.com) can help. Laracasts contains thousands of video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
+![ERD Diagram](.github/images/erd-diagram.png)
 
-## Laravel Sponsors
+## Performance Highlights
 
-We would like to extend our thanks to the following sponsors for funding Laravel development. If you are interested in becoming a sponsor, please visit the [Laravel Partners program](https://partners.laravel.com).
+- JWT tokens are stored in HttpOnly Cookies to reduce token exposure in client-side scripts.
+- Redis is used for token revocation and shopping cart storage.
+- Queue processing reduces blocking time for email sending and large product imports.
+- Bulk import flow handles large product datasets more efficiently with chunking and bulk inserts.
+- Rate limiting is applied to protect public and authentication APIs.
+- API caching is used for high-traffic endpoints.
 
-### Premium Partners
+## CI/CD & Deployment
 
-- **[Vehikl](https://vehikl.com)**
-- **[Tighten Co.](https://tighten.co)**
-- **[Kirschbaum Development Group](https://kirschbaumdevelopment.com)**
-- **[64 Robots](https://64robots.com)**
-- **[Curotec](https://www.curotec.com/services/technologies/laravel)**
-- **[DevSquad](https://devsquad.com/hire-laravel-developers)**
-- **[Redberry](https://redberry.international/laravel-development)**
-- **[Active Logic](https://activelogic.com)**
-
-## Contributing
-
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
-
-## Code of Conduct
-
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
-
-## Security Vulnerabilities
-
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
-
-## License
-
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+The project is configured for deployment with GitHub Actions, Docker, and a VPS environment. The CI/CD pipeline supports automated build and deployment workflows for production releases.
