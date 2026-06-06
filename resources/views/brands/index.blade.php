@@ -6,7 +6,9 @@
 
             {{-- Toolbar --}}
             <x-toolbar dataTableInstance="brandTable">
-                <x-create-button btnId="create-brand" />
+                @can('brands.create')
+                    <x-create-button btnId="create-brand" />
+                @endcan
 
             </x-toolbar>
 

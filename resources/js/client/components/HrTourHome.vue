@@ -121,6 +121,7 @@ const startHrTourHome = () => {
                     onNextClick: () => {
                         markTourCompleted();
                         driverObj.destroy();
+                        location.reload();
                     },
                 },
             },

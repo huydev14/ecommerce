@@ -223,6 +223,7 @@
                         {{ __('product_import.upload_another') }}
                     </a>
 
+                    @can('product-imports.remove')
                     @if ($canCancelImport)
                         <form action="{{ route('product-imports.cancel', $batch->id) }}" method="POST"
                             onsubmit="return confirm(@js(__('product_import.cancel_confirm')));">
@@ -235,7 +236,9 @@
                             </button>
                         </form>
                     @endif
+                    @endcan
 
+                    @can('product-imports.create')
                     @if ($canConfirmImport)
                         <form action="{{ route('product-imports.confirm', $batch->id) }}" method="POST">
                             @csrf
@@ -246,6 +249,7 @@
                             </button>
                         </form>
                     @endif
+                    @endcan
                 </div>
             </div>
 
@@ -268,6 +272,7 @@
                 </div>
             </div>
 
+            @can('product-imports.create')
             @if (($missingMasterData['total'] ?? 0) > 0 && $canResolveMasterData)
                 <div class="tw-border-b tw-border-amber-100 tw-bg-amber-50 tw-px-6 tw-py-4">
                     <div class="tw-flex tw-flex-col lg:tw-flex-row lg:tw-items-center lg:tw-justify-between tw-gap-4">
@@ -294,6 +299,7 @@
                     </div>
                 </div>
             @endif
+            @endcan
 
             <div class="tw-overflow-x-auto">
                 <table class="tw-w-full tw-table-fixed tw-divide-y tw-divide-gray-200">

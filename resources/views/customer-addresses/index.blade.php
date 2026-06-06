@@ -4,7 +4,9 @@
     <div class="fluent-card ">
         <div class="card-header tw-bg-white tw-border-b-0">
             <x-toolbar dataTableInstance="customerAddressTable">
-                <x-create-button btnId="create-customer-address" />
+                @can('customer-addresses.create')
+                    <x-create-button btnId="create-customer-address" />
+                @endcan
             </x-toolbar>
 
             <div id="filter-panel" class="tw-py-3">

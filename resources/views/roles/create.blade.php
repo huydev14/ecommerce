@@ -184,8 +184,19 @@
                                             value="log.detail"
                                             class="tw-flex tw-items-center tw-cursor-pointer tw-w-full tw-px-6 tw-py-4 tw-border-b tw-border-gray-100 hover:tw-bg-gray-50 tw-transition-colors" />
                                     </div>
+
+                                    <div>
+                                        <x-checkbox label="Xóa/khôi phục audit logs" name="permissions[]"
+                                            value="log.remove"
+                                            class="tw-flex tw-items-center tw-cursor-pointer tw-w-full tw-px-6 tw-py-4 tw-border-b tw-border-gray-100 hover:tw-bg-gray-50 tw-transition-colors" />
+                                    </div>
                                 </div>
                             </div>
+
+                            @include('roles.partials._permission-groups', [
+                                'permissionGroups' => $permissionGroups,
+                                'rolePermissions' => $rolePermissions ?? [],
+                            ])
                         </div>
                     </div>
                 </div>

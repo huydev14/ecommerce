@@ -4,7 +4,9 @@
     <div class="fluent-card ">
         <div class="card-header tw-bg-white tw-border-b-0">
             <x-toolbar dataTableInstance="taxTable">
-                <x-create-button btnId="create-tax" />
+                @can('taxes.create')
+                    <x-create-button btnId="create-tax" />
+                @endcan
             </x-toolbar>
 
             <div id="filter-panel" class="tw-py-3">

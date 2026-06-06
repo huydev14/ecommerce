@@ -153,11 +153,13 @@
 
                             <div
                                 class="tw-flex tw-flex-col sm:tw-flex-row sm:tw-items-center tw-gap-3 tw-justify-end">
-                                <button type="submit"
-                                    class=" tw-justify-center tw-gap-2 tw-rounded-sm tw-bg-[#0f6cbd] tw-px-4 tw-py-2 tw-text-sm tw-font-medium tw-text-white tw-shadow-sm hover:tw-bg-[#115ea3] focus:tw-outline-none focus:tw-ring-2 focus:tw-ring-[#0f6cbd] focus:tw-ring-offset-2">
-                                    <i class="fas fa-arrow-right"></i>
-                                    {{ __('product_import.upload_preview') }}
-                                </button>
+                                @can('product-imports.create')
+                                    <button type="submit"
+                                        class=" tw-justify-center tw-gap-2 tw-rounded-sm tw-bg-[#0f6cbd] tw-px-4 tw-py-2 tw-text-sm tw-font-medium tw-text-white tw-shadow-sm hover:tw-bg-[#115ea3] focus:tw-outline-none focus:tw-ring-2 focus:tw-ring-[#0f6cbd] focus:tw-ring-offset-2">
+                                        <i class="fas fa-arrow-right"></i>
+                                        {{ __('product_import.upload_preview') }}
+                                    </button>
+                                @endcan
                             </div>
                         </div>
 

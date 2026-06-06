@@ -5,7 +5,9 @@
         <div class="card-header tw-bg-white tw-border-b-0">
 
             <x-toolbar dataTableInstance="productTable">
-                <x-create-button btnId="create-product" />
+                @can('products.create')
+                    <x-create-button btnId="create-product" />
+                @endcan
             </x-toolbar>
 
             <div id="filter-panel" class="tw-py-3">

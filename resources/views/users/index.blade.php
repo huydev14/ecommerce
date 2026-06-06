@@ -6,7 +6,9 @@
 
             {{-- Toolbar --}}
             <x-toolbar dataTableInstance="usersTable">
-                <x-create-button btnId="btn-open-create" target="slideover-create-user" />
+                @can('users.create')
+                    <x-create-button btnId="btn-open-create" target="slideover-create-user" />
+                @endcan
             </x-toolbar>
 
             <div id="filter-panel" class="tw-py-3">

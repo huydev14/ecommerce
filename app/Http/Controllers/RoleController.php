@@ -7,10 +7,36 @@ use Exception;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
+use Spatie\Permission\Models\Permission;
 use Spatie\Permission\Models\Role;
 
 class RoleController extends Controller
 {
+    private const PERMISSION_MODULES = [
+        'banners' => 'Banners',
+        'brands' => 'Brands',
+        'categories' => 'Categories',
+        'products' => 'Products',
+        'product-variants' => 'Product variants',
+        'customer-addresses' => 'Customer addresses',
+        'units' => 'Units',
+        'taxes' => 'Taxes',
+        'warehouses' => 'Warehouses',
+        'stocks' => 'Stocks',
+        'stock-movements' => 'Stock movements',
+        'orders' => 'Orders',
+        'product-imports' => 'Product imports',
+        'settings' => 'Settings',
+    ];
+
+    private const PERMISSION_ACTIONS = [
+        'view' => 'Xem dữ liệu',
+        'create' => 'Tạo mới',
+        'edit' => 'Sửa/cập nhật',
+        'remove' => 'Xóa/khôi phục',
+    ];
+
     /**
      * Display a listing of the resource.
      */
@@ -25,7 +51,10 @@ class RoleController extends Controller
      */
     public function create()
     {
-        return view('roles.create');
+        $rolePermissions = old('permissions', []);
+        $permissionGroups = $this->permissionGroups();
+
+        return view('roles.create', compact('permissionGroups', 'rolePermissions'));
     }
 
     /**
@@ -36,7 +65,7 @@ class RoleController extends Controller
         $request->validate([
             'name' => 'required|string|max:255|unique:roles,name',
             'description' => 'nullable|string|max:255',
-            'permissions' => 'exists:permissions,name',
+            'permissions' => 'nullable|array',
             'permissions.*' => 'exists:permissions,name',
         ], [
             'name.required' => 'Vui lòng nhập tên vai trò.',
@@ -90,8 +119,9 @@ class RoleController extends Controller
     {
         $role = Role::findOrFail($id);
         $rolePermissions = $role->permissions->pluck('name')->toArray();
+        $permissionGroups = $this->permissionGroups();
 
-        return view('roles.edit', compact('role', 'rolePermissions'));
+        return view('roles.edit', compact('role', 'rolePermissions', 'permissionGroups'));
     }
 
     /**
@@ -186,5 +216,41 @@ class RoleController extends Controller
                 'msg' => 'Không thể xóa vai trò này!'
             ], 500);
         }
+    }
+
+    private function permissionGroups(): array
+    {
+        $availablePermissions = Permission::query()
+            ->pluck('name')
+            ->flip();
+
+        $groups = [];
+
+        foreach (self::PERMISSION_MODULES as $module => $label) {
+            $permissions = [];
+
+            foreach (self::PERMISSION_ACTIONS as $action => $actionLabel) {
+                $permissionName = "{$module}.{$action}";
+
+                if (! $availablePermissions->has($permissionName)) {
+                    continue;
+                }
+
+                $permissions[] = [
+                    'name' => $permissionName,
+                    'label' => "{$actionLabel} {$label}",
+                ];
+            }
+
+            if (! empty($permissions)) {
+                $groups[] = [
+                    'title' => $label,
+                    'description' => "Quyền thao tác module {$label}.",
+                    'permissions' => $permissions,
+                ];
+            }
+        }
+
+        return $groups;
     }
 }

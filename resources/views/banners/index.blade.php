@@ -4,7 +4,9 @@
     <div class="fluent-card">
         <div class="card-header tw-bg-white tw-border-b-0">
             <x-toolbar dataTableInstance="bannerTable">
-                <x-create-button btnId="create-banner" />
+                @can('banners.create')
+                    <x-create-button btnId="create-banner" />
+                @endcan
             </x-toolbar>
         </div>
 
