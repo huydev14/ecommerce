@@ -15,10 +15,5 @@ window.DataTable = DataTable;
 window.Lang = new Lang();
 window.Lang.setMessages(messages);
 
-import './pages/dashboard';
-import Chart from 'chart.js/auto';
-
-window.Chart = Chart;
 window.Alpine = Alpine;
 Alpine.start();
-

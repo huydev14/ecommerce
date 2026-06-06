@@ -30,7 +30,6 @@
         "@fortawesome/fontawesome-free": "^7.2.0",
         "@popperjs/core": "^2.11.8",
         "bootstrap": "^5.3.8",
-        "chart.js": "^4.5.1",
         "datatables.net": "^2.3.7",
         "datatables.net-bs5": "^2.3.7",
         "driver.js": "^1.4.0",

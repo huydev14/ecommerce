@@ -48,19 +48,32 @@
     .brand-link {
         display: flex;
         align-items: center;
-        gap: 8px;
+        gap: 10px;
         color: #fff;
         text-decoration: none;
         font-size: 14px;
     }
 
-    .brand-logo {
-        width: 26px;
-        height: 26px;
+    .brand-mark {
+        display: grid;
+        width: fit-content;
+        line-height: 1;
     }
 
     .brand-name {
-        font-weight: 600;
+        font-size: 22px;
+        font-weight: 700;
+        line-height: 22px;
+        letter-spacing: 0;
+    }
+
+    .brand-smile {
+        width: 58px;
+        height: 6px;
+        margin-left: auto;
+        margin-right: 4px;
+        border-bottom: 3px solid #ff9900;
+        border-radius: 50%;
     }
 
     .brand-module {

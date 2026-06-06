@@ -1,7 +1,7 @@
 <?php
 
 return [
-    'field_service' => 'Field Service',
+    'field_service' => 'Admin dashboard',
     'search_placeholder' => 'Tìm kiếm tài nguyên, dịch vụ và tài liệu (G+/)',
     'vi' => 'Tiếng Việt',
     'en' => 'English',

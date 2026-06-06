@@ -4,8 +4,10 @@
             <i class="fas fa-bars"></i>
         </button>
         <a href="/" class="brand-link">
-            <img src="{{ asset('adminlte/dist/img/AdminLTELogo.png') }}" alt="App logo" class="brand-logo">
-            <span class="brand-name">{{ config('app.name') }}</span>
+            <span class="brand-mark" aria-label="{{ config('app.name') }}">
+                <span class="brand-name">{{ config('app.name') }}</span>
+                <span class="brand-smile"></span>
+            </span>
             <span class="brand-module">{{ __('header.field_service') }}</span>
         </a>
     </div>
@@ -64,7 +66,7 @@
                     <span>{{ auth()->user()->name }}</span>
                     <span class="tw-text-xs tw-opacity-75">{{ auth()->user()->email }}</span>
                 </div>
-                <img src="{{ asset('adminlte/dist/img/user2-160x160.jpg') }}" class="img-circle" alt="User">
+                <img src="{{ asset('adminlte/dist/img/avatar-default.jpg') }}" class="img-circle" alt="User">
             </a>
 
             <div class="dropdown-menu dropdown-menu-right">
