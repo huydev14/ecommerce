@@ -15,6 +15,8 @@
         <footer class="client-footer tw-min-w-0">
             <TheFooter />
         </footer>
+
+        <HrTourHome />
     </div>
 </template>
 
@@ -22,4 +24,5 @@
 import TheHeader from '../components/TheHeader.vue';
 import TheSubNav from '../components/TheSubNav.vue';
 import TheFooter from '../components/TheFooter.vue';
+import HrTourHome from '../components/HrTourHome.vue';
 </script>

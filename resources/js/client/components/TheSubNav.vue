@@ -88,7 +88,7 @@ onBeforeUnmount(() => {
 <template>
     <div class="tw-relative tw-border-b tw-border-[#3a4553] tw-bg-[#232f3e] tw-text-white">
         <div
-            class="tw-flex tw-h-[39px] tw-items-center tw-gap-1 tw-overflow-x-auto tw-px-3 tw-text-[14px] tw-font-medium md:tw-gap-2 md:tw-px-4"
+            class="trending-keywords tw-flex tw-h-[39px] tw-items-center tw-gap-1 tw-overflow-x-auto tw-px-3 tw-text-[14px] tw-font-medium md:tw-gap-2 md:tw-px-4"
         >
             <button
                 type="button"

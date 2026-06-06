@@ -127,7 +127,7 @@ onBeforeUnmount(unlockBodyScroll);
             <div
                 role="button"
                 tabindex="0"
-                class="tw-hidden tw-flex-none tw-cursor-pointer tw-flex-col tw-rounded-sm tw-border tw-border-transparent tw-px-2 tw-py-1 hover:tw-border-white lg:tw-flex"
+                class="open-location-modal tw-hidden tw-flex-none tw-cursor-pointer tw-flex-col tw-rounded-sm tw-border tw-border-transparent tw-px-2 tw-py-1 hover:tw-border-white lg:tw-flex"
                 @click="isLocationModalOpen = true"
                 @keydown.enter.prevent="isLocationModalOpen = true"
                 @keydown.space.prevent="isLocationModalOpen = true"
@@ -313,7 +313,7 @@ onBeforeUnmount(unlockBodyScroll);
                 </span>
             </button>
 
-            <div class="tw-group tw-relative tw-h-[50px]">
+            <div class="tw-group tw-relative tw-h-[50px] client-cart">
                 <router-link
                     :to="{ name: 'Cart' }"
                     class="tw-flex tw-h-[50px] tw-cursor-pointer tw-items-center tw-rounded-sm tw-border tw-border-transparent tw-px-2 tw-py-1 hover:tw-border-white"
