@@ -19,7 +19,6 @@ use App\Http\Controllers\TaxController;
 use App\Http\Controllers\UnitController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\WarehouseController;
-use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Session;
 
@@ -42,17 +41,7 @@ Route::get('lang/{locale}', function ($locale) {
 
 Route::prefix('admin')->middleware('auth')->group(function () {
 
-    Route::get('/test-mail', function () {
-    try {
-        Mail::raw('email test', function ($message) {
-            $message->to('giahuy.codes@gmail.com')
-                    ->subject('Test Brevo SMTP');
-        });
-        return 'Gửi email thành công';
-    } catch (\Exception $e) {
-        return 'Lỗi gửi mail: ' . $e->getMessage();
-    }
-})->middleware('can:settings.edit');
+    Route::get('/test-mail', [SettingController::class, 'testMail']);
     // ---- Dashboard -----------------------------------
     Route::get('/', function () {
         return view('dashboard.index');
@@ -64,12 +53,9 @@ Route::prefix('admin')->middleware('auth')->group(function () {
         Route::get('/filter-data', [UserController::class, 'getFilterData'])->name('filter_data');
         Route::get('/getTeamsDropdown', [UserController::class, 'getTeamsDropdown'])->name('teams_data');
 
-        Route::post('/{id}/restore', [UserController::class, 'restore'])->middleware('can:users.remove')->name('restore');
+        Route::post('/{id}/restore', [UserController::class, 'restore'])->name('restore');
     });
-    Route::resource('users', UserController::class)
-        ->middlewareFor(['create', 'store'], 'can:users.create')
-        ->middlewareFor(['edit', 'update'], 'can:users.edit')
-        ->middlewareFor('destroy', 'can:users.remove');
+    Route::resource('users', UserController::class);
 
     // ---- Profile ---------------------------------------
     Route::prefix('profile')->name('profile.')->group(function () {
@@ -80,10 +66,7 @@ Route::prefix('admin')->middleware('auth')->group(function () {
 
     // ---- Role ---------------------------------------
     Route::resource('/roles', RoleController::class)
-        ->except(['show'])
-        ->middlewareFor(['create', 'store'], 'can:roles.create')
-        ->middlewareFor(['edit', 'update'], 'can:roles.edit')
-        ->middlewareFor('destroy', 'can:roles.remove');
+        ->except(['show']);
 
     // ---- Audit logs ---------------------------------------
     Route::prefix('audit-logs')->name('audit-logs.')->group(function () {
@@ -92,58 +75,42 @@ Route::prefix('admin')->middleware('auth')->group(function () {
 
         Route::get('/data', [AuditLogController::class, 'data'])->name('data');
         Route::get('/filter-data', [AuditLogController::class, 'getFilterData'])->name('filter_data');
-        Route::post('/{id}/restore', [AuditLogController::class, 'restore'])->middleware('can:log.remove')->name('restore');
     });
 
     // --- Banners -------------------------------------
     Route::get('/banners/data', [BannerController::class, 'data'])->name('banners.data');
     Route::resource('banners', BannerController::class)
-        ->except(['show'])
-        ->middlewareFor(['create', 'store'], 'can:banners.create')
-        ->middlewareFor(['edit', 'update'], 'can:banners.edit')
-        ->middlewareFor('destroy', 'can:banners.remove');
+        ->except(['show']);
 
     // --- Brands -----------------------------------
     Route::prefix('brands')->name('brands.')->group(function () {
         Route::get('/data', [BrandController::class, 'data'])->name('data');
         Route::get('/filter-data', [BrandController::class, 'getFilterData'])->name('filter_data');
     });
-    Route::resource('brands', BrandController::class)
-        ->middlewareFor(['create', 'store'], 'can:brands.create')
-        ->middlewareFor(['edit', 'update'], 'can:brands.edit')
-        ->middlewareFor('destroy', 'can:brands.remove');
+    Route::resource('brands', BrandController::class);
 
     // --- Categories -------------------------------
     Route::prefix('categories')->name('categories.')->group(function () {
         Route::get('/data', [CategoryController::class, 'data'])->name('data');
         Route::get('/filter-data', [CategoryController::class, 'getFilterData'])->name('filter_data');
     });
-    Route::resource('categories', CategoryController::class)
-        ->middlewareFor(['create', 'store'], 'can:categories.create')
-        ->middlewareFor(['edit', 'update'], 'can:categories.edit')
-        ->middlewareFor('destroy', 'can:categories.remove');
+    Route::resource('categories', CategoryController::class);
 
     // --- Products ---------------------------------
     Route::prefix('products')->name('products.')->group(function () {
         Route::get('/data', [ProductController::class, 'data'])->name('data');
         Route::get('/filter-data', [ProductController::class, 'getFilterData'])->name('filter_data');
-        Route::post('/{id}/restore', [ProductController::class, 'restore'])->middleware('can:products.remove')->name('restore');
+        Route::post('/{id}/restore', [ProductController::class, 'restore'])->name('restore');
     });
-    Route::resource('products', ProductController::class)
-        ->middlewareFor(['create', 'store'], 'can:products.create')
-        ->middlewareFor(['edit', 'update'], 'can:products.edit')
-        ->middlewareFor('destroy', 'can:products.remove');
+    Route::resource('products', ProductController::class);
 
     // --- Product variants --------------------------
     Route::prefix('product-variants')->name('product-variants.')->group(function () {
         Route::get('/data', [ProductVariantController::class, 'data'])->name('data');
         Route::get('/filter-data', [ProductVariantController::class, 'getFilterData'])->name('filter_data');
-        Route::post('/{id}/restore', [ProductVariantController::class, 'restore'])->middleware('can:product-variants.remove')->name('restore');
+        Route::post('/{id}/restore', [ProductVariantController::class, 'restore'])->name('restore');
     });
-    Route::resource('product-variants', ProductVariantController::class)
-        ->middlewareFor(['create', 'store'], 'can:product-variants.create')
-        ->middlewareFor(['edit', 'update'], 'can:product-variants.edit')
-        ->middlewareFor('destroy', 'can:product-variants.remove');
+    Route::resource('product-variants', ProductVariantController::class);
 
     // --- Customer addresses -----------------------
     Route::prefix('customer-addresses')->name('customer-addresses.')->group(function () {
@@ -153,67 +120,50 @@ Route::prefix('admin')->middleware('auth')->group(function () {
         Route::get('/wards', [CustomerAddressController::class, 'wards'])->name('wards');
     });
     Route::resource('customer-addresses', CustomerAddressController::class)
-        ->except(['show'])
-        ->middlewareFor(['create', 'store'], 'can:customer-addresses.create')
-        ->middlewareFor(['edit', 'update'], 'can:customer-addresses.edit')
-        ->middlewareFor('destroy', 'can:customer-addresses.remove');
+        ->except(['show']);
 
     // --- Units ------------------------------------
     Route::prefix('units')->name('units.')->group(function () {
         Route::get('/data', [UnitController::class, 'data'])->name('data');
         Route::get('/filter-data', [UnitController::class, 'getFilterData'])->name('filter_data');
-        Route::post('/{id}/restore', [UnitController::class, 'restore'])->middleware('can:units.remove')->name('restore');
+        Route::post('/{id}/restore', [UnitController::class, 'restore'])->name('restore');
     });
-    Route::resource('units', UnitController::class)
-        ->middlewareFor(['create', 'store'], 'can:units.create')
-        ->middlewareFor(['edit', 'update'], 'can:units.edit')
-        ->middlewareFor('destroy', 'can:units.remove');
+    Route::resource('units', UnitController::class);
 
     // --- Taxes ------------------------------------
     Route::prefix('taxes')->name('taxes.')->group(function () {
         Route::get('/data', [TaxController::class, 'data'])->name('data');
         Route::get('/filter-data', [TaxController::class, 'getFilterData'])->name('filter_data');
-        Route::post('/{id}/restore', [TaxController::class, 'restore'])->middleware('can:taxes.remove')->name('restore');
+        Route::post('/{id}/restore', [TaxController::class, 'restore'])->name('restore');
     });
-    Route::resource('taxes', TaxController::class)
-        ->middlewareFor(['create', 'store'], 'can:taxes.create')
-        ->middlewareFor(['edit', 'update'], 'can:taxes.edit')
-        ->middlewareFor('destroy', 'can:taxes.remove');
+    Route::resource('taxes', TaxController::class);
 
     // --- Warehouses -------------------------------
     Route::prefix('warehouses')->name('warehouses.')->group(function () {
         Route::get('/data', [WarehouseController::class, 'data'])->name('data');
         Route::get('/filter-data', [WarehouseController::class, 'getFilterData'])->name('filter_data');
-        Route::post('/{id}/restore', [WarehouseController::class, 'restore'])->middleware('can:warehouses.remove')->name('restore');
+        Route::post('/{id}/restore', [WarehouseController::class, 'restore'])->name('restore');
     });
     Route::resource('warehouses', WarehouseController::class)
-        ->except(['show'])
-        ->middlewareFor(['create', 'store'], 'can:warehouses.create')
-        ->middlewareFor(['edit', 'update'], 'can:warehouses.edit')
-        ->middlewareFor('destroy', 'can:warehouses.remove');
+        ->except(['show']);
 
     // --- Stocks -----------------------------------
     Route::prefix('stocks')->name('stocks.')->group(function () {
         Route::get('/data', [StockController::class, 'data'])->name('data');
         Route::get('/filter-data', [StockController::class, 'getFilterData'])->name('filter_data');
-        Route::post('/{id}/restore', [StockController::class, 'restore'])->middleware('can:stocks.remove')->name('restore');
+        Route::post('/{id}/restore', [StockController::class, 'restore'])->name('restore');
     });
     Route::resource('stocks', StockController::class)
-        ->except(['show'])
-        ->middlewareFor(['create', 'store'], 'can:stocks.create')
-        ->middlewareFor(['edit', 'update'], 'can:stocks.edit')
-        ->middlewareFor('destroy', 'can:stocks.remove');
+        ->except(['show']);
 
     // --- Stock movements --------------------------
     Route::prefix('stock-movements')->name('stock-movements.')->group(function () {
         Route::get('/data', [StockMovementController::class, 'data'])->name('data');
         Route::get('/filter-data', [StockMovementController::class, 'getFilterData'])->name('filter_data');
-        Route::post('/{id}/restore', [StockMovementController::class, 'restore'])->middleware('can:stock-movements.remove')->name('restore');
+        Route::post('/{id}/restore', [StockMovementController::class, 'restore'])->name('restore');
     });
     Route::resource('stock-movements', StockMovementController::class)
-        ->only(['index', 'create', 'store', 'destroy'])
-        ->middlewareFor(['create', 'store'], 'can:stock-movements.create')
-        ->middlewareFor('destroy', 'can:stock-movements.remove');
+        ->only(['index', 'create', 'store', 'destroy']);
 
     // --- Orders -----------------------------------
     Route::prefix('orders')->name('orders.')->group(function () {
@@ -221,26 +171,25 @@ Route::prefix('admin')->middleware('auth')->group(function () {
         Route::get('/filter-data', [OrderController::class, 'getFilterData'])->name('filter_data');
     });
     Route::resource('orders', OrderController::class)
-        ->only(['index', 'show', 'update'])
-        ->middlewareFor('update', 'can:orders.edit');
+        ->only(['index', 'show', 'update']);
 
     // --- Product imports --------------------------
     Route::prefix('product-imports')->name('product-imports.')->group(function () {
         Route::get('/', [ProductImportController::class, 'index'])->name('index');
-        Route::post('/preview', [ProductImportController::class, 'uploadAndPreview'])->middleware('can:product-imports.create')->name('upload');
+        Route::post('/preview', [ProductImportController::class, 'uploadAndPreview'])->name('upload');
         Route::get('/{batchId}/preview', [ProductImportController::class, 'showPreview'])->name('preview');
         Route::get('/{batchId}/progress', [ProductImportController::class, 'progress'])->name('progress');
-        Route::post('/{batchId}/resolve-master-data', [ProductImportController::class, 'resolveMissingMasterData'])->middleware('can:product-imports.create')->name('resolve-master-data');
-        Route::post('/{batchId}/confirm', [ProductImportController::class, 'confirmImport'])->middleware('can:product-imports.create')->name('confirm');
-        Route::delete('/{batchId}/cancel', [ProductImportController::class, 'cancelImport'])->middleware('can:product-imports.remove')->name('cancel');
+        Route::post('/{batchId}/resolve-master-data', [ProductImportController::class, 'resolveMissingMasterData'])->name('resolve-master-data');
+        Route::post('/{batchId}/confirm', [ProductImportController::class, 'confirmImport'])->name('confirm');
+        Route::delete('/{batchId}/cancel', [ProductImportController::class, 'cancelImport'])->name('cancel');
         Route::get('/download-template', [ProductImportController::class, 'downloadTemplate'])->name('download-template');
     });
 
     // --- Admin Settings -------------------------------
     Route::prefix('settings')->name('settings.')->group(function () {
         Route::get('/', [SettingController::class, 'index'])->name('index');
-        Route::patch('oauth/{provider}', [SettingController::class, 'updateOAuth'])->middleware('can:settings.edit')->name('updateOAuth');
-        Route::patch('mail', [SettingController::class, 'updateMail'])->middleware('can:settings.edit')->name('updateMail');
+        Route::patch('oauth/{provider}', [SettingController::class, 'updateOAuth'])->name('updateOAuth');
+        Route::patch('mail', [SettingController::class, 'updateMail'])->name('updateMail');
     });
 });
 

@@ -66,7 +66,7 @@ class CustomerAddressController extends Controller
     private function renderDefaultBadge(bool $isDefault): string
     {
         if ($isDefault) {
-            return '<span class="tw-px-2 tw-py-1 tw-bg-green-100 tw-text-green-700 tw-text-xs tw-font-medium tw-rounded-full">' . __('customer_address.default') . '</span>';
+            return '<span class="tw-px-1 tw-py-0.5 tw-bg-green-100 tw-text-green-700 tw-text-xs tw-font-medium tw-rounded-sm">' . __('customer_address.default') . '</span>';
         }
 
         return '<span class="tw-px-2 tw-py-1 tw-bg-gray-100 tw-text-gray-600 tw-text-xs tw-font-medium tw-rounded-full">' . __('customer_address.not_default') . '</span>';
@@ -92,6 +92,10 @@ class CustomerAddressController extends Controller
 
     public function create()
     {
+        if (!auth()->user()?->can('customer-addresses.create')) {
+            abort(403, 'Bạn không có quyền tạo địa chỉ khách hàng.');
+        }
+
         $customers = $this->getCustomerOptions();
         $provinces = $this->ghnService->getProvinces();
 
@@ -100,13 +104,17 @@ class CustomerAddressController extends Controller
 
     public function store(Request $request)
     {
+        if (!$request->user()?->can('customer-addresses.create')) {
+            abort(403, 'Bạn không có quyền tạo địa chỉ khách hàng.');
+        }
+
         $validated = $this->validateAddress($request);
         $validated['is_default'] = $request->has('is_default');
 
         try {
             DB::transaction(function () use ($validated) {
                 $hasAddress = CustomerAddress::where('customer_id', $validated['customer_id'])->exists();
-                $validated['is_default'] = $validated['is_default'] || ! $hasAddress;
+                $validated['is_default'] = $validated['is_default'] || !$hasAddress;
 
                 if ($validated['is_default']) {
                     $this->clearDefaultAddress($validated['customer_id']);
@@ -117,7 +125,7 @@ class CustomerAddressController extends Controller
 
             return response()->json([
                 'success' => true,
-                'msg' => __('customer_address.create_success'),
+                'message' => __('customer_address.create_success'),
             ], 200);
         } catch (Exception $e) {
             Log::error('Create customer address failed: ' . $e->getMessage(), [
@@ -126,13 +134,17 @@ class CustomerAddressController extends Controller
 
             return response()->json([
                 'success' => false,
-                'msg' => __('customer_address.system_error'),
+                'message' => __('customer_address.system_error'),
             ], 500);
         }
     }
 
     public function edit(CustomerAddress $customer_address)
     {
+        if (!auth()->user()?->can('customer-addresses.edit')) {
+            abort(403, 'Bạn không có quyền mở form sửa địa chỉ khách hàng.');
+        }
+
         $customers = $this->getCustomerOptions();
         $provinces = $this->ghnService->getProvinces();
 
@@ -169,6 +181,10 @@ class CustomerAddressController extends Controller
 
     public function update(Request $request, CustomerAddress $customer_address)
     {
+        if (!$request->user()?->can('customer-addresses.update')) {
+            abort(403, 'Bạn không có quyền cập nhật địa chỉ khách hàng.');
+        }
+
         $validated = $this->validateAddress($request);
         $validated['is_default'] = $request->has('is_default');
 
@@ -191,7 +207,7 @@ class CustomerAddressController extends Controller
 
             return response()->json([
                 'success' => true,
-                'msg' => __('customer_address.update_success'),
+                'message' => __('customer_address.update_success'),
             ], 200);
         } catch (Exception $e) {
             Log::error('Update customer address failed: ' . $e->getMessage(), [
@@ -200,13 +216,17 @@ class CustomerAddressController extends Controller
 
             return response()->json([
                 'success' => false,
-                'msg' => __('customer_address.system_error'),
+                'message' => __('customer_address.system_error'),
             ], 500);
         }
     }
 
     public function destroy(CustomerAddress $customer_address)
     {
+        if (!auth()->user()?->can('customer-addresses.remove')) {
+            abort(403, 'Bạn không có quyền xóa địa chỉ khách hàng.');
+        }
+
         try {
             DB::transaction(function () use ($customer_address) {
                 $customerId = $customer_address->customer_id;
@@ -225,7 +245,7 @@ class CustomerAddressController extends Controller
             return response()->json([
                 'success' => true,
                 'status' => 200,
-                'msg' => __('customer_address.delete_success'),
+                'message' => __('customer_address.delete_success'),
             ]);
         } catch (Exception $e) {
             Log::error('Delete customer address failed: ' . $e->getMessage(), [
@@ -234,7 +254,7 @@ class CustomerAddressController extends Controller
 
             return response()->json([
                 'success' => false,
-                'msg' => __('customer_address.system_error'),
+                'message' => __('customer_address.system_error'),
             ], 500);
         }
     }
@@ -277,7 +297,7 @@ class CustomerAddressController extends Controller
     private function clearDefaultAddress(int $customerId, ?int $exceptId = null): void
     {
         CustomerAddress::where('customer_id', $customerId)
-            ->when($exceptId, fn ($query) => $query->where('id', '!=', $exceptId))
+            ->when($exceptId, fn($query) => $query->where('id', '!=', $exceptId))
             ->update(['is_default' => false]);
     }
 
@@ -285,7 +305,7 @@ class CustomerAddressController extends Controller
     {
         $query = CustomerAddress::where('customer_id', $customerId);
 
-        if (! $query->exists() || (clone $query)->where('is_default', true)->exists()) {
+        if (!$query->exists() || (clone $query)->where('is_default', true)->exists()) {
             return;
         }
 

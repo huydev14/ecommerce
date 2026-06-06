@@ -77,7 +77,7 @@ class ProductVariantController extends Controller
     private function renderStatusBadge(bool $isActive): string
     {
         if ($isActive) {
-            return '<span class="tw-px-2 tw-py-1 tw-bg-green-100 tw-text-green-700 tw-text-xs tw-font-medium tw-rounded-full">' . __('product_variant.active') . '</span>';
+            return '<span class="tw-px-1 tw-py-0.5 tw-bg-green-100 tw-text-green-700 tw-text-xs tw-font-medium tw-rounded-sm">' . __('product_variant.active') . '</span>';
         }
 
         return '<span class="tw-px-2 tw-py-1 tw-bg-gray-100 tw-text-gray-600 tw-text-xs tw-font-medium tw-rounded-full">' . __('product_variant.hidden') . '</span>';
@@ -102,6 +102,10 @@ class ProductVariantController extends Controller
 
     public function create()
     {
+        if (!auth()->user()?->can('product-variants.create')) {
+            abort(403, 'Bạn không có quyền tạo biến thể sản phẩm.');
+        }
+
         $products = Product::orderBy('name')->get();
 
         return view('product-variants.create', compact('products'));
@@ -109,6 +113,10 @@ class ProductVariantController extends Controller
 
     public function store(Request $request)
     {
+        if (!$request->user()?->can('product-variants.create')) {
+            abort(403, 'Bạn không có quyền tạo biến thể sản phẩm.');
+        }
+
         $attributesJson = $request->input('attributes');
 
         $request->validate([
@@ -142,7 +150,7 @@ class ProductVariantController extends Controller
 
                 return response()->json([
                     'success' => true,
-                    'msg' => __('product_variant.create_success'),
+                    'message' => __('product_variant.create_success'),
                 ], 200);
             }
 
@@ -154,13 +162,17 @@ class ProductVariantController extends Controller
 
             return response()->json([
                 'status' => 'error',
-                'msg' => __('product_variant.system_error'),
+                'message' => __('product_variant.system_error'),
             ], 500);
         }
     }
 
     public function edit(ProductVariant $product_variant)
     {
+        if (!auth()->user()?->can('product-variants.edit')) {
+            abort(403, 'Bạn không có quyền mở form sửa biến thể sản phẩm.');
+        }
+
         $products = Product::orderBy('name')->get();
 
         return view('product-variants.edit', [
@@ -171,6 +183,10 @@ class ProductVariantController extends Controller
 
     public function update(Request $request, ProductVariant $product_variant)
     {
+        if (!$request->user()?->can('product-variants.update')) {
+            abort(403, 'Bạn không có quyền cập nhật biến thể sản phẩm.');
+        }
+
         $attributesJson = $request->input('attributes');
 
         $request->validate([
@@ -201,7 +217,7 @@ class ProductVariantController extends Controller
 
             return response()->json([
                 'success' => true,
-                'msg' => __('product_variant.update_success'),
+                'message' => __('product_variant.update_success'),
             ], 200);
         } catch (Exception $e) {
             Log::error('Update product variant failed: ' . $e->getMessage(), [
@@ -210,20 +226,24 @@ class ProductVariantController extends Controller
 
             return response()->json([
                 'success' => false,
-                'msg' => __('product_variant.system_error'),
+                'message' => __('product_variant.system_error'),
             ], 500);
         }
     }
 
     public function destroy(ProductVariant $product_variant)
     {
+        if (!auth()->user()?->can('product-variants.remove')) {
+            abort(403, 'Bạn không có quyền xóa biến thể sản phẩm.');
+        }
+
         try {
             $product_variant->delete();
 
             return response()->json([
                 'success' => true,
                 'status' => 200,
-                'msg' => __('product_variant.delete_success'),
+                'message' => __('product_variant.delete_success'),
             ]);
         } catch (Exception $e) {
             Log::error('Delete product variant failed: ' . $e->getMessage(), [
@@ -232,20 +252,24 @@ class ProductVariantController extends Controller
 
             return response()->json([
                 'success' => false,
-                'msg' => __('product_variant.system_error'),
+                'message' => __('product_variant.system_error'),
             ], 500);
         }
     }
 
     public function restore($id)
     {
+        if (!auth()->user()?->can('product-variants.remove')) {
+            abort(403, 'Bạn không có quyền khôi phục biến thể sản phẩm.');
+        }
+
         try {
             $variant = ProductVariant::withTrashed()->findOrFail($id);
             $variant->restore();
 
             return response()->json([
                 'success' => true,
-                'msg' => __('product_variant.restore_success'),
+                'message' => __('product_variant.restore_success'),
             ]);
         } catch (Exception $e) {
             Log::error('Restore product variant failed: ' . $e->getMessage(), [
@@ -254,7 +278,7 @@ class ProductVariantController extends Controller
 
             return response()->json([
                 'success' => false,
-                'msg' => __('product_variant.restore_error'),
+                'message' => __('product_variant.restore_error'),
             ], 500);
         }
     }

@@ -93,6 +93,10 @@ class StockMovementController extends Controller
 
     public function create()
     {
+        if (! auth()->user()?->can('stock-movements.create')) {
+            abort(403, 'Bạn không có quyền tạo biến động kho.');
+        }
+
         $stocks = Stock::with(['productVariant.product', 'warehouse'])->orderBy('id')->get();
 
         return view('stock-movements.create', compact('stocks'));
@@ -100,6 +104,10 @@ class StockMovementController extends Controller
 
     public function store(Request $request)
     {
+        if (! $request->user()?->can('stock-movements.create')) {
+            abort(403, 'Bạn không có quyền tạo biến động kho.');
+        }
+
         $request->validate([
             'stock_id' => 'required|exists:stocks,id',
             'type' => 'required|in:in,out,adjustment',
@@ -135,7 +143,7 @@ class StockMovementController extends Controller
 
                 return response()->json([
                     'success' => true,
-                    'msg' => __('stock_movement.create_success'),
+                    'message' => __('stock_movement.create_success'),
                 ], 200);
             }
 
@@ -143,7 +151,7 @@ class StockMovementController extends Controller
         } catch (\InvalidArgumentException $e) {
             return response()->json([
                 'status' => 'error',
-                'msg' => $e->getMessage(),
+                'message' => $e->getMessage(),
             ], 422);
         } catch (Exception $e) {
             Log::error('Create stock movement failed: ' . $e->getMessage(), [
@@ -152,20 +160,24 @@ class StockMovementController extends Controller
 
             return response()->json([
                 'status' => 'error',
-                'msg' => __('stock_movement.system_error'),
+                'message' => __('stock_movement.system_error'),
             ], 500);
         }
     }
 
     public function destroy(StockMovement $stock_movement)
     {
+        if (! auth()->user()?->can('stock-movements.remove')) {
+            abort(403, 'Bạn không có quyền xóa biến động kho.');
+        }
+
         try {
             $stock_movement->delete();
 
             return response()->json([
                 'success' => true,
                 'status' => 200,
-                'msg' => __('stock_movement.delete_success'),
+                'message' => __('stock_movement.delete_success'),
             ]);
         } catch (Exception $e) {
             Log::error('Delete stock movement failed: ' . $e->getMessage(), [
@@ -174,20 +186,24 @@ class StockMovementController extends Controller
 
             return response()->json([
                 'success' => false,
-                'msg' => __('stock_movement.system_error'),
+                'message' => __('stock_movement.system_error'),
             ], 500);
         }
     }
 
     public function restore($id)
     {
+        if (! auth()->user()?->can('stock-movements.remove')) {
+            abort(403, 'Bạn không có quyền khôi phục biến động kho.');
+        }
+
         try {
             $movement = StockMovement::withTrashed()->findOrFail($id);
             $movement->restore();
 
             return response()->json([
                 'success' => true,
-                'msg' => __('stock_movement.restore_success'),
+                'message' => __('stock_movement.restore_success'),
             ]);
         } catch (Exception $e) {
             Log::error('Restore stock movement failed: ' . $e->getMessage(), [
@@ -196,7 +212,7 @@ class StockMovementController extends Controller
 
             return response()->json([
                 'success' => false,
-                'msg' => __('stock_movement.restore_error'),
+                'message' => __('stock_movement.restore_error'),
             ], 500);
         }
     }

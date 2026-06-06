@@ -39,15 +39,19 @@ class RoleAndPermissionSeeder extends Seeder
             'log.remove',
             'orders.view',
             'orders.edit',
+            'orders.update',
             'product-imports.view',
             'product-imports.create',
+            'product-imports.edit',
+            'product-imports.update',
             'product-imports.remove',
             'settings.view',
             'settings.edit',
+            'settings.update',
         ];
 
         foreach ($crudPermissionModules as $module) {
-            foreach (['view', 'create', 'edit', 'remove'] as $action) {
+            foreach (['view', 'create', 'edit', 'update', 'remove'] as $action) {
                 $permissions[] = "{$module}.{$action}";
             }
         }
@@ -75,6 +79,15 @@ class RoleAndPermissionSeeder extends Seeder
             ->where('name', 'like', '%.view')
             ->orWhereIn('name', ['log.detail'])
             ->get();
+        $hrDemoPermissions = Permission::query()
+            ->where('name', 'like', '%.view')
+            ->orWhere('name', 'like', '%.create')
+            ->orWhere('name', 'like', '%.edit')
+            ->orWhereIn('name', ['log.detail'])
+            ->get();
+        $hrDemoPermissions = $hrDemoPermissions
+            ->merge(Permission::query()->where('name', 'like', 'product-imports.%')->get())
+            ->unique('id');
 
         $superAdmin->syncPermissions($allPermissions);
 
@@ -100,7 +113,7 @@ class RoleAndPermissionSeeder extends Seeder
         Role::findByName('Admin', 'web')->syncPermissions($allPermissions);
         Role::findByName('Manager', 'web')->syncPermissions($viewOnlyPermissions);
         Role::findByName('Employee', 'web')->syncPermissions($viewOnlyPermissions);
-        Role::findByName('HR Demo', 'web')->syncPermissions($viewOnlyPermissions);
+        Role::findByName('HR Demo', 'web')->syncPermissions($hrDemoPermissions);
 
         // Assign role to users ID
         $assignRole = [

@@ -53,11 +53,19 @@ class TaxController extends Controller
 
     public function create()
     {
+        if (! auth()->user()?->can('taxes.create')) {
+            abort(403, 'Bạn không có quyền tạo thuế.');
+        }
+
         return view('taxes.create');
     }
 
     public function store(Request $request)
     {
+        if (! $request->user()?->can('taxes.create')) {
+            abort(403, 'Bạn không có quyền tạo thuế.');
+        }
+
         $request->validate([
             'name' => 'required|string|min:2|max:255|unique:taxes,name',
             'rate' => 'required|numeric|min:0|max:100',
@@ -80,7 +88,7 @@ class TaxController extends Controller
 
                 return response()->json([
                     'success' => true,
-                    'msg' => __('tax.create_success'),
+                    'message' => __('tax.create_success'),
                 ], 200);
             }
 
@@ -92,18 +100,26 @@ class TaxController extends Controller
 
             return response()->json([
                 'status' => 'error',
-                'msg' => __('tax.system_error'),
+                'message' => __('tax.system_error'),
             ], 500);
         }
     }
 
     public function edit(Tax $tax)
     {
+        if (! auth()->user()?->can('taxes.edit')) {
+            abort(403, 'Bạn không có quyền mở form sửa thuế.');
+        }
+
         return view('taxes.edit', compact('tax'));
     }
 
     public function update(Request $request, Tax $tax)
     {
+        if (! $request->user()?->can('taxes.update')) {
+            abort(403, 'Bạn không có quyền cập nhật thuế.');
+        }
+
         $request->validate([
             'name' => 'required|string|min:2|max:255|unique:taxes,name,' . $tax->id,
             'rate' => 'required|numeric|min:0|max:100',
@@ -123,7 +139,7 @@ class TaxController extends Controller
 
             return response()->json([
                 'success' => true,
-                'msg' => __('tax.update_success'),
+                'message' => __('tax.update_success'),
             ], 200);
         } catch (Exception $e) {
             Log::error('Update tax failed: ' . $e->getMessage(), [
@@ -132,20 +148,24 @@ class TaxController extends Controller
 
             return response()->json([
                 'success' => false,
-                'msg' => __('tax.system_error'),
+                'message' => __('tax.system_error'),
             ], 500);
         }
     }
 
     public function destroy(Tax $tax)
     {
+        if (! auth()->user()?->can('taxes.remove')) {
+            abort(403, 'Bạn không có quyền xóa thuế.');
+        }
+
         try {
             $tax->delete();
 
             return response()->json([
                 'success' => true,
                 'status' => 200,
-                'msg' => __('tax.delete_success'),
+                'message' => __('tax.delete_success'),
             ]);
         } catch (Exception $e) {
             Log::error('Delete tax failed: ' . $e->getMessage(), [
@@ -154,20 +174,24 @@ class TaxController extends Controller
 
             return response()->json([
                 'success' => false,
-                'msg' => __('tax.system_error'),
+                'message' => __('tax.system_error'),
             ], 500);
         }
     }
 
     public function restore($id)
     {
+        if (! auth()->user()?->can('taxes.remove')) {
+            abort(403, 'Bạn không có quyền khôi phục thuế.');
+        }
+
         try {
             $tax = Tax::withTrashed()->findOrFail($id);
             $tax->restore();
 
             return response()->json([
                 'success' => true,
-                'msg' => __('tax.restore_success'),
+                'message' => __('tax.restore_success'),
             ]);
         } catch (Exception $e) {
             Log::error('Restore tax failed: ' . $e->getMessage(), [
@@ -176,7 +200,7 @@ class TaxController extends Controller
 
             return response()->json([
                 'success' => false,
-                'msg' => __('tax.restore_error'),
+                'message' => __('tax.restore_error'),
             ], 500);
         }
     }

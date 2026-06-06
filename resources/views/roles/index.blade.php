@@ -4,7 +4,7 @@
     <x-page-header title="{{ __('role.page_title') }}" description="{{ __('role.page_description') }}">
         @can('roles.create')
             <a href="{{ route('roles.create') }}"
-                class="tw-bg-[#0078D4] hover:tw-bg-[#106ebe] tw-text-white tw-text-[14px] tw-font-medium tw-px-4 tw-py-2 tw-rounded-[4px] tw-shadow-sm tw-transition-colors tw-flex tw-items-center tw-gap-2">
+                class="tw-inline-flex tw-items-center tw-justify-center tw-gap-2 tw-rounded-[4px] tw-bg-[#0078D4] tw-px-4 tw-py-1 tw-text-[14px] tw-font-medium tw-text-white tw-shadow-sm tw-transition-colors hover:tw-bg-[#106ebe] focus:tw-outline-none focus:tw-ring-2 focus:tw-ring-[#0078D4] focus:tw-ring-offset-2">
                 <i class="fas fa-plus tw-text-xs"></i> {{ __('role.new_role') }}
             </a>
         @endcan
@@ -13,89 +13,98 @@
 
 
 @section('content')
-    <div class="tw-px-6">
-        {{-- Grid Layout --}}
-        <div class="tw-grid tw-grid-cols-4 tw-gap-4">
-            @foreach ($roles as $role)
-                <div
-                    class="tw-bg-white tw-border tw-border-gray-200 tw-rounded-[8px] tw-p-5 tw-flex tw-flex-col tw-h-full hover:tw-shadow-md hover:tw-border-gray-300 tw-transition-all tw-duration-200 tw-relative tw-group">
+    <div class="tw-px-6 tw-pb-6">
 
-                    {{-- Card Header --}}
-                    <div class="tw-flex tw-justify-between tw-items-start tw-mb-2">
-                        <div class="tw-flex tw-items-center tw-gap-2">
-                            <h3 class="tw-text-[16px] tw-font-semibold tw-text-gray-900">{{ $role->name }}</h3>
-                        </div>
-
-                        @canany(['roles.edit', 'roles.remove'])
-                            {{-- Action Dropdown --}}
-                            <div class="tw-relative role-dropdown-container">
-                                <button type="button"
-                                    class="btn-role-dropdown tw-text-gray-400 hover:tw-text-gray-700 tw-w-8 tw-h-8 tw-rounded-[4px] hover:tw-bg-gray-100 tw-flex tw-items-center tw-justify-center tw-transition-colors focus:tw-outline-none">
-                                    <i class="fas fa-ellipsis-v"></i>
-                                </button>
-
-                                <div
-                                    class="role-dropdown-menu tw-hidden tw-absolute tw-right-0 tw-mt-1 tw-w-40 tw-bg-white tw-border tw-border-gray-200 tw-rounded-[4px] tw-shadow-lg tw-z-10 tw-py-1 tw-overflow-hidden">
-                                    @can('roles.edit')
-                                        <a href="{{ route('roles.edit', $role->id) }}"
-                                            class="tw-flex tw-items-center tw-px-4 tw-py-2 tw-text-[13px] tw-text-gray-700 hover:tw-bg-gray-50 tw-transition-colors">
-                                            <i class="fas fa-pen tw-mr-2.5 tw-text-gray-400 tw-w-3"></i>
-                                            {{ __('actions.edit_info') }}
-                                        </a>
-                                    @endcan
-                                    @can('roles.remove')
-                                        <button type="button"
-                                            onclick="deleteRole({{ $role->id }}, '{{ $role->name }}', '{{ route('roles.destroy', $role->id) }}')"
-                                            class="tw-w-full tw-flex tw-items-center tw-px-4 tw-py-2 tw-text-[13px] tw-text-red-600 hover:tw-bg-red-50 tw-transition-colors">
-                                            <i class="fas fa-trash tw-mr-2.5 tw-text-red-400 tw-w-3"></i>
-                                            {{ __('role.delete_role') }}
-                                        </button>
-                                    @endcan
+        @if ($roles->isEmpty())
+            <div class="tw-flex tw-min-h-[280px] tw-items-center tw-justify-center tw-rounded-[6px] tw-border tw-border-dashed tw-border-gray-300 tw-bg-white">
+                <div class="tw-text-center">
+                    <div class="tw-mx-auto tw-mb-3 tw-flex tw-h-11 tw-w-11 tw-items-center tw-justify-center tw-rounded-[6px] tw-bg-gray-100 tw-text-gray-500">
+                        <i class="fas fa-user-shield"></i>
+                    </div>
+                    <div class="tw-text-sm tw-font-semibold tw-text-gray-900">{{ __('role.empty_title') }}</div>
+                </div>
+            </div>
+        @else
+            <div class="tw-grid tw-grid-cols-1 tw-gap-4 lg:tw-grid-cols-2 2xl:tw-grid-cols-3">
+                @foreach ($roles as $role)
+                    <article
+                        class="tw-group tw-relative tw-flex tw-min-h-[218px] tw-flex-col tw-rounded-[6px] tw-border tw-border-gray-200 tw-bg-white tw-p-5 tw-shadow-sm tw-transition-all tw-duration-200 hover:tw-border-[#c7e0f4] hover:tw-shadow-md">
+                        <div class="tw-flex tw-items-start tw-justify-between tw-gap-4">
+                            <div class="tw-flex tw-min-w-0 tw-items-center tw-gap-3">
+                                <div class="tw-min-w-0">
+                                    <h3 class="tw-truncate tw-text-[16px] tw-font-semibold tw-text-gray-950">{{ $role->name }}</h3>
                                 </div>
                             </div>
-                        @endcanany
-                    </div>
 
-                    {{-- Card Body: Description --}}
-                    <p
-                        class="tw-text-[13px] tw-flex-grow tw-leading-relaxed tw-mb-5 tw-line-clamp-2 {{ $role->description ? 'tw-text-gray-600' : 'tw-text-gray-400 tw-italic' }}">
-                        {{ $role->description ?: __('role.no_description') }}
-                    </p>
+                            @canany(['roles.edit', 'roles.remove'])
+                                <div class="tw-relative role-dropdown-container">
+                                    <button type="button"
+                                        class="btn-role-dropdown tw-flex tw-h-8 tw-w-8 tw-items-center tw-justify-center tw-rounded-[4px] tw-text-gray-400 tw-transition-colors hover:tw-bg-gray-100 hover:tw-text-gray-700 focus:tw-outline-none focus:tw-ring-2 focus:tw-ring-[#0078D4] focus:tw-ring-offset-1"
+                                        aria-label="{{ __('role.actions_label') }}">
+                                        <i class="fas fa-ellipsis-v"></i>
+                                    </button>
 
-                    {{-- Card Footer --}}
-                    <div
-                        class="tw-flex tw-justify-between tw-items-center tw-mt-auto tw-border-t tw-border-gray-100 tw-pt-4">
-                        <span
-                            class="tw-bg-gray-50 tw-border tw-border-gray-200 tw-text-gray-600 tw-text-xs tw-font-medium tw-px-2.5 tw-py-1 tw-rounded-[4px] tw-flex tw-items-center tw-gap-1.5">
-                            <i class="fas fa-user-check tw-text-gray-400"></i> {{ $role->users_count ?? 0 }}
-                            {{ __('user.staff') }}
-                        </span>
+                                    <div
+                                        class="role-dropdown-menu tw-hidden tw-absolute tw-right-0 tw-z-10 tw-mt-1 tw-w-44 tw-overflow-hidden tw-rounded-[4px] tw-border tw-border-gray-200 tw-bg-white tw-py-1 tw-shadow-lg">
+                                        @can('roles.edit')
+                                            <a href="{{ route('roles.edit', $role->id) }}"
+                                                class="tw-flex tw-items-center tw-px-4 tw-py-2 tw-text-[13px] tw-text-gray-700 tw-transition-colors hover:tw-bg-gray-50">
+                                                <i class="fas fa-pen tw-mr-2.5 tw-w-3 tw-text-gray-400"></i>
+                                                {{ __('actions.edit_info') }}
+                                            </a>
+                                        @endcan
+                                        @can('roles.remove')
+                                            <button type="button"
+                                                onclick="deleteRole({{ $role->id }}, @js($role->name), @js(route('roles.destroy', $role->id)))"
+                                                class="tw-flex tw-w-full tw-items-center tw-px-4 tw-py-2 tw-text-left tw-text-[13px] tw-text-red-600 tw-transition-colors hover:tw-bg-red-50">
+                                                <i class="fas fa-trash tw-mr-2.5 tw-w-3 tw-text-red-400"></i>
+                                                {{ __('role.delete_role') }}
+                                            </button>
+                                        @endcan
+                                    </div>
+                                </div>
+                            @endcanany
+                        </div>
 
-                        @can('roles.edit')
-                            <a href="{{ route('roles.edit', $role->id) }}"
-                                class="assign-role-btn tw-text-[13px] tw-font-medium tw-text-gray-700 tw-bg-white tw-border tw-border-gray-300 hover:tw-bg-gray-50 hover:tw-text-[#0078D4] hover:tw-border-[#0078D4] tw-rounded-[4px] tw-px-4 tw-py-1.5 tw-transition-colors tw-shadow-sm tw-flex tw-items-center tw-gap-2">
-                                {{ __('role.assign_permissions') }}
-                            </a>
-                        @endcan
-                    </div>
-                </div>
-            @endforeach
-        </div>
+                        <p class="tw-line-clamp-2 tw-min-h-[40px] tw-text-[13px] tw-leading-5 {{ $role->description ? 'tw-text-gray-600' : 'tw-text-gray-400 tw-italic' }}">
+                            {{ $role->description ?: __('role.no_description') }}
+                        </p>
+
+                        <div class="tw-mt-5 tw-grid tw-grid-cols-2 tw-gap-2">
+                            <div class="tw-rounded-[4px] tw-bg-gray-50 tw-px-3 tw-py-2">
+                                <div class="tw-text-[11px] tw-font-medium tw-text-gray-500">{{ __('user.staff') }}</div>
+                                <div class="tw-mt-0.5 tw-text-[15px] tw-font-semibold tw-text-gray-900">{{ number_format($role->users_count ?? 0) }}</div>
+                            </div>
+                            <div class="tw-rounded-[4px] tw-bg-gray-50 tw-px-3 tw-py-2">
+                                <div class="tw-text-[11px] tw-font-medium tw-text-gray-500">{{ __('role.permissions_short') }}</div>
+                                <div class="tw-mt-0.5 tw-text-[15px] tw-font-semibold tw-text-gray-900">{{ number_format($role->permissions_count ?? 0) }}</div>
+                            </div>
+                        </div>
+
+                        <div class="tw-mt-auto tw-flex tw-items-center tw-justify-between tw-border-t tw-border-gray-100 tw-pt-4">
+                            <span class="tw-inline-flex tw-items-center tw-gap-1.5 tw-rounded-[4px] tw-border tw-border-gray-200 tw-bg-white tw-px-2.5 tw-py-1 tw-text-xs tw-font-medium tw-text-gray-600">
+                                {{ trans_choice('role.permission_count', $role->permissions_count ?? 0, ['count' => number_format($role->permissions_count ?? 0)]) }}
+                            </span>
+
+                            @can('roles.edit')
+                                <a href="{{ route('roles.edit', $role->id) }}"
+                                    class="tw-inline-flex tw-items-center tw-gap-2 tw-rounded-[4px] tw-border tw-border-gray-300 tw-bg-white tw-px-3 tw-py-1.5 tw-text-[13px] tw-font-medium tw-text-gray-700 tw-shadow-sm tw-transition-colors hover:tw-border-[#0078D4] hover:tw-bg-gray-50 hover:tw-text-[#0078D4]">
+                                    {{ __('role.assign_permissions') }}
+                                    <i class="fas fa-arrow-right tw-text-[11px]"></i>
+                                </a>
+                            @endcan
+                        </div>
+                    </article>
+                @endforeach
+            </div>
+        @endif
     </div>
 @endsection
 
 @push('scripts')
     <script type="module">
         $(function() {
-            @if (session('success'))
-                fluentToast({
-                    type: 'success',
-                    title: "{{ __('Success') }}",
-                    description: "{{ session('success') }}",
-                    subtitle: 'Code: 200',
-                    actionType: 'close',
-                });
-            @endif
+            @include('partials.fluent-session-toasts')
 
             $(document).on('click', '.btn-role-dropdown', function(e) {
                 e.stopPropagation();
@@ -113,7 +122,9 @@
             });
 
             window.deleteRole = function(id, name, deleteUrl) {
-                if (confirm("{{ __('role.delete_confirm', ['name' => '']) }}" + name)) {
+                const deleteMessage = @js(__('role.delete_confirm', ['name' => ':name'])).replace(':name', name);
+
+                if (confirm(deleteMessage)) {
                     $.ajax({
                         type: 'DELETE',
                         url: deleteUrl,
@@ -121,7 +132,7 @@
                             fluentToast({
                                 type: 'success',
                                 title: "{{ __('actions.success') }}",
-                                description: res.msg,
+                                description: res.message,
                             });
                             setTimeout(() => {
                                 window.location.reload();
@@ -131,8 +142,7 @@
                             fluentToast({
                                 type: 'error',
                                 title: "{{ __('actions.error') }}",
-                                description: xhr.responseJSON?.msg ||
-                                    "{{ __('role.delete_error') }}",
+                                description: xhr.responseJSON?.message || "{{ __('role.delete_error') }}",
                             });
                         }
                     });

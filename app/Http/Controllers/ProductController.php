@@ -56,7 +56,7 @@ class ProductController extends Controller
                 })
                 ->editColumn('status', function ($product) {
                     return match ($product->status) {
-                        'published' => '<span class="tw-px-2 tw-py-1 tw-bg-green-100 tw-text-green-700 tw-text-xs tw-font-medium tw-rounded-full">' . __('product.published') . '</span>',
+                        'published' => '<span class="tw-px-1 tw-py-0.5 tw-bg-green-100 tw-text-green-700 tw-text-xs tw-font-medium tw-rounded-sm">' . __('product.published') . '</span>',
                         'archived' => '<span class="tw-px-2 tw-py-1 tw-bg-gray-100 tw-text-gray-600 tw-text-xs tw-font-medium tw-rounded-full">' . __('product.archived') . '</span>',
                         default => '<span class="tw-px-2 tw-py-1 tw-bg-yellow-100 tw-text-yellow-700 tw-text-xs tw-font-medium tw-rounded-full">' . __('product.draft') . '</span>',
                     };
@@ -108,6 +108,10 @@ class ProductController extends Controller
 
     public function create()
     {
+        if (!auth()->user()?->can('products.create')) {
+            abort(403, 'Bạn không có quyền tạo sản phẩm.');
+        }
+
         $categories = Category::orderBy('name')->get();
         $brands = Brand::orderBy('name')->get();
 
@@ -116,6 +120,10 @@ class ProductController extends Controller
 
     public function store(Request $request)
     {
+        if (!$request->user()?->can('products.create')) {
+            abort(403, 'Bạn không có quyền tạo sản phẩm.');
+        }
+
         $data = $request->validate([
             'name' => 'required|string|min:2|max:255|unique:products,name',
             'description' => 'nullable|string',
@@ -148,7 +156,7 @@ class ProductController extends Controller
             if ($request->ajax() || $request->wantsJson()) {
                 return response()->json([
                     'success' => true,
-                    'msg' => __('product.create_success'),
+                    'message' => __('product.create_success'),
                 ], 200);
             }
 
@@ -166,7 +174,7 @@ class ProductController extends Controller
             if ($request->ajax() || $request->wantsJson()) {
                 return response()->json([
                     'success' => false,
-                    'msg' => __('product.system_error'),
+                    'message' => __('product.system_error'),
                 ], 500);
             }
 
@@ -176,6 +184,10 @@ class ProductController extends Controller
 
     public function edit(Product $product)
     {
+        if (!auth()->user()?->can('products.edit')) {
+            abort(403, 'Bạn không có quyền mở form sửa sản phẩm.');
+        }
+
         $categories = Category::orderBy('name')->get();
         $brands = Brand::orderBy('name')->get();
 
@@ -184,6 +196,10 @@ class ProductController extends Controller
 
     public function update(Request $request, Product $product)
     {
+        if (!$request->user()?->can('products.update')) {
+            abort(403, 'Bạn không có quyền cập nhật sản phẩm.');
+        }
+
         $data = $request->validate([
             'name' => 'required|string|min:2|max:255|unique:products,name,' . $product->id,
             'description' => 'nullable|string',
@@ -227,7 +243,7 @@ class ProductController extends Controller
 
             return response()->json([
                 'success' => true,
-                'msg' => __('product.update_success'),
+                'message' => __('product.update_success'),
             ], 200);
         } catch (Exception $e) {
             if ($request->hasFile('thumbnail') && $thumbnailPublicId && $thumbnailPublicId !== $product->getOriginal('thumbnail_public_id')) {
@@ -240,13 +256,17 @@ class ProductController extends Controller
 
             return response()->json([
                 'success' => false,
-                'msg' => __('product.system_error'),
+                'message' => __('product.system_error'),
             ], 500);
         }
     }
 
     public function destroy(Product $product)
     {
+        if (!auth()->user()?->can('products.remove')) {
+            abort(403, 'Bạn không có quyền xóa sản phẩm.');
+        }
+
         try {
             $product->delete();
             $this->clearProductApiCaches();
@@ -254,7 +274,7 @@ class ProductController extends Controller
             return response()->json([
                 'success' => true,
                 'status' => 200,
-                'msg' => __('product.delete_success'),
+                'message' => __('product.delete_success'),
             ]);
         } catch (Exception $e) {
             Log::error('Delete product failed: ' . $e->getMessage(), [
@@ -263,13 +283,17 @@ class ProductController extends Controller
 
             return response()->json([
                 'success' => false,
-                'msg' => __('product.system_error'),
+                'message' => __('product.system_error'),
             ], 500);
         }
     }
 
     public function restore($id)
     {
+        if (!auth()->user()?->can('products.remove')) {
+            abort(403, 'Bạn không có quyền khôi phục sản phẩm.');
+        }
+
         try {
             $product = Product::withTrashed()->findOrFail($id);
             $product->restore();
@@ -277,7 +301,7 @@ class ProductController extends Controller
 
             return response()->json([
                 'success' => true,
-                'msg' => __('product.restore_success'),
+                'message' => __('product.restore_success'),
             ]);
         } catch (Exception $e) {
             Log::error('Restore product failed: ' . $e->getMessage(), [
@@ -286,7 +310,7 @@ class ProductController extends Controller
 
             return response()->json([
                 'success' => false,
-                'msg' => __('product.restore_error'),
+                'message' => __('product.restore_error'),
             ], 500);
         }
     }

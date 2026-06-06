@@ -44,6 +44,10 @@ class ProductImportController extends Controller
 
     public function uploadAndPreview(Request $request)
     {
+        if (! $request->user()?->can('product-imports.create')) {
+            abort(403, 'Bạn không có quyền upload file import sản phẩm.');
+        }
+
         $request->validate([
             'excel_file' => 'required|mimes:xlsx,xls,csv|max:10240',
             'warehouse_id' => 'required|exists:warehouses,id',
@@ -119,6 +123,10 @@ class ProductImportController extends Controller
 
     public function confirmImport($batchId)
     {
+        if (! auth()->user()?->can('product-imports.update')) {
+            abort(403, 'Bạn không có quyền xác nhận import sản phẩm.');
+        }
+
         $batch = ImportBatch::findOrFail($batchId);
 
         if (!in_array($batch->status, ['ready', 'preview_ready'], true)) {
@@ -150,6 +158,10 @@ class ProductImportController extends Controller
 
     public function cancelImport($batchId)
     {
+        if (! auth()->user()?->can('product-imports.remove')) {
+            abort(403, 'Bạn không có quyền hủy import sản phẩm.');
+        }
+
         $batch = ImportBatch::findOrFail($batchId);
 
         if (! in_array($batch->status, ['processing', 'preview_ready', 'ready'], true)) {
@@ -170,6 +182,10 @@ class ProductImportController extends Controller
 
     public function resolveMissingMasterData($batchId)
     {
+        if (! auth()->user()?->can('product-imports.update')) {
+            abort(403, 'Bạn không có quyền xử lý dữ liệu import sản phẩm.');
+        }
+
         $batch = ImportBatch::findOrFail($batchId);
 
         if (!in_array($batch->status, ['ready', 'preview_ready', 'completed_with_errors'], true)) {

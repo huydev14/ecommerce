@@ -33,7 +33,8 @@ class RoleController extends Controller
     private const PERMISSION_ACTIONS = [
         'view' => 'Xem dữ liệu',
         'create' => 'Tạo mới',
-        'edit' => 'Sửa/cập nhật',
+        'edit' => 'Mở form sửa',
+        'update' => 'Lưu cập nhật',
         'remove' => 'Xóa/khôi phục',
     ];
 
@@ -42,7 +43,7 @@ class RoleController extends Controller
      */
     public function index()
     {
-        $roles = Role::withCount('users')->get();
+        $roles = Role::withCount(['users', 'permissions'])->orderBy('name')->get();
         return view('roles.index', compact('roles'));
     }
 
@@ -51,6 +52,10 @@ class RoleController extends Controller
      */
     public function create()
     {
+        if (! auth()->user()?->can('roles.create')) {
+            abort(403, 'Bạn không có quyền tạo vai trò.');
+        }
+
         $rolePermissions = old('permissions', []);
         $permissionGroups = $this->permissionGroups();
 
@@ -62,6 +67,10 @@ class RoleController extends Controller
      */
     public function store(Request $request)
     {
+        if (! $request->user()?->can('roles.create')) {
+            abort(403, 'Bạn không có quyền tạo vai trò.');
+        }
+
         $request->validate([
             'name' => 'required|string|max:255|unique:roles,name',
             'description' => 'nullable|string|max:255',
@@ -90,7 +99,7 @@ class RoleController extends Controller
 
             return response()->json([
                 'success' => true,
-                'msg' => 'Tạo vai trò mới thành công',
+                'message' => 'Tạo vai trò mới thành công',
                 'redirect' => route('roles.index'),
             ], 200);
         } catch (Exception $e) {
@@ -99,7 +108,7 @@ class RoleController extends Controller
 
             return response()->json([
                 'status' => 'error',
-                'msg' => 'Lỗi hệ thống'
+                'message' => 'Lỗi hệ thống'
             ], 500);
         }
     }
@@ -117,6 +126,10 @@ class RoleController extends Controller
      */
     public function edit(string $id)
     {
+        if (! auth()->user()?->can('roles.edit')) {
+            abort(403, 'Bạn không có quyền mở form sửa vai trò.');
+        }
+
         $role = Role::findOrFail($id);
         $rolePermissions = $role->permissions->pluck('name')->toArray();
         $permissionGroups = $this->permissionGroups();
@@ -129,6 +142,10 @@ class RoleController extends Controller
      */
     public function update(Request $request, string $id)
     {
+        if (! $request->user()?->can('roles.update')) {
+            abort(403, 'Bạn không có quyền cập nhật vai trò.');
+        }
+
         $role = Role::findOrFail($id);
 
         $request->validate([
@@ -175,7 +192,7 @@ class RoleController extends Controller
 
             return response()->json([
                 'success' => true,
-                'msg' => 'Tạo vai trò mới thành công',
+                'message' => 'Tạo vai trò mới thành công',
                 'redirect' => route('roles.index'),
             ], 200);
         } catch (Exception $e) {
@@ -184,7 +201,7 @@ class RoleController extends Controller
 
             return response()->json([
                 'status' => 'error',
-                'msg' => 'Lỗi hệ thống'
+                'message' => 'Lỗi hệ thống'
             ], 500);
         }
     }
@@ -194,6 +211,10 @@ class RoleController extends Controller
      */
     public function destroy(string $id)
     {
+        if (! auth()->user()?->can('roles.remove')) {
+            abort(403, 'Bạn không có quyền xóa vai trò.');
+        }
+
         $role = Role::findOrFail($id);
 
         DB::beginTransaction();
@@ -206,14 +227,14 @@ class RoleController extends Controller
 
             return response()->json([
                 'status' => 'success',
-                'msg' => 'Đã xóa vai trò thành công!'
+                'message' => 'Đã xóa vai trò thành công!'
             ], 200);
         } catch (Exception $e) {
             DB::rollBack();
             Log::error('Delete role failed:', ['error' => $e->getMessage(), 'trace' => $e->getTraceAsString()]);
             return response()->json([
                 'status' => 'error',
-                'msg' => 'Không thể xóa vai trò này!'
+                'message' => 'Không thể xóa vai trò này!'
             ], 500);
         }
     }

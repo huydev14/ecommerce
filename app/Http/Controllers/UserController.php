@@ -36,6 +36,10 @@ class UserController extends Controller
 
     public function create(Request $request)
     {
+        if (! $request->user()?->can('users.create')) {
+            abort(403, 'Bạn không có quyền tạo người dùng.');
+        }
+
         $status = collect([
             ['id'  => 1, 'text' => 'Đã nghỉ'],
             ['id' => 0, 'text' => 'Đang làm'],
@@ -52,6 +56,10 @@ class UserController extends Controller
 
     public function store(StoreUserRequest $request)
     {
+        if (! $request->user()?->can('users.create')) {
+            abort(403, 'Bạn không có quyền tạo người dùng.');
+        }
+
         $data = $request->validated();
 
         try {
@@ -68,15 +76,19 @@ class UserController extends Controller
                 $user->assignRole($role);
             }
 
-            return response()->json(['success' => true, 'msg' => __('user.success_description')], 200);
+            return response()->json(['success' => true, 'message' => __('user.success_description')], 200);
         } catch (Exception $e) {
             Log::error('Create user failed', ['error' => $e->getMessage(), 'trace' => $e->getTraceAsString()]);
-            return response()->json(['status' => 'error', 'msg' => __('user.system_error_description')], 500);
+            return response()->json(['status' => 'error', 'message' => __('user.system_error_description')], 500);
         }
     }
 
     public function edit(User $user)
     {
+        if (! auth()->user()?->can('users.edit')) {
+            abort(403, 'Bạn không có quyền mở form sửa người dùng.');
+        }
+
         $user->load('roles');
 
         $status = collect([
@@ -99,6 +111,10 @@ class UserController extends Controller
 
     public function update(UpdateUserRequest $request, User $user)
     {
+        if (! $request->user()?->can('users.update')) {
+            abort(403, 'Bạn không có quyền cập nhật người dùng.');
+        }
+
         $data = $request->validated();
         try {
             if (!empty($data['password'])) {
@@ -119,38 +135,46 @@ class UserController extends Controller
                 $user->syncRoles([]);
             }
 
-            return response()->json(['success' => true, 'msg' => __('user.success_description')], 200);
+            return response()->json(['success' => true, 'message' => __('user.success_description')], 200);
         } catch (Exception $e) {
             Log::error('Update user failed', ['error' => $e->getMessage(), 'trace' => $e->getTraceAsString(),]);
-            return response()->json(['success' => false, 'msg' => __('user.system_error_description')], 500);
+            return response()->json(['success' => false, 'message' => __('user.system_error_description')], 500);
         }
     }
 
     public function destroy(User $user)
     {
+        if (! auth()->user()?->can('users.remove')) {
+            abort(403, 'Bạn không có quyền xóa người dùng.');
+        }
+
         try {
             if (Auth::id() === $user->id) {
-                return response()->json(['msg' => 'Không thể tự xóa tài khoản của chính mình!'], 403);
+                return response()->json(['message' => 'Không thể tự xóa tài khoản của chính mình!'], 403);
             }
             $user->delete();
 
-            return response()->json(['success' => true, 'msg' => __('user.delete_description')]);
+            return response()->json(['success' => true, 'message' => __('user.delete_description')]);
         } catch (Exception $e) {
             Log::error('Remove user failed', ['error' => $e->getMessage(), 'trace' => $e->getTraceAsString(),]);
-            return response()->json(['msg' => __('user.system_error_description')], 500);
+            return response()->json(['message' => __('user.system_error_description')], 500);
         }
     }
 
     public function restore($id)
     {
+        if (! auth()->user()?->can('users.remove')) {
+            abort(403, 'Bạn không có quyền khôi phục người dùng.');
+        }
+
         try {
             $user = User::withTrashed()->findOrFail($id);
             $user->restore();
 
-            return response()->json(['success' => true, 'msg' => __('user.undo_success_description')]);
+            return response()->json(['success' => true, 'message' => __('user.undo_success_description')]);
         } catch (Exception $e) {
             Log::error('Restore user failed', ['error' => $e->getMessage(), 'trace' => $e->getTraceAsString(),]);
-            return response()->json(['success' => false, 'msg' => __('user.restore_error_description')], 500);
+            return response()->json(['success' => false, 'message' => __('user.restore_error_description')], 500);
         }
     }
 

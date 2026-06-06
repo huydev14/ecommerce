@@ -6,6 +6,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Mail;
 
 use App\Models\Setting;
 
@@ -19,6 +20,10 @@ class SettingController extends Controller
 
     public function update(Request $request)
     {
+        if (! $request->user()?->can('settings.update')) {
+            abort(403, 'Bạn không có quyền cập nhật cấu hình.');
+        }
+
         $settings = $request->input('settings', []);
 
         foreach ($settings as $key => $value) {
@@ -30,6 +35,10 @@ class SettingController extends Controller
 
     public function updateOAuth(Request $request, $provider)
     {
+        if (! $request->user()?->can('settings.update')) {
+            abort(403, 'Bạn không có quyền cập nhật cấu hình OAuth.');
+        }
+
          $rules = [
                 'client_id' => 'required|string',
                 'client_secret' => 'nullable|string',
@@ -78,6 +87,10 @@ class SettingController extends Controller
 
     public function updateMail(Request $request)
     {
+        if (! $request->user()?->can('settings.update')) {
+            abort(403, 'Bạn không có quyền cập nhật cấu hình mail.');
+        }
+
         $value = [
             'host' => $request->host,
             'port' => $request->port,
@@ -110,6 +123,24 @@ class SettingController extends Controller
         } catch (\Exception $e) {
             Log::error("Mail config update error: " . $e->getMessage());
             return redirect()->back()->with('error', "Có lỗi xảy ra khi lưu cấu hình Mail.");
+        }
+    }
+
+    public function testMail(Request $request)
+    {
+        if (! $request->user()?->can('settings.update')) {
+            abort(403, 'Bạn không có quyền gửi email kiểm tra.');
+        }
+
+        try {
+            Mail::raw('email test', function ($message) {
+                $message->to('giahuy.codes@gmail.com')
+                    ->subject('Test Brevo SMTP');
+            });
+
+            return 'Gửi email thành công';
+        } catch (\Exception $e) {
+            return 'Lỗi gửi mail: ' . $e->getMessage();
         }
     }
 }

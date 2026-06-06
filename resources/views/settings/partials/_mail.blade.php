@@ -59,7 +59,7 @@
             </div>
 
             <div class="tw-pt-6 tw-border-t tw-flex tw-justify-end">
-                @can('settings.edit')
+                @can('settings.update')
                     <button type="submit"
                         class="tw-px-4 tw-py-2 tw-text-sm tw-font-bold tw-text-white tw-bg-[#0078d4] tw-rounded">
                         Lưu cấu hình Mail

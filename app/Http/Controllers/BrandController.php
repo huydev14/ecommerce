@@ -32,7 +32,7 @@ class BrandController extends Controller
                 })
                 ->editColumn('is_active', function ($brand) {
                     if ($brand->is_active) {
-                        return '<span class="tw-px-2 tw-py-1 tw-bg-green-100 tw-text-green-700 tw-text-xs tw-font-medium tw-rounded-full">' . __('brand.active') . '</span>';
+                        return '<span class="tw-px-1 tw-py-0.5 tw-bg-green-100 tw-text-green-700 tw-text-xs tw-font-medium tw-rounded-sm">' . __('brand.active') . '</span>';
                     }
                     return '<span class="tw-px-2 tw-py-1 tw-bg-gray-100 tw-text-gray-600 tw-text-xs tw-font-medium tw-rounded-full">' . __('brand.hidden') . '</span>';
                 })
@@ -67,11 +67,19 @@ class BrandController extends Controller
 
     public function create()
     {
+        if (!auth()->user()?->can('brands.create')) {
+            abort(403, 'Bạn không có quyền tạo thương hiệu.');
+        }
+
         return view('brands.create');
     }
 
     public function store(Request $request)
     {
+        if (!$request->user()?->can('brands.create')) {
+            abort(403, 'Bạn không có quyền tạo thương hiệu.');
+        }
+
         $request->validate([
             'name' => 'required|string|min:2|max:255|unique:brands,name',
             'website' => 'nullable|url|max:255',
@@ -100,7 +108,7 @@ class BrandController extends Controller
 
                 return response()->json([
                     'success' => true,
-                    'msg' => __('brand.create_success'),
+                    'message' => __('brand.create_success'),
                 ], 200);
             }
             return redirect()->route('brands.index')->with('success', __('brand.create_success'));
@@ -114,18 +122,26 @@ class BrandController extends Controller
             ]);
             return response()->json([
                 'status' => 'error',
-                'msg' => __('brand.system_error')
+                'message' => __('brand.system_error')
             ], 500);
         }
     }
 
     public function edit(Brand $brand)
     {
+        if (!auth()->user()?->can('brands.edit')) {
+            abort(403, 'Bạn không có quyền mở form sửa thương hiệu.');
+        }
+
         return view('brands.edit', compact('brand'));
     }
 
     public function update(Request $request, Brand $brand)
     {
+        if (!$request->user()?->can('brands.update')) {
+            abort(403, 'Bạn không có quyền cập nhật thương hiệu.');
+        }
+
         $request->validate([
             'name' => 'required|string|min:2|max:255|unique:brands,name,' . $brand->id,
             'website' => 'nullable|url|max:255',
@@ -158,7 +174,7 @@ class BrandController extends Controller
 
             return response()->json([
                 'success' => true,
-                'msg' => __('brand.update_success'),
+                'message' => __('brand.update_success'),
             ], 200);
         } catch (Exception $e) {
             if ($request->hasFile('logo') && $newLogoPath && $newLogoPath !== $oldLogoPath) {
@@ -171,20 +187,24 @@ class BrandController extends Controller
 
             return response()->json([
                 'success' => false,
-                'msg' => __('brand.messages.system_error'),
+                'message' => __('brand.messages.system_error'),
             ], 500);
         }
     }
 
     public function destroy(Brand $brand)
     {
+        if (!auth()->user()?->can('brands.remove')) {
+            abort(403, 'Bạn không có quyền xóa thương hiệu.');
+        }
+
         try {
             $brand->delete();
 
             return response()->json([
                 'success' => true,
                 'status' => 200,
-                'msg' => __('brand.delete_success'),
+                'message' => __('brand.delete_success'),
             ]);
         } catch (Exception $e) {
             Log::error('Delete brand failed: ' . $e->getMessage(), [
@@ -193,7 +213,7 @@ class BrandController extends Controller
 
             return response()->json([
                 'success' => false,
-                'msg' => __('brand.messages.system_error'),
+                'message' => __('brand.messages.system_error'),
             ], 500);
         }
     }

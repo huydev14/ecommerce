@@ -174,6 +174,10 @@ class OrderController extends Controller
 
     public function update(Request $request, Order $order)
     {
+        if (! $request->user()?->can('orders.update')) {
+            abort(403, 'HR Demo không được cập nhật đơn hàng.');
+        }
+
         $validated = $request->validate([
             'status' => ['required', Rule::in(['pending', 'processing', 'shipping', 'completed', 'cancelled'])],
             'payment_status' => ['required', Rule::in(['pending', 'unpaid', 'paid'])],
@@ -190,7 +194,7 @@ class OrderController extends Controller
 
             return response()->json([
                 'success' => true,
-                'msg' => __('order.update_success'),
+                'message' => __('order.update_success'),
             ], 200);
         } catch (Exception $e) {
             Log::error('Update order failed: ' . $e->getMessage(), [
@@ -200,7 +204,7 @@ class OrderController extends Controller
 
             return response()->json([
                 'success' => false,
-                'msg' => __('order.system_error'),
+                'message' => __('order.system_error'),
             ], 500);
         }
     }

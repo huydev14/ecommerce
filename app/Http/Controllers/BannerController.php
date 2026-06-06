@@ -38,7 +38,7 @@ class BannerController extends Controller
                 })
                 ->editColumn('is_active', function ($banner) {
                     return $banner->is_active
-                        ? '<span class="tw-px-2 tw-py-1 tw-bg-green-100 tw-text-green-700 tw-text-xs tw-font-medium tw-rounded-full">Active</span>'
+                        ? '<span class="tw-px-1 tw-py-0.5 tw-bg-green-100 tw-text-green-700 tw-text-xs tw-font-medium tw-rounded-sm">Active</span>'
                         : '<span class="tw-px-2 tw-py-1 tw-bg-gray-100 tw-text-gray-600 tw-text-xs tw-font-medium tw-rounded-full">Hidden</span>';
                 })
                 ->editColumn('created_at', fn($banner) => $banner->created_at?->format('d/m/Y'))
@@ -51,11 +51,19 @@ class BannerController extends Controller
 
     public function create()
     {
+        if (!auth()->user()?->can('banners.create')) {
+            abort(403, 'Bạn không có quyền tạo banner.');
+        }
+
         return view('banners.create');
     }
 
     public function store(Request $request)
     {
+        if (!$request->user()?->can('banners.create')) {
+            abort(403, 'Bạn không có quyền tạo banner.');
+        }
+
         $validated = $request->validate([
             'title' => 'nullable|string|max:255',
             'image_url' => 'required|image|mimes:jpeg,png,jpg,webp|max:2048',
@@ -84,7 +92,7 @@ class BannerController extends Controller
 
             Cache::forget('homepage_data');
 
-            return response()->json(['success' => true, 'msg' => 'Đã tạo banner thành công!'], 200);
+            return response()->json(['success' => true, 'message' => 'Đã tạo banner thành công!'], 200);
 
         } catch (Exception $e) {
             if ($imagePath) {
@@ -92,17 +100,25 @@ class BannerController extends Controller
             }
 
             Log::error('Create banner failed: ' . $e->getMessage(), ['trace' => $e->getTraceAsString()]);
-            return response()->json(['success' => false, 'msg' => self::SYSTEM_ERROR_MESSAGE], 500);
+            return response()->json(['success' => false, 'message' => self::SYSTEM_ERROR_MESSAGE], 500);
         }
     }
 
     public function edit(Banner $banner)
     {
+        if (!auth()->user()?->can('banners.edit')) {
+            abort(403, 'Bạn không có quyền mở form sửa banner.');
+        }
+
         return view('banners.edit', compact('banner'));
     }
 
     public function update(Request $request, Banner $banner)
     {
+        if (!$request->user()?->can('banners.update')) {
+            abort(403, 'Bạn không có quyền cập nhật banner.');
+        }
+
         $validated = $request->validate([
             'title' => 'nullable|string|max:255',
             'image_url' => 'nullable|image|mimes:jpeg,png,jpg,webp|max:2048',
@@ -139,7 +155,7 @@ class BannerController extends Controller
 
             Cache::forget('homepage_data');
 
-            return response()->json(['success' => true, 'msg' => 'Đã cập nhật banner thành công!'], 200);
+            return response()->json(['success' => true, 'message' => 'Đã cập nhật banner thành công!'], 200);
 
         } catch (Exception $e) {
             if ($request->hasFile('image_url') && $imagePath && $imagePath !== $banner->getOriginal('image_public_id')) {
@@ -147,12 +163,16 @@ class BannerController extends Controller
             }
 
             Log::error('Update banner failed: ' . $e->getMessage(), ['trace' => $e->getTraceAsString()]);
-            return response()->json(['success' => false, 'msg' => self::SYSTEM_ERROR_MESSAGE], 500);
+            return response()->json(['success' => false, 'message' => self::SYSTEM_ERROR_MESSAGE], 500);
         }
     }
 
     public function destroy(Banner $banner)
     {
+        if (!auth()->user()?->can('banners.remove')) {
+            abort(403, 'Bạn không có quyền xóa banner.');
+        }
+
         try {
             if ($banner->image_public_id) {
                 Storage::disk('cloudinary')->delete($banner->image_public_id);
@@ -161,11 +181,11 @@ class BannerController extends Controller
             $banner->delete();
             Cache::forget('homepage_data');
 
-            return response()->json(['success' => true, 'status' => 200, 'msg' => 'Đã xóa banner.']);
+            return response()->json(['success' => true, 'status' => 200, 'message' => 'Đã xóa banner.']);
 
         } catch (Exception $e) {
             Log::error('Delete banner failed: ' . $e->getMessage(), ['trace' => $e->getTraceAsString()]);
-            return response()->json(['success' => false, 'msg' => self::SYSTEM_ERROR_MESSAGE], 500);
+            return response()->json(['success' => false, 'message' => self::SYSTEM_ERROR_MESSAGE], 500);
         }
     }
 }

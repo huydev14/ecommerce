@@ -49,7 +49,7 @@ class WarehouseController extends Controller
     private function renderStatusBadge(bool $isActive): string
     {
         if ($isActive) {
-            return '<span class="tw-px-2 tw-py-1 tw-bg-green-100 tw-text-green-700 tw-text-xs tw-font-medium tw-rounded-full">' . __('warehouse.active') . '</span>';
+            return '<span class="tw-px-1 tw-py-0.5 tw-bg-green-100 tw-text-green-700 tw-text-xs tw-font-medium tw-rounded-sm">' . __('warehouse.active') . '</span>';
         }
 
         return '<span class="tw-px-2 tw-py-1 tw-bg-gray-100 tw-text-gray-600 tw-text-xs tw-font-medium tw-rounded-full">' . __('warehouse.inactive') . '</span>';
@@ -71,11 +71,19 @@ class WarehouseController extends Controller
 
     public function create()
     {
+        if (!auth()->user()?->can('warehouses.create')) {
+            abort(403, 'Bạn không có quyền tạo kho.');
+        }
+
         return view('warehouses.create');
     }
 
     public function store(Request $request)
     {
+        if (!$request->user()?->can('warehouses.create')) {
+            abort(403, 'Bạn không có quyền tạo kho.');
+        }
+
         $request->validate([
             'name' => 'required|string|min:2|max:255|unique:warehouses,name',
             'code' => 'required|string|min:2|max:50|unique:warehouses,code',
@@ -100,7 +108,7 @@ class WarehouseController extends Controller
 
                 return response()->json([
                     'success' => true,
-                    'msg' => __('warehouse.create_success'),
+                    'message' => __('warehouse.create_success'),
                 ], 200);
             }
 
@@ -112,18 +120,26 @@ class WarehouseController extends Controller
 
             return response()->json([
                 'status' => 'error',
-                'msg' => __('warehouse.system_error'),
+                'message' => __('warehouse.system_error'),
             ], 500);
         }
     }
 
     public function edit(Warehouse $warehouse)
     {
+        if (!auth()->user()?->can('warehouses.edit')) {
+            abort(403, 'Bạn không có quyền mở form sửa kho.');
+        }
+
         return view('warehouses.edit', compact('warehouse'));
     }
 
     public function update(Request $request, Warehouse $warehouse)
     {
+        if (!$request->user()?->can('warehouses.update')) {
+            abort(403, 'Bạn không có quyền cập nhật kho.');
+        }
+
         $request->validate([
             'name' => 'required|string|min:2|max:255|unique:warehouses,name,' . $warehouse->id,
             'code' => 'required|string|min:2|max:50|unique:warehouses,code,' . $warehouse->id,
@@ -145,7 +161,7 @@ class WarehouseController extends Controller
 
             return response()->json([
                 'success' => true,
-                'msg' => __('warehouse.update_success'),
+                'message' => __('warehouse.update_success'),
             ], 200);
         } catch (Exception $e) {
             Log::error('Update warehouse failed: ' . $e->getMessage(), [
@@ -154,20 +170,24 @@ class WarehouseController extends Controller
 
             return response()->json([
                 'success' => false,
-                'msg' => __('warehouse.system_error'),
+                'message' => __('warehouse.system_error'),
             ], 500);
         }
     }
 
     public function destroy(Warehouse $warehouse)
     {
+        if (!auth()->user()?->can('warehouses.remove')) {
+            abort(403, 'Bạn không có quyền xóa kho.');
+        }
+
         try {
             $warehouse->delete();
 
             return response()->json([
                 'success' => true,
                 'status' => 200,
-                'msg' => __('warehouse.delete_success'),
+                'message' => __('warehouse.delete_success'),
             ]);
         } catch (Exception $e) {
             Log::error('Delete warehouse failed: ' . $e->getMessage(), [
@@ -176,20 +196,24 @@ class WarehouseController extends Controller
 
             return response()->json([
                 'success' => false,
-                'msg' => __('warehouse.system_error'),
+                'message' => __('warehouse.system_error'),
             ], 500);
         }
     }
 
     public function restore($id)
     {
+        if (!auth()->user()?->can('warehouses.remove')) {
+            abort(403, 'Bạn không có quyền khôi phục kho.');
+        }
+
         try {
             $warehouse = Warehouse::withTrashed()->findOrFail($id);
             $warehouse->restore();
 
             return response()->json([
                 'success' => true,
-                'msg' => __('warehouse.restore_success'),
+                'message' => __('warehouse.restore_success'),
             ]);
         } catch (Exception $e) {
             Log::error('Restore warehouse failed: ' . $e->getMessage(), [
@@ -198,7 +222,7 @@ class WarehouseController extends Controller
 
             return response()->json([
                 'success' => false,
-                'msg' => __('warehouse.restore_error'),
+                'message' => __('warehouse.restore_error'),
             ], 500);
         }
     }

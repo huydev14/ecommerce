@@ -35,7 +35,7 @@ class CategoryController extends Controller
                 })
                 ->editColumn('is_active', function ($category) {
                     if ($category->is_active) {
-                        return '<span class="tw-px-2 tw-py-1 tw-bg-green-100 tw-text-green-700 tw-text-xs tw-font-medium tw-rounded-full">' . __('category.active') . '</span>';
+                        return '<span class="tw-px-1 tw-py-0.5 tw-bg-green-100 tw-text-green-700 tw-text-xs tw-font-medium tw-rounded-sm">' . __('category.active') . '</span>';
                     }
                     return '<span class="tw-px-2 tw-py-1 tw-bg-gray-100 tw-text-gray-600 tw-text-xs tw-font-medium tw-rounded-full">' . __('category.hidden') . '</span>';
                 })
@@ -70,6 +70,10 @@ class CategoryController extends Controller
 
     public function create()
     {
+        if (!auth()->user()?->can('categories.create')) {
+            abort(403, 'Bạn không có quyền tạo danh mục.');
+        }
+
         $parents = Category::orderBy('name')->get();
 
         return view('categories.create', compact('parents'));
@@ -77,6 +81,10 @@ class CategoryController extends Controller
 
     public function store(Request $request)
     {
+        if (!$request->user()?->can('categories.create')) {
+            abort(403, 'Bạn không có quyền tạo danh mục.');
+        }
+
         $request->validate([
             'name' => 'required|string|min:2|max:255|unique:categories,name',
             'description' => 'required|string|max:1000',
@@ -103,7 +111,7 @@ class CategoryController extends Controller
 
                 return response()->json([
                     'success' => true,
-                    'msg' => __('category.create_success'),
+                    'message' => __('category.create_success'),
                 ], 200);
             }
 
@@ -115,13 +123,17 @@ class CategoryController extends Controller
 
             return response()->json([
                 'status' => 'error',
-                'msg' => __('category.messages.system_error'),
+                'message' => __('category.messages.system_error'),
             ], 500);
         }
     }
 
     public function edit(Category $category)
     {
+        if (!auth()->user()?->can('categories.edit')) {
+            abort(403, 'Bạn không có quyền mở form sửa danh mục.');
+        }
+
         $parents = Category::where('id', '!=', $category->id)->orderBy('name')->get();
 
         return view('categories.edit', compact('category', 'parents'));
@@ -129,6 +141,10 @@ class CategoryController extends Controller
 
     public function update(Request $request, Category $category)
     {
+        if (!$request->user()?->can('categories.update')) {
+            abort(403, 'Bạn không có quyền cập nhật danh mục.');
+        }
+
         $request->validate([
             'name' => 'required|string|min:2|max:255|unique:categories,name,' . $category->id,
             'description' => 'required|string|max:1000',
@@ -153,7 +169,7 @@ class CategoryController extends Controller
 
             return response()->json([
                 'success' => true,
-                'msg' => __('category.update_success'),
+                'message' => __('category.update_success'),
             ], 200);
         } catch (Exception $e) {
             Log::error('Update category failed: ' . $e->getMessage(), [
@@ -162,20 +178,24 @@ class CategoryController extends Controller
 
             return response()->json([
                 'success' => false,
-                'msg' => __('category.system_error'),
+                'message' => __('category.system_error'),
             ], 500);
         }
     }
 
     public function destroy(Category $category)
     {
+        if (!auth()->user()?->can('categories.remove')) {
+            abort(403, 'Bạn không có quyền xóa danh mục.');
+        }
+
         try {
             $category->delete();
 
             return response()->json([
                 'success' => true,
                 'status' => 200,
-                'msg' => __('category.delete_success'),
+                'message' => __('category.delete_success'),
             ]);
         } catch (Exception $e) {
             Log::error('Delete category failed: ' . $e->getMessage(), [
@@ -184,7 +204,7 @@ class CategoryController extends Controller
 
             return response()->json([
                 'success' => false,
-                'msg' => __('category.system_error'),
+                'message' => __('category.system_error'),
             ], 500);
         }
     }

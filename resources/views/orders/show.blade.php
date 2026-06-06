@@ -13,7 +13,7 @@
             </p>
         </div>
 
-        @can('orders.edit')
+        @can('orders.update')
             <button type="submit" id="submit-update-order"
                 class="tw-bg-[#0078D4] tw-border tw-border-transparent tw-px-4 tw-py-1.5 tw-text-sm tw-font-medium tw-text-white hover:tw-bg-[#106ebe] tw-transition-colors tw-rounded-sm shadow-sm">
                 {{ __('order.save_update') }}
@@ -67,7 +67,7 @@
                 <label for="status" class="tw-block tw-text-sm tw-font-medium tw-text-gray-700 tw-mb-1.5">
                     {{ __('order.status') }} <span class="tw-text-red-500">*</span>
                 </label>
-                <select name="status" id="status" required @cannot('orders.edit') disabled @endcannot
+                <select name="status" id="status" required @cannot('orders.update') disabled @endcannot
                     class="tw-w-full tw-rounded-md tw-border-gray-300 tw-shadow-sm focus:tw-border-[#0078D4] focus:tw-ring-[#0078D4] tw-text-sm tw-px-3 tw-py-2 tw-transition-colors tw-outline-none">
                     @foreach ($statusOptions as $option)
                         <option value="{{ $option['id'] }}" @selected($order->status === $option['id'])>{{ $option['text'] }}</option>
@@ -79,7 +79,7 @@
                 <label for="payment_status" class="tw-block tw-text-sm tw-font-medium tw-text-gray-700 tw-mb-1.5">
                     {{ __('order.payment_status') }} <span class="tw-text-red-500">*</span>
                 </label>
-                <select name="payment_status" id="payment_status" required @cannot('orders.edit') disabled @endcannot
+                <select name="payment_status" id="payment_status" required @cannot('orders.update') disabled @endcannot
                     class="tw-w-full tw-rounded-md tw-border-gray-300 tw-shadow-sm focus:tw-border-[#0078D4] focus:tw-ring-[#0078D4] tw-text-sm tw-px-3 tw-py-2 tw-transition-colors tw-outline-none">
                     @foreach ($paymentStatusOptions as $option)
                         <option value="{{ $option['id'] }}" @selected($order->payment_status === $option['id'])>{{ $option['text'] }}</option>
@@ -97,7 +97,7 @@
 
         <div>
             <label for="notes" class="tw-block tw-text-sm tw-font-medium tw-text-gray-700 tw-mb-1.5">{{ __('order.notes') }}</label>
-            <textarea name="notes" id="notes" rows="3" @cannot('orders.edit') readonly @endcannot
+            <textarea name="notes" id="notes" rows="3" @cannot('orders.update') readonly @endcannot
                 class="tw-w-full tw-rounded-md tw-border-gray-300 tw-shadow-sm focus:tw-border-[#0078D4] focus:tw-ring-[#0078D4] tw-text-sm tw-px-3 tw-py-2 tw-transition-colors tw-outline-none">{{ $order->notes }}</textarea>
         </div>
 

@@ -83,6 +83,10 @@ class StockController extends Controller
 
     public function create()
     {
+        if (! auth()->user()?->can('stocks.create')) {
+            abort(403, 'Bạn không có quyền tạo tồn kho.');
+        }
+
         $warehouses = Warehouse::where('is_active', true)->orderBy('name')->get();
         $variants = ProductVariant::with('product')->orderBy('sku')->get();
 
@@ -91,6 +95,10 @@ class StockController extends Controller
 
     public function store(Request $request)
     {
+        if (! $request->user()?->can('stocks.create')) {
+            abort(403, 'Bạn không có quyền tạo tồn kho.');
+        }
+
         $request->validate([
             'product_variant_id' => [
                 'required',
@@ -123,7 +131,7 @@ class StockController extends Controller
 
                 return response()->json([
                     'success' => true,
-                    'msg' => __('stock.create_success'),
+                    'message' => __('stock.create_success'),
                 ], 200);
             }
 
@@ -135,13 +143,17 @@ class StockController extends Controller
 
             return response()->json([
                 'status' => 'error',
-                'msg' => __('stock.system_error'),
+                'message' => __('stock.system_error'),
             ], 500);
         }
     }
 
     public function edit(Stock $stock)
     {
+        if (! auth()->user()?->can('stocks.edit')) {
+            abort(403, 'Bạn không có quyền mở form sửa tồn kho.');
+        }
+
         $warehouses = Warehouse::where('is_active', true)->orWhere('id', $stock->warehouse_id)->orderBy('name')->get();
         $variants = ProductVariant::with('product')->orderBy('sku')->get();
 
@@ -150,6 +162,10 @@ class StockController extends Controller
 
     public function update(Request $request, Stock $stock)
     {
+        if (! $request->user()?->can('stocks.update')) {
+            abort(403, 'Bạn không có quyền cập nhật tồn kho.');
+        }
+
         $request->validate([
             'product_variant_id' => [
                 'required',
@@ -194,7 +210,7 @@ class StockController extends Controller
 
             return response()->json([
                 'success' => true,
-                'msg' => __('stock.update_success'),
+                'message' => __('stock.update_success'),
             ], 200);
         } catch (Exception $e) {
             Log::error('Update stock failed: ' . $e->getMessage(), [
@@ -203,20 +219,24 @@ class StockController extends Controller
 
             return response()->json([
                 'success' => false,
-                'msg' => __('stock.system_error'),
+                'message' => __('stock.system_error'),
             ], 500);
         }
     }
 
     public function destroy(Stock $stock)
     {
+        if (! auth()->user()?->can('stocks.remove')) {
+            abort(403, 'Bạn không có quyền xóa tồn kho.');
+        }
+
         try {
             $stock->delete();
 
             return response()->json([
                 'success' => true,
                 'status' => 200,
-                'msg' => __('stock.delete_success'),
+                'message' => __('stock.delete_success'),
             ]);
         } catch (Exception $e) {
             Log::error('Delete stock failed: ' . $e->getMessage(), [
@@ -225,20 +245,24 @@ class StockController extends Controller
 
             return response()->json([
                 'success' => false,
-                'msg' => __('stock.system_error'),
+                'message' => __('stock.system_error'),
             ], 500);
         }
     }
 
     public function restore($id)
     {
+        if (! auth()->user()?->can('stocks.remove')) {
+            abort(403, 'Bạn không có quyền khôi phục tồn kho.');
+        }
+
         try {
             $stock = Stock::withTrashed()->findOrFail($id);
             $stock->restore();
 
             return response()->json([
                 'success' => true,
-                'msg' => __('stock.restore_success'),
+                'message' => __('stock.restore_success'),
             ]);
         } catch (Exception $e) {
             Log::error('Restore stock failed: ' . $e->getMessage(), [
@@ -247,7 +271,7 @@ class StockController extends Controller
 
             return response()->json([
                 'success' => false,
-                'msg' => __('stock.restore_error'),
+                'message' => __('stock.restore_error'),
             ], 500);
         }
     }

@@ -53,11 +53,19 @@ class UnitController extends Controller
 
     public function create()
     {
+        if (! auth()->user()?->can('units.create')) {
+            abort(403, 'Bạn không có quyền tạo đơn vị.');
+        }
+
         return view('units.create');
     }
 
     public function store(Request $request)
     {
+        if (! $request->user()?->can('units.create')) {
+            abort(403, 'Bạn không có quyền tạo đơn vị.');
+        }
+
         $request->validate([
             'name' => 'required|string|min:2|max:255|unique:units,name',
             'short_name' => 'nullable|string|max:50',
@@ -78,7 +86,7 @@ class UnitController extends Controller
 
                 return response()->json([
                     'success' => true,
-                    'msg' => __('unit.create_success'),
+                    'message' => __('unit.create_success'),
                 ], 200);
             }
 
@@ -90,18 +98,26 @@ class UnitController extends Controller
 
             return response()->json([
                 'status' => 'error',
-                'msg' => __('unit.system_error'),
+                'message' => __('unit.system_error'),
             ], 500);
         }
     }
 
     public function edit(Unit $unit)
     {
+        if (! auth()->user()?->can('units.edit')) {
+            abort(403, 'Bạn không có quyền mở form sửa đơn vị.');
+        }
+
         return view('units.edit', compact('unit'));
     }
 
     public function update(Request $request, Unit $unit)
     {
+        if (! $request->user()?->can('units.update')) {
+            abort(403, 'Bạn không có quyền cập nhật đơn vị.');
+        }
+
         $request->validate([
             'name' => 'required|string|min:2|max:255|unique:units,name,' . $unit->id,
             'short_name' => 'nullable|string|max:50',
@@ -119,7 +135,7 @@ class UnitController extends Controller
 
             return response()->json([
                 'success' => true,
-                'msg' => __('unit.update_success'),
+                'message' => __('unit.update_success'),
             ], 200);
         } catch (Exception $e) {
             Log::error('Update unit failed: ' . $e->getMessage(), [
@@ -128,20 +144,24 @@ class UnitController extends Controller
 
             return response()->json([
                 'success' => false,
-                'msg' => __('unit.system_error'),
+                'message' => __('unit.system_error'),
             ], 500);
         }
     }
 
     public function destroy(Unit $unit)
     {
+        if (! auth()->user()?->can('units.remove')) {
+            abort(403, 'Bạn không có quyền xóa đơn vị.');
+        }
+
         try {
             $unit->delete();
 
             return response()->json([
                 'success' => true,
                 'status' => 200,
-                'msg' => __('unit.delete_success'),
+                'message' => __('unit.delete_success'),
             ]);
         } catch (Exception $e) {
             Log::error('Delete unit failed: ' . $e->getMessage(), [
@@ -150,20 +170,24 @@ class UnitController extends Controller
 
             return response()->json([
                 'success' => false,
-                'msg' => __('unit.system_error'),
+                'message' => __('unit.system_error'),
             ], 500);
         }
     }
 
     public function restore($id)
     {
+        if (! auth()->user()?->can('units.remove')) {
+            abort(403, 'Bạn không có quyền khôi phục đơn vị.');
+        }
+
         try {
             $unit = Unit::withTrashed()->findOrFail($id);
             $unit->restore();
 
             return response()->json([
                 'success' => true,
-                'msg' => __('unit.restore_success'),
+                'message' => __('unit.restore_success'),
             ]);
         } catch (Exception $e) {
             Log::error('Restore unit failed: ' . $e->getMessage(), [
@@ -172,7 +196,7 @@ class UnitController extends Controller
 
             return response()->json([
                 'success' => false,
-                'msg' => __('unit.restore_error'),
+                'message' => __('unit.restore_error'),
             ], 500);
         }
     }
