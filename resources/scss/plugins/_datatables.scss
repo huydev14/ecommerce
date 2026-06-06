@@ -11,14 +11,14 @@
 
     thead th {
         cursor: pointer;
-        background-color: #faf9f8 !important;
+        background-color: #f3f2f1 !important;
         color: $text-main !important;
         font-weight: 600;
         font-size: 13px;
         padding: 12px 16px;
         padding-right: 30px !important;
         position: relative;
-        border-bottom: 2px solid #edebe9 !important;
+        border-bottom: 1px solid #edebe9 !important;
         border-top: none !important;
         border-left: none !important;
         border-right: none !important;
@@ -29,42 +29,7 @@
             background-color: #f3f2f1 !important;
         }
 
-        &.dt-orderable-asc,
-        &.dt-orderable-desc {
-            &::before,
-            &::after {
-                position: absolute;
-                display: block;
-                opacity: 0.125;
-                right: 10px;
-                line-height: 9px;
-                font-size: 0.8em;
-                transition: opacity 0.2s ease;
-            }
-
-            &::before {
-                bottom: 50%;
-                content: "▲";
-                content: "▲" /"";
-            }
-
-            &::after {
-                top: 50%;
-                content: "▼";
-                content: "▼" /"";
-            }
-            
-            &:hover::before,
-            &:hover::after {
-                opacity: 0.3;
-            }
-        }
-
-        &.dt-ordering-asc::before,
-        &.dt-ordering-desc::after {
-            opacity: 0.6;
-            color: $blue !important;
-        }
+       
     }
 
     tbody td {
@@ -84,30 +49,6 @@
 
         td:first-child {
             box-shadow: inset 3px 0 0 0 #0f6cbd;
-        }
-    }
-}
-
-.dt-scroll-body {
-    thead tr {
-        height: 0 !important;
-    }
-
-    thead th,
-    thead td {
-        padding-top: 0 !important;
-        padding-bottom: 0 !important;
-        border-top: none !important;
-        border-bottom: none !important;
-        height: 0 !important;
-        line-height: 0 !important;
-        overflow: hidden !important;
-        color: transparent !important;
-        white-space: nowrap;
-
-        &::before,
-        &::after {
-            display: none !important; 
         }
     }
 }
@@ -153,33 +94,3 @@
     }
 }
 
-.dataTables_scrollBody,
-.table-scroll-container {
-    &::-webkit-scrollbar {
-        width: 6px;
-        height: 6px;
-    }
-    &::-webkit-scrollbar-thumb {
-        background: #e2e8f0;
-        border-radius: 10px;
-
-        &:hover {
-            background: #cbd5e1; 
-        }
-    }
-}
-
-.table-scroll-container {
-    flex: 1;
-    min-height: 0;
-    overflow-y: auto; 
-    overflow-x: hidden;
-    
-    thead th {
-        position: sticky;
-        top: 0;
-        z-index: 10;
-        background-color: #fff;
-        border-bottom: 2px solid #dee2e6;
-    }
-}

@@ -64,7 +64,7 @@ class ProductController extends Controller
                 ->editColumn('is_featured', function ($product) {
                     return $product->is_featured
                         ? '<span class="tw-px-2 tw-py-1 tw-bg-blue-100 tw-text-blue-700 tw-text-xs tw-font-medium tw-rounded-full">' . __('product.featured') . '</span>'
-                        : '<span class="tw-px-2 tw-py-1 tw-bg-gray-100 tw-text-gray-600 tw-text-xs tw-font-medium tw-rounded-full">' . __('product.not_featured') . '</span>';
+                        : '---';
                 })
                 ->editColumn('created_at', function ($product) {
                     return $product->created_at ? $product->created_at->format('d/m/Y') : '';

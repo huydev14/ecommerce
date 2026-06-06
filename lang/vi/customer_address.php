@@ -1,7 +1,7 @@
 <?php
 
 return [
-    'management_title' => 'Quản lý địa chỉ khách hàng',
+    'management_title' => 'Quản lý địa chỉ',
     'customer' => 'Khách hàng',
     'receiver_name' => 'Tên người nhận',
     'receiver_phone' => 'Số điện thoại',

@@ -38,25 +38,22 @@
         </div>
 
         <div class="card-body tw-pt-0">
-            <div class="table-responsive">
-                <table id="productTable" class="display table table-hover text-nowrap" style="width: 100%;">
-                    <thead>
-                        <tr>
-                            <th>{{ __('product.name') }}</th>
-                            <th>{{ __('product.slug') }}</th>
-                            <th>{{ __('product.category') }}</th>
-                            <th>{{ __('product.brand') }}</th>
-                            <th>{{ __('product.status') }}</th>
-                            <th>{{ __('product.featured_status') }}</th>
-                            <th>{{ __('product.created_at') }}</th>
-                            <th>{{ __('product.updated_at') }}</th>
-                            <th>
-                                <div class="tw-text-center">{{ __('product.action') }}</div>
-                            </th>
-                        </tr>
-                    </thead>
-                </table>
-            </div>
+            <table id="productTable" class="display table table-hover text-nowrap" style="width: 100%; min-width: 0;">
+                <thead>
+                    <tr>
+                        <th>{{ __('product.name') }}</th>
+                        <th>{{ __('product.slug') }}</th>
+                        <th>{{ __('product.category') }}</th>
+                        <th>{{ __('product.brand') }}</th>
+                        <th>{{ __('product.status') }}</th>
+                        <th>{{ __('product.featured_status') }}</th>
+                        <th>{{ __('product.updated_at') }}</th>
+                        <th>
+                            <div class="tw-text-center">{{ __('product.action') }}</div>
+                        </th>
+                    </tr>
+                </thead>
+            </table>
         </div>
     </div>
 
@@ -64,19 +61,12 @@
         <div id="product-modal-content"></div>
     </x-modal>
 
+
     @push('scripts')
         @vite('resources/js/pages/product.js')
         <script type="module">
             $(function() {
-                @if (session('success'))
-                    fluentToast({
-                        type: 'success',
-                        title: Lang.get('product.success_title'),
-                        description: "{{ session('success') }}",
-                        subtitle: Lang.get('product.code_prefix') + ' 200',
-                        actionType: 'close',
-                    });
-                @endif
+                @include('partials.fluent-session-toasts')
 
                 $('#category_id, #brand_id').select2({
                     theme: 'bootstrap4',

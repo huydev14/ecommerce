@@ -118,7 +118,6 @@ $(function () {
     globalThis.productTable = new DataTable('#productTable', {
         processing: true,
         serverSide: true,
-        scrollX: true,
         ajax: {
             url: route('products.data'),
             data: function (d) {
@@ -129,14 +128,17 @@ $(function () {
                 d.is_featured = $('#f_isFeatured').val() || '';
             },
         },
+
         columns: [
             {
                 data: 'name',
                 name: 'name',
+                className: 'tw-max-w-[300px] tw-truncate tw-whitespace-nowrap',
             },
             {
                 data: 'slug',
                 name: 'slug',
+                className: 'tw-max-w-[300px] tw-truncate tw-whitespace-nowrap',
             },
             {
                 data: 'category_name',
@@ -149,6 +151,7 @@ $(function () {
                 name: 'brand.name',
                 orderable: false,
                 searchable: false,
+                className: 'tw-max-w-[130px] tw-truncate tw-whitespace-nowrap',
             },
             {
                 data: 'status',
@@ -157,10 +160,7 @@ $(function () {
             {
                 data: 'is_featured',
                 name: 'is_featured',
-            },
-            {
-                data: 'created_at',
-                name: 'created_at',
+                className: 'tw-max-w-[80px] tw-truncate tw-whitespace-nowrap',
             },
             {
                 data: 'updated_at',

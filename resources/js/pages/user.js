@@ -90,8 +90,6 @@ $(function () {
         serverSide: true,
         autoWidth: false,
         order: [[0, 'desc']],
-        lengthChange: false,
-        paging: false,
         ajax: {
             url: route('users.data'),
             data: function (d) {
