@@ -101,6 +101,27 @@ class UserSeeder extends Seeder
             ]
         );
 
+        User::firstOrCreate(
+            ['email' => 'hr.demo@gmail.com'],
+            [
+                'name' => 'HR Demo',
+                'email' => 'hr.demo@gmail.com',
+                'password' => Hash::make('hrdemo'),
+                'email_verified_at' => now(),
+                'department_id' => 1,
+                'position_id' => 1,
+                'team_id' => 1,
+                'employment_type' => 0,
+                'status' => 0,
+                'start_date' => now(),
+                'end_date' => null,
+                'gender' => 0,
+                'birthday' => '1998-01-01',
+                'phone' => '0909000000',
+                'address' => 'Hồ Chí Minh, Việt Nam',
+            ]
+        );
+
         User::factory()->count(50)->create();
     }
 }

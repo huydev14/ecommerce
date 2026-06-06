@@ -6,29 +6,24 @@
             </router-link>
         </div>
 
-        <div class="login-box">
-            <h1 class="login-title">{{ title }}</h1>
+        <div class="login-content">
+            <div class="login-box">
+                <h1 class="login-title">{{ title }}</h1>
 
-            <div v-if="errorMessage" class="a-alert-content">
-                <i class="alert-icon">!</i>
-                <span class="alert-text">
-                    {{ errorMessage }}
-                    <span v-if="isCountingDown" class="countdown-timer">{{ formattedTime }}</span>
-                </span>
+                <div v-if="errorMessage" class="a-alert-content">
+                    <i class="alert-icon">!</i>
+                    <span class="alert-text">
+                        {{ errorMessage }}
+                        <span v-if="isCountingDown" class="countdown-timer">{{ formattedTime }}</span>
+                    </span>
+                </div>
+
+                <slot></slot>
+
+                <slot name="footer-action"></slot>
             </div>
 
-            <slot></slot>
-
-            <div class="a-divider-inner">
-                <p class="terms-text">
-                    {{ t('authLayout.terms_prefix', { action: displayActionText }) }}
-                    <a href="#" class="a-link-normal">{{ t('authLayout.terms_conditions') }}</a>
-                    {{ t('authLayout.terms_middle') }}
-                    <a href="#" class="a-link-normal">{{ t('authLayout.terms_privacy') }}</a>.
-                </p>
-            </div>
-
-            <slot name="footer-action"></slot>
+            <slot name="side-card"></slot>
         </div>
         <AuthFooter />
     </div>

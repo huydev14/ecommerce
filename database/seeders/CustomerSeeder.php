@@ -24,5 +24,20 @@ class CustomerSeeder extends Seeder
                 'is_active' => true,
             ]
         );
+
+        Customer::firstOrCreate(
+            ['email' => 'hr.demo@gmail.com'],
+            [
+                'fullname' => 'HR Demo',
+                'email' => 'hr.demo@gmail.com',
+                'password' => Hash::make('hrdemo'),
+                'email_verified_at' => now(),
+                'phone' => '0909000000',
+                'avatar' => null,
+                'points' => 0,
+                'membership_tier' => 'standard',
+                'is_active' => true,
+            ]
+        );
     }
 }

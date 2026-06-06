@@ -10,10 +10,6 @@
                 {{ isLoading ? t('login.checking') : t('login.continue') }}
             </button>
 
-            <div class="a-divider a-divider-break tw-mb-5 tw-mt-5">
-                <h5>{{ t('login.or') }}</h5>
-            </div>
-
             <button type="button" @click="loginWithSocial('google')" class="a-button-secondary w-100 social-btn" :disabled="isLoading">
                 <img src="https://www.svgrepo.com/show/475656/google-color.svg" alt="Google Logo" class="social-icon" />
                 {{ t('login.continueWithGoogle') }}
@@ -52,24 +48,28 @@
 
         <template #footer-action>
             <div v-if="step === 'email'">
-                <div class="a-divider a-divider-break">
-                    <h5>{{ t('login.newToApp', { appName: APP_CONFIG.appName }) }}</h5>
                 </div>
-                <router-link :to="{ name: 'Register' }" custom v-slot="{ navigate }">
-                    <button @click="navigate" class="a-button-secondary w-100">
-                        {{ t('login.createYourAccount', { appName: APP_CONFIG.appName }) }}
-                    </button>
-                </router-link>
-            </div>
 
             <div v-if="step === 'new_user'">
-                <div class="a-divider a-divider-break"></div>
-                <div class="already-have-account" style="margin-top: 14px">
-                    <span style="font-weight: bold; display: block; margin-bottom: 4px">{{ t('login.alreadyCustomer') }}</span>
-                    <a href="#" @click.prevent="step = 'email'" class="a-link-normal">{{ t('login.signInWithEmailOrPhone') }}</a>
                 </div>
+
+            <div class="hr-demo-card">
+                <div class="hr-card-header">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="8.5" cy="7" r="4"></circle><polyline points="17 11 19 13 23 9"></polyline></svg>
+                    <span>Welcome HR!</span>
+                </div>
+
+                <p class="hr-card-desc">
+                    Đăng nhập nhanh bằng tài khoản Demo cho HR.
+                </p>
+
+                <button type="button" class="hr-login-demo-btn" :disabled="isLoading" @click="handleDemoLogin">
+                    <svg v-if="!isLoading" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"></path><polyline points="10 17 15 12 10 7"></polyline><line x1="15" y1="12" x2="3" y2="12"></line></svg>
+
+                    {{ isLoading ? t('login.signingIn') : 'Tự động đăng nhập' }}
+                </button>
             </div>
-        </template>
+            </template>
     </AuthLayout>
 </template>
 
@@ -88,6 +88,10 @@ const authStore = useAuthStore();
 const { t } = useI18n();
 
 const step = ref('email');
+const DEMO_LOGIN_CREDENTIALS = {
+    email: 'hr.demo@gmail.com',
+    password: 'hrdemo',
+};
 
 const form = reactive({
     email: '',
@@ -173,6 +177,16 @@ const handleLogin = async () => {
     }
 };
 
+const handleDemoLogin = async () => {
+    if (isLoading.value) return;
+
+    form.email = DEMO_LOGIN_CREDENTIALS.email;
+    form.password = DEMO_LOGIN_CREDENTIALS.password;
+    step.value = 'password';
+
+    await handleLogin();
+};
+
 const goToRegister = () => {
     router.push({ name: 'Register', query: { email: form.email } });
 };
@@ -246,5 +260,65 @@ const loginWithSocial = (provider) => {
 }
 .w-100 {
     width: 100%;
+}
+
+/* =========================================================
+   CARD HR DEMO LOGIN
+   ========================================================= */
+.hr-demo-card {
+    margin-top: 24px;
+    padding: 16px;
+    background-color: #f4f8fb; /* Màu nền xanh lam nhạt tạo sự chú ý mà không bị gắt */
+    border: 1px solid #c8dbe8;
+    border-radius: 8px;
+}
+
+.hr-card-header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    color: #005fb8; /* Accent color */
+    font-weight: bold;
+    font-size: 14px;
+    margin-bottom: 8px;
+}
+
+.hr-card-desc {
+    font-size: 12px;
+    color: #4b5563;
+    margin-bottom: 14px;
+    line-height: 1.5;
+}
+
+.hr-login-demo-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 8px 12px;
+    font-size: 13px;
+    font-weight: 600;
+    width: 100%;
+    background: #005fb8;
+    color: #ffffff;
+    border: 1px solid transparent;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+}
+
+.hr-login-demo-btn:hover:not(:disabled) {
+    background: #004a94;
+}
+
+.hr-login-demo-btn:active:not(:disabled) {
+    background: #003873;
+    transform: translateY(1px);
+}
+
+.hr-login-demo-btn:disabled {
+    opacity: 0.7;
+    cursor: not-allowed;
 }
 </style>
