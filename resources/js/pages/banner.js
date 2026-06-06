@@ -42,7 +42,7 @@ $(function () {
                     if (res.success) {
                         ModalHelper.close('modal');
                         bannerTable.ajax.reload(null, false);
-                        toastSuccess(res.msg, xhr.status);
+                        toastSuccess(res.message, xhr.status);
                     }
                 },
                 error: function (xhr) {
@@ -72,7 +72,7 @@ $(function () {
                         fluentToast({
                             type: 'error',
                             title: 'Lỗi hệ thống',
-                            description: xhr.responseJSON?.msg || 'Đã có lỗi hệ thống xảy ra!',
+                            description: xhr.responseJSON?.message || 'Đã có lỗi hệ thống xảy ra!',
                             subtitle: 'Mã: ' + xhr.status,
                             actionType: 'close',
                         });
@@ -191,7 +191,7 @@ $(function () {
                 fluentToast({
                     type: 'error',
                     title: 'Lỗi hệ thống',
-                    description: xhr.responseJSON?.msg || 'Đã có lỗi hệ thống xảy ra!',
+                    description: xhr.responseJSON?.message || 'Đã có lỗi hệ thống xảy ra!',
                     subtitle: 'Mã: ' + xhr.status,
                     actionType: 'close',
                 });

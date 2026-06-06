@@ -45,7 +45,7 @@ $(function () {
                     if (res.success) {
                         ModalHelper.close('modal');
                         brandTable.ajax.reload(null, false);
-                        toastSuccess(res.msg, xhr.status);
+                        toastSuccess(res.message, xhr.status);
                     }
                 },
                 error: function (xhr) {
@@ -75,7 +75,7 @@ $(function () {
                         fluentToast({
                             type: 'error',
                             title: Lang.get('brand.system_error_title'),
-                            description: xhr.responseJSON?.msg || Lang.get('brand.system_error_description'),
+                            description: xhr.responseJSON?.message || Lang.get('brand.system_error_description'),
                             subtitle: 'Code: ' + ' ' + xhr.status,
                             actionType: 'close',
                         });
@@ -214,7 +214,7 @@ $(function () {
                 fluentToast({
                     type: 'error',
                     title: Lang.get('brand.generic_error_title'),
-                    description: xhr.responseJSON?.msg || Lang.get('brand.generic_error_description'),
+                    description: xhr.responseJSON?.message || Lang.get('brand.generic_error_description'),
                     subtitle: 'Code: ' + xhr.status,
                     actionType: 'close',
                 });

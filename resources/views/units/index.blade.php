@@ -44,15 +44,7 @@
         @vite('resources/js/pages/unit.js')
         <script>
             $(function() {
-                @if (session('success'))
-                    fluentToast({
-                        type: 'success',
-                        title: Lang.get('unit.success_title'),
-                        description: "{{ session('success') }}",
-                        subtitle: Lang.get('unit.code_prefix') + ' 200',
-                        actionType: 'close',
-                    });
-                @endif
+                @include('partials.fluent-session-toasts')
             });
         </script>
     @endpush

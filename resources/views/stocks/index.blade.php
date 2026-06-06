@@ -49,15 +49,7 @@
         @vite('resources/js/pages/stock.js')
         <script>
             $(function() {
-                @if (session('success'))
-                    fluentToast({
-                        type: 'success',
-                        title: Lang.get('stock.success_title'),
-                        description: "{{ session('success') }}",
-                        subtitle: Lang.get('stock.code_prefix') + ' 200',
-                        actionType: 'close',
-                    });
-                @endif
+                @include('partials.fluent-session-toasts')
             });
         </script>
     @endpush

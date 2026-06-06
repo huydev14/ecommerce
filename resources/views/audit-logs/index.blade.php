@@ -59,6 +59,8 @@
     @push('scripts')
         <script type="module">
             $(function() {
+                @include('partials.fluent-session-toasts')
+
                 const causerTypes = {
                     user: @js(App\Models\User::class),
                     customer: @js(App\Models\Customer::class),

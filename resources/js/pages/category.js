@@ -45,7 +45,7 @@ $(function () {
                     if (res.success) {
                         ModalHelper.close('modal');
                         categoryTable.ajax.reload(null, false);
-                        toastSuccess(res.msg, xhr.status);
+                        toastSuccess(res.message, xhr.status);
                     }
                 },
                 error: function (xhr) {
@@ -75,7 +75,7 @@ $(function () {
                         fluentToast({
                             type: 'error',
                             title: Lang.get('category.system_error_title'),
-                            description: xhr.responseJSON?.msg || Lang.get('category.system_error_description'),
+                            description: xhr.responseJSON?.message || Lang.get('category.system_error_description'),
                             subtitle: 'Code: ' + ' ' + xhr.status,
                             actionType: 'close',
                         });
@@ -200,7 +200,7 @@ $(function () {
                 fluentToast({
                     type: 'error',
                     title: Lang.get('category.generic_error_title'),
-                    description: xhr.responseJSON?.msg || Lang.get('category.generic_error_description'),
+                    description: xhr.responseJSON?.message || Lang.get('category.generic_error_description'),
                     subtitle: 'Code: ' + xhr.status,
                     actionType: 'close',
                 });

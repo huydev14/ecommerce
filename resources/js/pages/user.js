@@ -40,7 +40,7 @@ let ajaxUserFormRequest = function (formSelector, dataTableInstance = null, relo
                     fluentToast({
                         type: 'success',
                         title: Lang.get('user.success_title'),
-                        description: res.msg || Lang.get('user.success_description'),
+                        description: res.message || Lang.get('user.success_description'),
                         subtitle: 'Code: ' + xhr.status,
                         actionType: 'close',
                     });
@@ -73,7 +73,7 @@ let ajaxUserFormRequest = function (formSelector, dataTableInstance = null, relo
                     fluentToast({
                         type: 'error',
                         title: Lang.get('user.system_error_title'),
-                        description: xhr.responseJSON?.msg || Lang.get('user.system_error_description'),
+                        description: xhr.responseJSON?.message || Lang.get('user.system_error_description'),
                         subtitle: 'Mã lỗi: ' + xhr.status,
                         actionType: 'close',
                     });

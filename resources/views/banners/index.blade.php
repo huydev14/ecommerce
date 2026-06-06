@@ -40,15 +40,7 @@
         @vite('resources/js/pages/banner.js')
         <script>
             $(function() {
-                @if (session('success'))
-                    fluentToast({
-                        type: 'success',
-                        title: 'Thành công',
-                        description: "{{ session('success') }}",
-                        subtitle: 'Mã: 200',
-                        actionType: 'close',
-                    });
-                @endif
+                @include('partials.fluent-session-toasts')
             })
         </script>
     @endpush

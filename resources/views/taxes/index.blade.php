@@ -44,15 +44,7 @@
         @vite('resources/js/pages/tax.js')
         <script>
             $(function() {
-                @if (session('success'))
-                    fluentToast({
-                        type: 'success',
-                        title: Lang.get('tax.success_title'),
-                        description: "{{ session('success') }}",
-                        subtitle: Lang.get('tax.code_prefix') + ' 200',
-                        actionType: 'close',
-                    });
-                @endif
+                @include('partials.fluent-session-toasts')
             });
         </script>
     @endpush

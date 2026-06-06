@@ -11,3 +11,11 @@
     </div>
     <!-- /.row -->
 @endsection
+
+@push('scripts')
+    <script>
+        $(function() {
+            @include('partials.fluent-session-toasts')
+        });
+    </script>
+@endpush

@@ -45,7 +45,7 @@ $(function () {
                     if (res.success) {
                         ModalHelper.close('modal');
                         unitTable.ajax.reload(null, false);
-                        toastSuccess(res.msg, xhr.status);
+                        toastSuccess(res.message, xhr.status);
                     }
                 },
                 error: function (xhr) {
@@ -75,7 +75,7 @@ $(function () {
                         fluentToast({
                             type: 'error',
                             title: Lang.get('unit.system_error_title'),
-                            description: xhr.responseJSON?.msg || Lang.get('unit.system_error_description'),
+                            description: xhr.responseJSON?.message || Lang.get('unit.system_error_description'),
                             subtitle: 'Code: ' + ' ' + xhr.status,
                             actionType: 'close',
                         });
@@ -98,7 +98,7 @@ $(function () {
                 fluentToast({
                     type: 'success',
                     title: Lang.get('unit.undo_success_title'),
-                    description: res.msg || Lang.get('unit.undo_success_description'),
+                    description: res.message || Lang.get('unit.undo_success_description'),
                     actionType: 'close',
                 });
             },
@@ -106,7 +106,7 @@ $(function () {
                 fluentToast({
                     type: 'error',
                     title: Lang.get('unit.restore_error_title'),
-                    description: xhr.responseJSON?.msg || Lang.get('unit.restore_error_description'),
+                    description: xhr.responseJSON?.message || Lang.get('unit.restore_error_description'),
                     subtitle: 'Code: ' + ' ' + xhr.status,
                 });
                 console.error('Load error:', xhr.status);
@@ -220,7 +220,7 @@ $(function () {
                 fluentToast({
                     type: 'error',
                     title: Lang.get('unit.generic_error_title'),
-                    description: xhr.responseJSON?.msg || Lang.get('unit.generic_error_description'),
+                    description: xhr.responseJSON?.message || Lang.get('unit.generic_error_description'),
                     subtitle: 'Code: ' + xhr.status,
                     actionType: 'close',
                 });

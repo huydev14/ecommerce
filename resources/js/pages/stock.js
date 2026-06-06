@@ -44,7 +44,7 @@ $(function () {
                     if (res.success) {
                         ModalHelper.close('modal');
                         stockTable.ajax.reload(null, false);
-                        toastSuccess(res.msg, xhr.status);
+                        toastSuccess(res.message, xhr.status);
                     }
                 },
                 error: function (xhr) {
@@ -63,7 +63,7 @@ $(function () {
                         fluentToast({
                             type: 'error',
                             title: Lang.get('stock.system_error_title'),
-                            description: xhr.responseJSON?.msg || Lang.get('stock.system_error_description'),
+                            description: xhr.responseJSON?.message || Lang.get('stock.system_error_description'),
                             subtitle: 'Code: ' + xhr.status,
                             actionType: 'close',
                         });
@@ -85,7 +85,7 @@ $(function () {
                 fluentToast({
                     type: 'success',
                     title: Lang.get('stock.undo_success_title'),
-                    description: res.msg || Lang.get('stock.undo_success_description'),
+                    description: res.message || Lang.get('stock.undo_success_description'),
                     actionType: 'close',
                 });
             },
@@ -93,7 +93,7 @@ $(function () {
                 fluentToast({
                     type: 'error',
                     title: Lang.get('stock.restore_error_title'),
-                    description: xhr.responseJSON?.msg || Lang.get('stock.restore_error_description'),
+                    description: xhr.responseJSON?.message || Lang.get('stock.restore_error_description'),
                     subtitle: 'Code: ' + xhr.status,
                 });
             },
@@ -178,7 +178,7 @@ $(function () {
                 fluentToast({
                     type: 'error',
                     title: Lang.get('stock.generic_error_title'),
-                    description: xhr.responseJSON?.msg || Lang.get('stock.generic_error_description'),
+                    description: xhr.responseJSON?.message || Lang.get('stock.generic_error_description'),
                     subtitle: 'Code: ' + xhr.status,
                     actionType: 'close',
                 });

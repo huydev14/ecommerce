@@ -51,15 +51,7 @@
         @vite('resources/js/pages/customer-address.js')
         <script>
             $(function() {
-                @if (session('success'))
-                    fluentToast({
-                        type: 'success',
-                        title: Lang.get('customer_address.success_title'),
-                        description: "{{ session('success') }}",
-                        subtitle: Lang.get('customer_address.code_prefix') + ' 200',
-                        actionType: 'close',
-                    });
-                @endif
+                @include('partials.fluent-session-toasts')
             });
         </script>
     @endpush

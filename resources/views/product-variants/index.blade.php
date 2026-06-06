@@ -49,15 +49,7 @@
         @vite('resources/js/pages/product-variant.js')
         <script>
             $(function() {
-                @if (session('success'))
-                    fluentToast({
-                        type: 'success',
-                        title: Lang.get('product_variant.success_title'),
-                        description: "{{ session('success') }}",
-                        subtitle: Lang.get('product_variant.code_prefix') + ' 200',
-                        actionType: 'close',
-                    });
-                @endif
+                @include('partials.fluent-session-toasts')
             });
         </script>
     @endpush

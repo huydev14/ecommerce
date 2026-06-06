@@ -6,19 +6,6 @@
 @endsection
 
 <div class=" tw-bg-[#f3f3f3] tw-min-h-screen">
-    {{-- Alert Messages --}}
-    @if (session('success'))
-        <div class="tw-flex tw-items-center tw-p-4 tw-mb-6 tw-text-[#107c10] tw-bg-[#dff6dd] tw-rounded-sm tw-shadow-sm">
-            <i class="fas fa-check-circle tw-mr-2"></i> {{ session('success') }}
-        </div>
-    @endif
-
-    @if (session('error'))
-        <div class="tw-flex tw-items-center tw-p-4 tw-mb-6 tw-text-[#d83b01] tw-bg-[#fde7e9] tw-rounded-sm tw-shadow-sm">
-            <i class="fas fa-exclamation-circle tw-mr-2"></i> {{ session('error') }}
-        </div>
-    @endif
-
     <div class="tw-grid tw-grid-cols-1 lg:tw-grid-cols-12 tw-gap-3">
         {{-- Navigation Left --}}
         <div class="lg:tw-col-span-3">
@@ -99,3 +86,11 @@
     }
 </style>
 @endsection
+
+@push('scripts')
+    <script>
+        $(function() {
+            @include('partials.fluent-session-toasts')
+        });
+    </script>
+@endpush

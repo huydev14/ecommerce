@@ -70,4 +70,9 @@
 
 @push('scripts')
     @vite('resources/js/pages/user.js')
+    <script type="module">
+        $(function() {
+            @include('partials.fluent-session-toasts')
+        });
+    </script>
 @endpush

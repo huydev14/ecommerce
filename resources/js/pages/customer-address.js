@@ -181,7 +181,7 @@ $(function () {
                     if (res.success) {
                         ModalHelper.close('modal');
                         customerAddressTable.ajax.reload(null, false);
-                        toastSuccess(res.msg, xhr.status);
+                        toastSuccess(res.message, xhr.status);
                     }
                 },
                 error: function (xhr) {
@@ -211,7 +211,7 @@ $(function () {
                         fluentToast({
                             type: 'error',
                             title: Lang.get('customer_address.system_error_title'),
-                            description: xhr.responseJSON?.msg || Lang.get('customer_address.system_error_description'),
+                            description: xhr.responseJSON?.message || Lang.get('customer_address.system_error_description'),
                             subtitle: 'Code: ' + xhr.status,
                             actionType: 'close',
                         });
@@ -345,7 +345,7 @@ $(function () {
                 fluentToast({
                     type: 'info',
                     title: Lang.get('customer_address.delete_toast_title'),
-                    description: res.msg || Lang.get('customer_address.delete_description'),
+                    description: res.message || Lang.get('customer_address.delete_description'),
                     subtitle: res.status,
                     actionType: 'close',
                 });
@@ -354,7 +354,7 @@ $(function () {
                 fluentToast({
                     type: 'error',
                     title: Lang.get('customer_address.generic_error_title'),
-                    description: xhr.responseJSON?.msg || Lang.get('customer_address.generic_error_description'),
+                    description: xhr.responseJSON?.message || Lang.get('customer_address.generic_error_description'),
                     subtitle: 'Code: ' + xhr.status,
                     actionType: 'close',
                 });

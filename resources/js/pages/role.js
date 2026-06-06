@@ -67,7 +67,7 @@ $(function () {
 
                 if (xhr.status === 422) {
                     $.each(xhr.responseJSON.errors, function (field, messages) {
-                        let input = $form.find(`[name="${inputName}"]`);
+                        let input = $form.find(`[name="${field}"]`);
                         let errorMessage = messages[0];
 
                         if (input.length) {
@@ -90,6 +90,14 @@ $(function () {
                         type: 'error',
                         title: Lang.get('role.process_failed_title'),
                         description: Lang.get('role.process_failed_description'),
+                        subtitle: 'Mã lỗi: ' + xhr.status,
+                        actionType: 'close',
+                    });
+                } else {
+                    fluentToast({
+                        type: 'error',
+                        title: Lang.get('role.process_failed_title'),
+                        description: xhr.responseJSON?.message || Lang.get('role.generic_error_description'),
                         subtitle: 'Mã lỗi: ' + xhr.status,
                         actionType: 'close',
                     });

@@ -45,7 +45,7 @@ $(function () {
                     if (res.success) {
                         ModalHelper.close('modal');
                         productTable.ajax.reload(null, false);
-                        toastSuccess(res.msg, xhr.status);
+                        toastSuccess(res.message, xhr.status);
                     }
                 },
                 error: function (xhr) {
@@ -75,7 +75,7 @@ $(function () {
                         fluentToast({
                             type: 'error',
                             title: Lang.get('product.system_error_title'),
-                            description: xhr.responseJSON?.msg || Lang.get('product.system_error_description'),
+                            description: xhr.responseJSON?.message || Lang.get('product.system_error_description'),
                             subtitle: 'Code: ' + ' ' + xhr.status,
                             actionType: 'close',
                         });
@@ -98,7 +98,7 @@ $(function () {
                 fluentToast({
                     type: 'success',
                     title: Lang.get('product.undo_success_title'),
-                    description: res.msg || Lang.get('product.undo_success_description'),
+                    description: res.message || Lang.get('product.undo_success_description'),
                     actionType: 'close',
                 });
             },
@@ -106,7 +106,7 @@ $(function () {
                 fluentToast({
                     type: 'error',
                     title: Lang.get('product.restore_error_title'),
-                    description: xhr.responseJSON?.msg || Lang.get('product.restore_error_description'),
+                    description: xhr.responseJSON?.message || Lang.get('product.restore_error_description'),
                     subtitle: 'Code: ' + ' ' + xhr.status,
                 });
                 console.error('Load error:', xhr.status);
@@ -118,8 +118,7 @@ $(function () {
     globalThis.productTable = new DataTable('#productTable', {
         processing: true,
         serverSide: true,
-        autoWidth: false,
-        order: [[0, 'asc']],
+        scrollX: true,
         ajax: {
             url: route('products.data'),
             data: function (d) {
@@ -248,7 +247,7 @@ $(function () {
                 fluentToast({
                     type: 'error',
                     title: Lang.get('product.generic_error_title'),
-                    description: xhr.responseJSON?.msg || Lang.get('product.generic_error_description'),
+                    description: xhr.responseJSON?.message || Lang.get('product.generic_error_description'),
                     subtitle: 'Code: ' + xhr.status,
                     actionType: 'close',
                 });
