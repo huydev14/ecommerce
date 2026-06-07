@@ -8,6 +8,8 @@ import { useLocationStore } from '@/stores/location';
 import { APP_CONFIG } from '@/config';
 import LocationModal from '@/components/Modals/LocationModal.vue';
 
+const HR_TOUR_REPLAY_EVENT = 'hr-tour:replay';
+const HR_TOUR_ACTIVE_CHANGE_EVENT = 'hr-tour:active-change';
 const authStore = useAuthStore();
 const cartStore = useCartStore();
 const locationStore = useLocationStore();
@@ -15,6 +17,7 @@ const router = useRouter();
 const { locale, t } = useI18n();
 const searchTerm = ref('');
 const isLocationModalOpen = ref(false);
+const isHrTourActive = ref(false);
 const cartPreviewItems = computed(() => cartStore.items.slice(0, 3));
 const currentLocationName = computed(() => locationStore.currentLocationName);
 const currentLanguageLabel = computed(() => locale.value.toUpperCase());
@@ -59,6 +62,14 @@ const toggleLanguage = () => {
     document.documentElement.lang = nextLocale;
 };
 
+const replayHrTour = () => {
+    window.dispatchEvent(new CustomEvent(HR_TOUR_REPLAY_EVENT));
+};
+
+const handleHrTourActiveChange = (event) => {
+    isHrTourActive.value = Boolean(event.detail?.isActive);
+};
+
 const formatPrice = (price) => {
     const numericPrice = Number(price || 0);
 
@@ -72,6 +83,7 @@ const formatPrice = (price) => {
 onMounted(() => {
     document.documentElement.lang = locale.value;
     cartStore.fetchCart().catch(() => {});
+    window.addEventListener(HR_TOUR_ACTIVE_CHANGE_EVENT, handleHrTourActiveChange);
 });
 
 const lockBodyScroll = () => {
@@ -103,7 +115,10 @@ watch(isLocationModalOpen, (isOpen) => {
     unlockBodyScroll();
 });
 
-onBeforeUnmount(unlockBodyScroll);
+onBeforeUnmount(() => {
+    window.removeEventListener(HR_TOUR_ACTIVE_CHANGE_EVENT, handleHrTourActiveChange);
+    unlockBodyScroll();
+});
 </script>
 
 <template>
@@ -155,9 +170,36 @@ onBeforeUnmount(unlockBodyScroll);
                 </div>
             </div>
 
+            <button
+                v-if="!isHrTourActive"
+                type="button"
+                class="hr-tour-replay-trigger tw-hidden tw-h-[42px] tw-flex-none tw-cursor-pointer tw-items-center tw-gap-2 tw-rounded-sm tw-border tw-border-transparent tw-bg-transparent tw-px-2 tw-py-1 tw-text-white tw-transition-colors hover:tw-border-white hover:tw-text-[#febd69] focus:tw-border-white focus:tw-outline-none lg:tw-inline-flex"
+                title="Xem lại các tính năng nổi bật"
+                aria-label="Xem lại các tính năng nổi bật"
+                @click="replayHrTour"
+            >
+                <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    class="tw-h-5 tw-w-5 tw-flex-none"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                >
+                    <path
+                        d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"
+                    />
+                    <path d="M12 8v4" />
+                    <path d="M12 16h.01" />
+                </svg>
+                <span class="tw-hidden tw-whitespace-nowrap tw-text-[13px] tw-font-bold xl:tw-inline">HR Tour</span>
+            </button>
+
             <form
                 @submit.prevent="submitSearch"
-                class="tw-hidden tw-h-[40px] tw-min-w-0 tw-flex-grow tw-overflow-hidden tw-rounded-md tw-bg-white focus-within:tw-ring-2 focus-within:tw-ring-[#f3a847] md:tw-flex"
+                class="tw-hidden tw-h-[40px] tw-min-w-0 tw-flex-grow tw-overflow-hidden tw-rounded-md tw-bg-white focus-within:tw-ring-2 focus-within:tw-ring-[#f3a847] md:tw-flex lg:tw-max-w-[620px] xl:tw-max-w-[760px]"
             >
                 <input
                     v-model="searchTerm"
@@ -313,7 +355,7 @@ onBeforeUnmount(unlockBodyScroll);
                 </span>
             </button>
 
-            <div class="tw-group tw-relative tw-h-[50px] client-cart">
+            <div class="client-cart tw-group tw-relative tw-h-[50px]">
                 <router-link
                     :to="{ name: 'Cart' }"
                     class="tw-flex tw-h-[50px] tw-cursor-pointer tw-items-center tw-rounded-sm tw-border tw-border-transparent tw-px-2 tw-py-1 hover:tw-border-white"

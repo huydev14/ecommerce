@@ -1,16 +1,45 @@
 <script setup>
-import { onMounted } from 'vue';
+import { onMounted, onUnmounted, ref } from 'vue';
 import { driver } from 'driver.js';
 import 'driver.js/dist/driver.css';
 
 const HR_TOUR_COMPLETED_KEY = 'hr_tour_completed';
+const HR_TOUR_REPLAY_EVENT = 'hr-tour:replay';
+const HR_TOUR_ACTIVE_CHANGE_EVENT = 'hr-tour:active-change';
 const ADMIN_URL = '/admin';
+
+let driverObj = null;
+const isTourActive = ref(false);
 
 const markTourCompleted = () => {
     localStorage.setItem(HR_TOUR_COMPLETED_KEY, 'true');
 };
 
+const setTourActive = (isActive) => {
+    isTourActive.value = isActive;
+    window.dispatchEvent(new CustomEvent(HR_TOUR_ACTIVE_CHANGE_EVENT, { detail: { isActive } }));
+};
+
+const destroyTour = () => {
+    if (driverObj) {
+        driverObj.destroy();
+        driverObj = null;
+    }
+
+    setTourActive(false);
+};
+
+const replayTour = () => {
+    startHrTourHome();
+};
+
+const handleReplayTour = () => {
+    replayTour();
+};
+
 onMounted(() => {
+    window.addEventListener(HR_TOUR_REPLAY_EVENT, handleReplayTour);
+
     const hasSeenTour = localStorage.getItem(HR_TOUR_COMPLETED_KEY);
 
     if (!hasSeenTour) {
@@ -20,20 +49,36 @@ onMounted(() => {
     }
 });
 
+onUnmounted(() => {
+    window.removeEventListener(HR_TOUR_REPLAY_EVENT, handleReplayTour);
+    destroyTour();
+});
+
 const startHrTourHome = () => {
-    const driverObj = driver({
+    if (isTourActive.value) {
+        return;
+    }
+
+    setTourActive(true);
+
+    driverObj = driver({
         showProgress: true,
         animate: true,
         doneBtnText: 'Trải nghiệm ngay',
         nextBtnText: 'Tiếp theo',
         prevBtnText: 'Quay lại',
         progressText: '{{current}} / {{total}}',
-        allowClose: false,
+        allowClose: true,
+        showButtons: ['next', 'previous', 'close'],
         onDestroyStarted: () => {
             if (!driverObj.hasNextStep() || confirm('Anh/Chị có chắc muốn bỏ qua phần hướng dẫn này?')) {
                 markTourCompleted();
                 driverObj.destroy();
             }
+        },
+        onDestroyed: () => {
+            driverObj = null;
+            setTourActive(false);
         },
         steps: [
     {
