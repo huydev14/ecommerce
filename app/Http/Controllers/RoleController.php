@@ -19,6 +19,7 @@ class RoleController extends Controller
         'categories' => 'Categories',
         'products' => 'Products',
         'product-variants' => 'Product variants',
+        'customers' => 'Customers',
         'customer-addresses' => 'Customer addresses',
         'units' => 'Units',
         'taxes' => 'Taxes',

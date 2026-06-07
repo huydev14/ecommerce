@@ -1,0 +1,72 @@
+<?php
+
+return [
+    'management_title' => 'Customers',
+    'permissions_description' => 'View, add, edit, delete and manage customers',
+    'customer' => 'Customer',
+    'fullname' => 'Full name',
+    'email' => 'Email',
+    'phone' => 'Phone',
+    'password' => 'Password',
+    'password_keep' => 'Leave blank to keep current password',
+    'membership_tier' => 'Membership tier',
+    'points' => 'Points',
+    'status' => 'Status',
+    'email_status' => 'Email status',
+    'updated_at' => 'Updated at',
+    'action' => 'Action',
+    'placeholder' => 'Choose an option',
+    'unknown_name' => 'No name',
+
+    'active' => 'Active',
+    'inactive' => 'Inactive',
+    'verified' => 'Verified',
+    'unverified' => 'Unverified',
+
+    'tiers' => [
+        'standard' => 'Standard',
+        'silver' => 'Silver',
+        'gold' => 'Gold',
+        'premium' => 'Premium',
+    ],
+
+    'create_title' => 'Create customer',
+    'create_subtitle' => 'Fill in the customer account information.',
+    'edit_title' => 'Update customer',
+    'edit_subtitle' => 'Edit customer information and save your changes.',
+    'save_create' => 'Save customer',
+    'save_edit' => 'Save changes',
+    'save_loading' => 'Saving...',
+
+    'email_required' => 'Please enter an email.',
+    'email_invalid' => 'Please enter a valid email.',
+    'email_unique' => 'This email already exists in the system.',
+    'password_required' => 'Please enter a password.',
+    'password_min' => 'Password must be at least 8 characters.',
+    'tier_required' => 'Please choose a membership tier.',
+
+    'create_success' => 'Customer created successfully!',
+    'update_success' => 'Customer updated successfully!',
+    'delete_success' => 'Customer deleted.',
+    'confirm_delete' => 'Confirm deleting this customer?',
+    'delete_toast_title' => 'Customer deleted',
+    'delete_description' => 'The customer has been moved to trash.',
+    'undo' => 'Undo',
+    'undo_success_title' => 'Undo successful',
+    'undo_success_description' => 'The customer has been restored.',
+    'restore_error_title' => 'Restore failed',
+    'restore_error_description' => 'Unable to restore customer.',
+
+    'success_title' => 'Success',
+    'process_failed_title' => 'Process failed',
+    'process_failed_description' => 'Invalid data. Please check your inputs.',
+    'system_error_title' => 'System error',
+    'system_error_description' => 'A system error has occurred!',
+    'generic_error_title' => 'Something went wrong!',
+    'generic_error_description' => 'Please try again later',
+
+    'action_labels' => [
+        'edit' => 'Edit',
+        'delete' => 'Delete customer',
+    ],
+];

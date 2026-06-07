@@ -25,6 +25,7 @@ class RoleAndPermissionSeeder extends Seeder
             'categories',
             'products',
             'product-variants',
+            'customers',
             'customer-addresses',
             'units',
             'taxes',

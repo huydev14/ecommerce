@@ -12,4 +12,12 @@ return [
     'accounts' => 'Accounts',
     'system' => 'System',
     'settings' => 'General Settings',
+    'banner_management' => 'Banner Management',
+    'sidebar' => [
+        'sales' => 'Sales',
+        'products' => 'Products',
+        'operations' => 'Operations',
+        'customers' => 'Customers',
+        'system' => 'System',
+    ],
 ];

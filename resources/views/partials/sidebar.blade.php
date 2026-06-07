@@ -8,7 +8,7 @@
             </a>
         </li>
 
-        <li class="nav-header">KINH DOANH</li>
+        <li class="nav-header">{{ __('header.sidebar.sales') }}</li>
 
         <li class="nav-item">
             <a href="{{ route('orders.index') }}" class="nav-link {{ request()->routeIs('orders.*') ? 'active' : '' }}">
@@ -17,7 +17,7 @@
             </a>
         </li>
 
-        <li class="nav-header">SẢN PHẨM</li>
+        <li class="nav-header">{{ __('header.sidebar.products') }}</li>
 
         <li class="nav-item">
             <a href="{{ route('products.index') }}"
@@ -60,14 +60,13 @@
             </a>
         </li>
 
-        {{-- Vận hành --}}
-        <li class="nav-header">VẬN HÀNH</li>
+        <li class="nav-header">{{ __('header.sidebar.operations') }}</li>
 
         <li class="nav-item">
             <a href="{{ route('product-imports.index') }}"
                 class="nav-link {{ request()->routeIs('product-imports.*') ? 'active' : '' }}">
                 <x-icon-upload class="nav-icon" />
-                <p>Import sản phẩm</p>
+                <p>{{ __('product_import.page_title') }}</p>
             </a>
         </li>
 
@@ -93,8 +92,15 @@
             </a>
         </li>
 
-        <li class="nav-header">CUSTOMERS</li>
+        <li class="nav-header">{{ __('header.sidebar.customers') }}</li>
 
+        <li class="nav-item">
+            <a href="{{ route('customers.index') }}"
+                class="nav-link {{ request()->routeIs('customers.*') ? 'active' : '' }}">
+                <x-icon-customer class="nav-icon" />
+                <p>{{ __('customer.management_title') }}</p>
+            </a>
+        </li>
         <li class="nav-item">
             <a href="{{ route('customer-addresses.index') }}"
                 class="nav-link {{ request()->routeIs('customer-addresses.*') ? 'active' : '' }}">
@@ -106,11 +112,11 @@
             <a href="{{ route('banners.index') }}"
                 class="nav-link {{ request()->routeIs('banners.*') ? 'active' : '' }}">
                 <x-icon-megaphone class="nav-icon" />
-                <p>Quản lý Banner</p>
+                <p>{{ __('header.banner_management') }}</p>
             </a>
         </li>
 
-        <li class="nav-header">HỆ THỐNG</li>
+        <li class="nav-header">{{ __('header.sidebar.system') }}</li>
 
         <li class="nav-item">
             <a href="{{ route('users.index') }}" class="nav-link {{ request()->routeIs('users.*') ? 'active' : '' }}">

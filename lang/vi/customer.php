@@ -1,0 +1,72 @@
+<?php
+
+return [
+    'management_title' => 'Khách hàng',
+    'permissions_description' => 'Xem, thêm, sửa, xóa và quản lý khách hàng',
+    'customer' => 'Khách hàng',
+    'fullname' => 'Họ và tên',
+    'email' => 'Email',
+    'phone' => 'Số điện thoại',
+    'password' => 'Mật khẩu',
+    'password_keep' => 'Bỏ trống nếu không đổi mật khẩu',
+    'membership_tier' => 'Hạng thành viên',
+    'points' => 'Điểm',
+    'status' => 'Trạng thái',
+    'email_status' => 'Xác thực email',
+    'updated_at' => 'Cập nhật',
+    'action' => 'Tác vụ',
+    'placeholder' => 'Chọn một giá trị',
+    'unknown_name' => 'Chưa có tên',
+
+    'active' => 'Đang hoạt động',
+    'inactive' => 'Tạm ngưng',
+    'verified' => 'Đã xác thực',
+    'unverified' => 'Chưa xác thực',
+
+    'tiers' => [
+        'standard' => 'Tiêu chuẩn',
+        'silver' => 'Bạc',
+        'gold' => 'Vàng',
+        'premium' => 'Cao cấp',
+    ],
+
+    'create_title' => 'Thêm khách hàng',
+    'create_subtitle' => 'Nhập thông tin tài khoản khách hàng.',
+    'edit_title' => 'Cập nhật khách hàng',
+    'edit_subtitle' => 'Chỉnh sửa thông tin khách hàng và lưu thay đổi.',
+    'save_create' => 'Lưu khách hàng',
+    'save_edit' => 'Lưu thay đổi',
+    'save_loading' => 'Đang lưu...',
+
+    'email_required' => 'Vui lòng nhập email.',
+    'email_invalid' => 'Email không hợp lệ.',
+    'email_unique' => 'Email này đã tồn tại trong hệ thống.',
+    'password_required' => 'Vui lòng nhập mật khẩu.',
+    'password_min' => 'Mật khẩu phải có ít nhất 8 ký tự.',
+    'tier_required' => 'Vui lòng chọn hạng thành viên.',
+
+    'create_success' => 'Thêm khách hàng thành công!',
+    'update_success' => 'Cập nhật khách hàng thành công!',
+    'delete_success' => 'Đã xóa khách hàng.',
+    'confirm_delete' => 'Xác nhận xóa khách hàng này?',
+    'delete_toast_title' => 'Đã xóa khách hàng',
+    'delete_description' => 'Khách hàng đã được chuyển vào thùng rác.',
+    'undo' => 'Hoàn tác',
+    'undo_success_title' => 'Hoàn tác thành công',
+    'undo_success_description' => 'Khách hàng đã được khôi phục.',
+    'restore_error_title' => 'Lỗi khôi phục',
+    'restore_error_description' => 'Không thể khôi phục khách hàng.',
+
+    'success_title' => 'Thành công',
+    'process_failed_title' => 'Xử lý thất bại',
+    'process_failed_description' => 'Dữ liệu không hợp lệ. Vui lòng kiểm tra lại các trường nhập.',
+    'system_error_title' => 'Lỗi hệ thống',
+    'system_error_description' => 'Đã có lỗi hệ thống xảy ra!',
+    'generic_error_title' => 'Đã xảy ra lỗi!',
+    'generic_error_description' => 'Hãy thử lại sau',
+
+    'action_labels' => [
+        'edit' => 'Sửa thông tin',
+        'delete' => 'Xóa khách hàng',
+    ],
+];

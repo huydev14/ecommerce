@@ -12,4 +12,12 @@ return [
     'accounts' => 'Tài khoản',
     'system' => 'Hệ thống',
     'settings' => 'Cài đặt chung',
+    'banner_management' => 'Quản lý Banner',
+    'sidebar' => [
+        'sales' => 'Kinh doanh',
+        'products' => 'Sản phẩm',
+        'operations' => 'Vận hành',
+        'customers' => 'Khách hàng',
+        'system' => 'Hệ thống',
+    ],
 ];

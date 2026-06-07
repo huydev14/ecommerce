@@ -6,6 +6,7 @@ use App\Http\Controllers\BrandController;
 use App\Http\Controllers\CategoryController;
 use App\Http\Controllers\BannerController;
 use App\Http\Controllers\CustomerAddressController;
+use App\Http\Controllers\CustomerController;
 use App\Http\Controllers\OrderController;
 use App\Http\Controllers\ProductController;
 use App\Http\Controllers\ProductImportController;
@@ -113,6 +114,15 @@ Route::prefix('admin')->middleware('auth')->group(function () {
     Route::resource('product-variants', ProductVariantController::class);
 
     // --- Customer addresses -----------------------
+    Route::prefix('customers')->name('customers.')->group(function () {
+        Route::get('/data', [CustomerController::class, 'data'])->name('data');
+        Route::get('/filter-data', [CustomerController::class, 'getFilterData'])->name('filter_data');
+        Route::post('/{id}/restore', [CustomerController::class, 'restore'])->name('restore');
+    });
+    // --- Customers -----------------------
+    Route::resource('customers', CustomerController::class)
+        ->except(['show']);
+
     Route::prefix('customer-addresses')->name('customer-addresses.')->group(function () {
         Route::get('/data', [CustomerAddressController::class, 'data'])->name('data');
         Route::get('/filter-data', [CustomerAddressController::class, 'getFilterData'])->name('filter_data');
