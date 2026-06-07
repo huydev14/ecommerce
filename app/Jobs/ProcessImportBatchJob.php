@@ -109,7 +109,6 @@ class ProcessImportBatchJob implements ShouldQueue
                                     'attributes' => !empty($variantPayload['attributes']) ? json_encode(json_decode($variantPayload['attributes'], true)) : null,
                                     'sku' => $variantPayload['sku'],
                                     'price' => round($variantPayload['price']),
-                                    'compare_at_price' => $variantPayload['compare_at_price'] ? round($variantPayload['compare_at_price']) : null,
                                     'cost_price' => $variantPayload['cost_price'] ? round($variantPayload['cost_price']) : null,
                                     'unit_id' => $variantPayload['unit_id'] ?? null,
                                     'tax_id' => $variantPayload['tax_id'] ?? null,
