@@ -4,10 +4,16 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Models\Order;
+use App\Models\Setting;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Log;
 
 class PaymentController extends Controller
 {
+    /**
+     * API: Create URL VNPAY PAYMENT
+     */
     public function createPayment(Request $request, $orderId)
     {
         $order = Order::findOrFail($orderId);
@@ -24,13 +30,21 @@ class PaymentController extends Controller
             return response()->json(['success' => false, 'message' => 'Đơn hàng đã được thanh toán.'], 400);
         }
 
-        // Get configs
-        $vnp_TmnCode = config('vnpay.tmn_code');
-        $vnp_HashSecret = config('vnpay.hash_secret');
-        $vnp_Url = config('vnpay.url');
-        $vnp_Returnurl = config('vnpay.return_url');
+        // Get config from cache
+        $vnpConfig = $this->getVnpayConfig();
 
-        // Preapre parameters
+        if (
+            blank($vnpConfig['tmn_code'] ?? null)
+            || blank($vnpConfig['hash_secret'] ?? null)
+            || blank($vnpConfig['url'] ?? null)
+            || blank($vnpConfig['return_url'] ?? null)
+        ) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Cấu hình VNPAY chưa đầy đủ hoặc chưa được kích hoạt.',
+            ], 422);
+        }
+
         $vnp_TxnRef = $order->id . '_' . time();
         $vnp_OrderInfo = "Thanh toan don hang " . $order->id;
         $vnp_OrderType = 'billpayment';
@@ -39,8 +53,8 @@ class PaymentController extends Controller
         $vnp_IpAddr = $request->ip();
 
         $inputData = [
-            'vnp_Version' => '2.1.0',
-            "vnp_TmnCode" => $vnp_TmnCode,
+            "vnp_Version" => "2.1.0",
+            "vnp_TmnCode" => $vnpConfig['tmn_code'],
             "vnp_Amount" => $vnp_Amount,
             "vnp_Command" => "pay",
             "vnp_CreateDate" => date('YmdHis'),
@@ -49,11 +63,11 @@ class PaymentController extends Controller
             "vnp_Locale" => $vnp_Locale,
             "vnp_OrderInfo" => $vnp_OrderInfo,
             "vnp_OrderType" => $vnp_OrderType,
-            "vnp_ReturnUrl" => $vnp_Returnurl,
+            "vnp_ReturnUrl" => $vnpConfig['return_url'],
             "vnp_TxnRef" => $vnp_TxnRef,
         ];
 
-        // Create Signature
+        // Create signature
         ksort($inputData);
         $query = "";
         $i = 0;
@@ -67,11 +81,12 @@ class PaymentController extends Controller
             }
             $query .= urlencode($key) . "=" . urlencode($value) . '&';
         }
-        $vnp_Url = $vnp_Url . "?" . $query;
 
-        if (isset($vnp_HashSecret)) {
-            $vnpSecureHash = hash_hmac('sha512', $hashdata, $vnp_HashSecret);
-            $vnp_Url .= 'vnp_SecureHash=' . $vnpSecureHash;
+        $vnp_Url = $vnpConfig['url'] . "?" . $query;
+
+        if (!empty($vnpConfig['hash_secret'])) {
+            $vnpSecureHash = hash_hmac('sha512', $hashdata, $vnpConfig['hash_secret']);
+            $vnp_Url .= '&vnp_SecureHash=' . $vnpSecureHash;
         }
 
         return response()->json([
@@ -88,7 +103,7 @@ class PaymentController extends Controller
      */
     public function vnpayIpn(Request $request)
     {
-        \Log::warning('VNPAY đã gọi IPN !!!');
+        Log::warning('VNPAY đã gọi IPN !!!');
         $inputData = [];
         $allRequestData = $request->all();
 
@@ -114,12 +129,23 @@ class PaymentController extends Controller
             }
         }
 
-        $vnp_HashSecret = config('vnpay.hash_secret');
-        $secureHash = hash_hmac('sha512', $hashData, $vnp_HashSecret);
+        $vnpConfig = $this->getVnpayConfig();
+
+        if (
+            blank($vnpConfig['tmn_code'] ?? null)
+            || blank($vnpConfig['hash_secret'] ?? null)
+            || blank($vnpConfig['url'] ?? null)
+            || blank($vnpConfig['return_url'] ?? null)
+        ) {
+            Log::error('VNPAY IPN: Cấu hình VNPAY chưa đầy đủ hoặc chưa được kích hoạt.');
+            return response()->json(['RspCode' => '99', 'Message' => 'VNPAY config missing']);
+        }
+
+        $secureHash = hash_hmac('sha512', $hashData, $vnpConfig['hash_secret']);
 
         // Check signature validation
         if ($secureHash !== $vnp_SecureHash) {
-            \Log::warning('VNPAY IPN: Sai chữ ký bảo mật', ['data' => $request->all()]);
+            Log::warning('VNPAY IPN: Sai chữ ký bảo mật', ['data' => $request->all()]);
             return response()->json(['RspCode' => '97', 'Message' => 'Invalid signature']);
         }
 
@@ -134,12 +160,12 @@ class PaymentController extends Controller
 
         $vnp_Amount = $inputData['vnp_Amount'] / 100;
         if (floatval($order->total_amount) !== floatval($vnp_Amount)) {
-            \Log::error("VNPAY IPN: Sai số tiền. Đơn hàng: {$order->total_amount}, VNPAY gửi: {$vnp_Amount}");
+            Log::error("VNPAY IPN: Sai số tiền. Đơn hàng: {$order->total_amount}, VNPAY gửi: {$vnp_Amount}");
             return response()->json(['RspCode' => '04', 'Message' => 'Invalid amount']);
         }
 
         if ($order->payment_status !== 'pending') {
-            \Log::warning("VNPAY IPN: Đơn hàng {$orderId} đã được xác nhận trước đó");
+            Log::warning("VNPAY IPN: Đơn hàng {$orderId} đã được xác nhận trước đó");
             return response()->json(['RspCode' => '02', 'Message' => 'Order already confirmed']);
         }
 
@@ -147,13 +173,43 @@ class PaymentController extends Controller
         if ($inputData['vnp_ResponseCode'] == '00' && $inputData['vnp_TransactionStatus'] == '00') {
             $order->payment_status = 'paid';
             $order->status = 'processing';
-            \Log::info("VNPAY IPN: Thanh toán thành công đơn hàng {$orderId}");
+            Log::info("VNPAY IPN: Thanh toán thành công đơn hàng {$orderId}");
         } else {
             $order->payment_status = 'failed';
-            \Log::info("VNPAY IPN: Thanh toán thất bại đơn hàng {$orderId}");
+            Log::info("VNPAY IPN: Thanh toán thất bại đơn hàng {$orderId}");
         }
         $order->save();
 
         return response()->json(['RspCode' => '00', 'Message' => 'Confirm Success']);
+    }
+
+    /**
+     * Helper: Get VNPAY config dynamically
+     */
+    private function getVnpayConfig(): array
+    {
+        $settings = Cache::rememberForever('config.integrations.vnpay', function () {
+            return Setting::where('group', 'integrations')
+                ->where('key', 'vnpay')
+                ->first()?->value;
+        });
+
+        if (empty($settings['is_active'])) {
+            return [
+                'tmn_code' => config('vnpay.tmn_code'),
+                'hash_secret' => config('vnpay.hash_secret'),
+                'url' => config('vnpay.url'),
+                'return_url' => config('vnpay.return_url'),
+            ];
+        }
+
+        return [
+            'tmn_code' => ($settings['tmn_code'] ?? '') ?: config('vnpay.tmn_code'),
+            'hash_secret' => !empty($settings['hash_secret'])
+                ? decrypt($settings['hash_secret'])
+                : config('vnpay.hash_secret'),
+            'url' => ($settings['url'] ?? '') ?: config('vnpay.url'),
+            'return_url' => ($settings['return_url'] ?? '') ?: config('vnpay.return_url'),
+        ];
     }
 }

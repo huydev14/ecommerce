@@ -140,6 +140,7 @@ class SettingController extends Controller
         ]);
 
         $oldConfig = Setting::where('key', 'vnpay')->where('group', 'integrations')->first();
+        $validated['is_active'] = $request->boolean('is_active');
 
         if ($request->filled('hash_secret')) {
             $validated['hash_secret'] = encrypt($request->hash_secret);

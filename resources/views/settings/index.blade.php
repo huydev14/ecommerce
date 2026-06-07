@@ -16,7 +16,7 @@
                 <div class="tw-px-3 tw-py-2 tw-text-[10px] tw-font-bold tw-text-gray-400 tw-uppercase">Communication</div>
                 <a class="nav-link fluent-tab-item tw-mb-1 tw-flex tw-items-center tw-gap-3" id="v-pills-mail-tab"
                     data-bs-toggle="pill" href="#v-pills-mail" data-tab="mail" role="tab">
-                    <i class="fas fa-envelope tw-text-lg tw-w-5"></i>
+                    <x-icon-mail/>
                     <span class="tw-font-medium tw-text-sm">Cấu hình Mail</span>
                 </a>
 
@@ -33,6 +33,16 @@
                     data-bs-toggle="pill" href="#v-pills-microsoft" data-tab="microsoft" role="tab">
                     <i class="fab fa-microsoft tw-text-lg tw-w-5"></i>
                     <span class="tw-font-medium tw-text-sm">Microsoft OAuth</span>
+                </a>
+
+                <hr class="tw-my-2 tw-border-gray-100">
+
+                {{-- Group: Third Party Integration --}}
+                <div class="tw-px-3 tw-py-2 tw-text-[10px] tw-font-bold tw-text-gray-400 tw-uppercase">Payment method</div>
+                <a class="nav-link fluent-tab-item tw-mb-1 tw-flex tw-items-center tw-gap-3" id="v-pills-vnpay-tab"
+                    data-bs-toggle="pill" href="#v-pills-vnpay" data-tab="vnpay" role="tab">
+                    <i class="fas fa-credit-card tw-text-lg tw-w-5"></i>
+                    <span class="tw-font-medium tw-text-sm">VNPAY</span>
                 </a>
             </div>
         </div>
@@ -51,6 +61,10 @@
 
                 <div class="tab-pane fade" id="v-pills-microsoft" role="tabpanel">
                     @include('settings.partials._microsoft_oauth')
+                </div>
+
+                <div class="tab-pane fade" id="v-pills-vnpay" role="tabpanel">
+                    @include('settings.partials._vnpay')
                 </div>
             </div>
         </div>
