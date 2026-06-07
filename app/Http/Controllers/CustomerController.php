@@ -66,7 +66,7 @@ class CustomerController extends Controller
                 ['id' => 1, 'text' => __('customer.active')],
                 ['id' => 0, 'text' => __('customer.inactive')],
             ]),
-            'tiers' => collect($this->tierOptions())->map(fn ($label, $id) => [
+            'tiers' => collect($this->tierOptions())->map(fn($label, $id) => [
                 'id' => $id,
                 'text' => $label,
             ])->values(),
@@ -237,7 +237,7 @@ class CustomerController extends Controller
     private function renderStatusBadge(bool $isActive): string
     {
         if ($isActive) {
-            return '<span class="tw-inline-flex tw-items-center tw-gap-1.5 tw-rounded tw-bg-emerald-50 tw-px-1 tw-text-xs tw-font-semibold tw-text-emerald-700"><i class="fas fa-circle-check"></i>' . e(__('customer.active')) . '</span>';
+            return '<span class="tw-inline-flex tw-items-center tw-gap-1.5 tw-rounded tw-bg-emerald-50 tw-px-1 tw-text-xs tw-font-medium tw-text-emerald-700"><i class="fas fa-circle-check"></i>' . e(__('customer.active')) . '</span>';
         }
 
         return '<span class="tw-inline-flex tw-items-center tw-gap-1.5 tw-rounded tw-bg-gray-100 tw-px-2 tw-py-1 tw-text-xs tw-font-semibold tw-text-gray-600"><i class="fas fa-circle-xmark"></i>' . e(__('customer.inactive')) . '</span>';
@@ -246,7 +246,7 @@ class CustomerController extends Controller
     private function renderVerifiedBadge(bool $isVerified): string
     {
         if ($isVerified) {
-            return '<span class="tw-inline-flex tw-items-center tw-gap-1.5 tw-rounded tw-bg-emerald-50 tw-px-1 tw-text-xs tw-font-semibold tw-text-emerald-700"><i class="fas fa-circle-check"></i>' . e(__('customer.verified')) . '</span>';
+            return '<span class="tw-inline-flex tw-items-center tw-gap-1.5 tw-rounded tw-bg-emerald-50 tw-px-1 tw-text-xs tw-font-medium tw-text-emerald-700"><i class="fas fa-circle-check"></i>' . e(__('customer.verified')) . '</span>';
         }
 
         return '<span class="tw-inline-flex tw-items-center tw-gap-1.5 tw-rounded tw-bg-amber-50 tw-px-1 tw-text-xs tw-font-semibold tw-text-amber-700"><i class="fas fa-clock"></i>' . e(__('customer.unverified')) . '</span>';

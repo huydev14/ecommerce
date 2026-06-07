@@ -119,7 +119,8 @@ $(function () {
         processing: true,
         serverSide: true,
         autoWidth: false,
-        order: [[6, 'desc']],
+        scrollX: true,
+        order: [[7, 'desc']],
         ajax: {
             url: route('product-variants.data'),
             data: function (d) {
@@ -127,6 +128,12 @@ $(function () {
             },
         },
         columns: [
+            {
+                data: 'product_name',
+                name: 'product.name',
+                orderable: false,
+                searchable: false,
+            },
             {
                 data: 'variant_name',
                 name: 'variant_name',

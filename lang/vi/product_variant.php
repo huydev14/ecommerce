@@ -3,6 +3,7 @@
 return [
     'title' => 'Bộ lọc',
     'product' => 'Sản phẩm',
+    'product_name' => 'Tên sản phẩm',
     'variant_name' => 'Tên biến thể',
     'status' => 'Trạng thái',
     'placeholder' => 'Chọn một giá trị',

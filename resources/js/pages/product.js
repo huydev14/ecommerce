@@ -118,6 +118,7 @@ $(function () {
     globalThis.productTable = new DataTable('#productTable', {
         processing: true,
         serverSide: true,
+        scrollX: true,
         ajax: {
             url: route('products.data'),
             data: function (d) {

@@ -25,6 +25,7 @@
             <table id="productVariantTable" class="display table table-hover text-nowrap" style="width: 100%;">
                 <thead>
                     <tr>
+                        <th>{{ __('product_variant.product_name') }}</th>
                         <th>{{ __('product_variant.variant_name') }}</th>
                         <th>{{ __('product_variant.sku') }}</th>
                         <th>{{ __('product_variant.price') }}</th>

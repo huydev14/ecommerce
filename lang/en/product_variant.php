@@ -3,6 +3,7 @@
 return [
     'title' => 'Filter',
     'product' => 'Product',
+    'product_name' => 'Product name',
     'variant_name' => 'Variant name',
     'status' => 'Status',
     'placeholder' => 'Choose an option',
@@ -72,5 +73,4 @@ return [
     'system_error_title' => 'System error',
     'system_error_description' => 'A system error has occurred!',
 ];
-
 

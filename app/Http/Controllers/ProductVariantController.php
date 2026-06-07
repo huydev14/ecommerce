@@ -23,6 +23,9 @@ class ProductVariantController extends Controller
             $this->applyFilters($variants, $request);
 
             return DataTables::of($variants)
+                ->addColumn('product_name', function ($variant) {
+                    return $variant->product?->name ?? '<span class="tw-text-gray-400 tw-italic tw-text-sm">---</span>';
+                })
                 ->addColumn('variant_name', function ($variant) {
                     return $variant->attributes['variant_name'] ?? '<span class="tw-text-gray-400 tw-italic tw-text-sm">---</span>';
                 })
@@ -44,7 +47,7 @@ class ProductVariantController extends Controller
                 ->editColumn('action', function ($variant) {
                     return view('product-variants._product-variants-action', compact('variant'))->render();
                 })
-                ->rawColumns(['variant_name', 'compare_at_price', 'cost_price', 'is_active', 'action'])
+                ->rawColumns(['product_name', 'variant_name', 'compare_at_price', 'cost_price', 'is_active', 'action'])
                 ->make(true);
         }
     }
@@ -77,7 +80,7 @@ class ProductVariantController extends Controller
     private function renderStatusBadge(bool $isActive): string
     {
         if ($isActive) {
-            return '<span class="tw-inline-flex tw-items-center tw-gap-1.5 tw-rounded tw-bg-emerald-50 tw-px-2 tw-py-1 tw-text-xs tw-font-medium tw-text-emerald-700 tw-capitalize"><i class="fas fa-circle-check"></i>' . strtolower(__('product_variant.active')) . '</span>';
+            return '<span class="tw-inline-flex tw-items-center tw-gap-1.5 tw-rounded tw-bg-emerald-50 tw-px-2 tw-text-xs tw-font-medium tw-text-emerald-700 tw-capitalize"><i class="fas fa-circle-check"></i>' . strtolower(__('product_variant.active')) . '</span>';
         }
 
         return '<span class="tw-inline-flex tw-items-center tw-gap-1.5 tw-rounded tw-bg-gray-100 tw-px-2 tw-py-1 tw-text-xs tw-font-semibold tw-text-gray-600"><i class="fas fa-circle-xmark"></i>' . strtolower(__('product_variant.hidden')) . '</span>';
