@@ -165,6 +165,44 @@ class SettingController extends Controller
         }
     }
 
+    public function updateGhn(Request $request)
+    {
+        if (! $request->user()?->can('settings.update')) {
+            abort(403, 'Bạn không có quyền cập nhật cấu hình GHN.');
+        }
+
+        $validated = $request->validate([
+            'api_url' => 'nullable|url|max:500',
+            'api_token' => 'nullable|string|max:255',
+            'shop_id' => 'nullable|string|max:255',
+        ]);
+
+        $oldConfig = Setting::where('key', 'ghn')->where('group', 'integrations')->first();
+        $validated['is_active'] = $request->boolean('is_active');
+
+        if ($request->filled('api_token')) {
+            $validated['api_token'] = encrypt($request->api_token);
+        } else {
+            $validated['api_token'] = $oldConfig->value['api_token'] ?? null;
+        }
+
+        try {
+            Setting::updateOrCreate(
+                ['key' => 'ghn', 'group' => 'integrations'],
+                ['value' => $validated]
+            );
+
+            Cache::forget('config.integrations.ghn');
+
+            return redirect()
+                ->to(route('settings.index') . '?tab=ghn')
+                ->with('success', 'Cấu hình GHN đã được cập nhật.');
+        } catch (\Exception $e) {
+            Log::error('GHN config update error: ' . $e->getMessage());
+            return redirect()->back()->with('error', 'Có lỗi xảy ra khi lưu cấu hình GHN.');
+        }
+    }
+
     public function testMail(Request $request)
     {
         if (! $request->user()?->can('settings.update')) {

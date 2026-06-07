@@ -2,6 +2,8 @@
 
 namespace App\Services;
 
+use App\Models\Setting;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 
@@ -13,9 +15,36 @@ class GhnService
 
     public function __construct()
     {
-        $this->apiUrl = env('GHN_API_URL', 'https://dev-online-gateway.ghn.vn/shiip/public-api');
-        $this->token = env('GHN_API_TOKEN');
-        $this->shopId = env('GHN_SHOP_ID');
+        $config = $this->getGhnConfig();
+
+        $this->apiUrl = $config['api_url'];
+        $this->token = $config['api_token'];
+        $this->shopId = $config['shop_id'];
+    }
+
+    private function getGhnConfig(): array
+    {
+        $settings = Cache::rememberForever('config.integrations.ghn', function () {
+            return Setting::where('group', 'integrations')
+                ->where('key', 'ghn')
+                ->first()?->value;
+        });
+
+        if (empty($settings['is_active'])) {
+            return [
+                'api_url' => env('GHN_API_URL', 'https://dev-online-gateway.ghn.vn/shiip/public-api'),
+                'api_token' => env('GHN_API_TOKEN'),
+                'shop_id' => env('GHN_SHOP_ID'),
+            ];
+        }
+
+        return [
+            'api_url' => ($settings['api_url'] ?? '') ?: env('GHN_API_URL', 'https://dev-online-gateway.ghn.vn/shiip/public-api'),
+            'api_token' => !empty($settings['api_token'])
+                ? decrypt($settings['api_token'])
+                : env('GHN_API_TOKEN'),
+            'shop_id' => ($settings['shop_id'] ?? '') ?: env('GHN_SHOP_ID'),
+        ];
     }
 
     public function getProvinces()

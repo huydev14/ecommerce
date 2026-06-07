@@ -44,6 +44,11 @@
                     <i class="fas fa-credit-card tw-text-lg tw-w-5"></i>
                     <span class="tw-font-medium tw-text-sm">VNPAY</span>
                 </a>
+                <a class="nav-link fluent-tab-item tw-mb-1 tw-flex tw-items-center tw-gap-3" id="v-pills-ghn-tab"
+                    data-bs-toggle="pill" href="#v-pills-ghn" data-tab="ghn" role="tab">
+                    <i class="fas fa-truck tw-text-lg tw-w-5"></i>
+                    <span class="tw-font-medium tw-text-sm">GHN API</span>
+                </a>
             </div>
         </div>
 
@@ -65,6 +70,10 @@
 
                 <div class="tab-pane fade" id="v-pills-vnpay" role="tabpanel">
                     @include('settings.partials._vnpay')
+                </div>
+
+                <div class="tab-pane fade" id="v-pills-ghn" role="tabpanel">
+                    @include('settings.partials._ghn')
                 </div>
             </div>
         </div>

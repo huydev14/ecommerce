@@ -201,6 +201,7 @@ Route::prefix('admin')->middleware('auth')->group(function () {
         Route::patch('oauth/{provider}', [SettingController::class, 'updateOAuth'])->name('updateOAuth');
         Route::patch('mail', [SettingController::class, 'updateMail'])->name('updateMail');
         Route::patch('/vnpay', [SettingController::class, 'updateVnpay'])->name('updateVnpay');
+        Route::patch('/ghn', [SettingController::class, 'updateGhn'])->name('updateGhn');
     });
 });
 
