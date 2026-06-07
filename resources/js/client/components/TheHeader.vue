@@ -123,7 +123,7 @@ onBeforeUnmount(() => {
 
 <template>
     <div class="tw-bg-[#131921] tw-text-white">
-        <div class="tw-flex tw-min-w-0 tw-items-center tw-gap-1 tw-px-2 tw-py-2 md:tw-gap-2 md:tw-px-4 xl:tw-gap-4">
+        <div class="tw-flex tw-min-w-0 tw-items-center tw-justify-center tw-gap-1 tw-px-2 tw-py-2 md:tw-gap-2 md:tw-px-4 xl:tw-gap-4">
             <router-link
                 :to="{ name: 'Home' }"
                 class="tw-grid tw-min-h-[42px] tw-flex-none tw-cursor-pointer tw-place-items-center tw-rounded-sm tw-border tw-border-transparent tw-px-2 tw-py-1 tw-text-white tw-no-underline hover:tw-border-white"
