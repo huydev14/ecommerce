@@ -32,9 +32,9 @@ class BrandController extends Controller
                 })
                 ->editColumn('is_active', function ($brand) {
                     if ($brand->is_active) {
-                        return '<span class="tw-px-1 tw-py-0.5 tw-bg-green-100 tw-text-green-700 tw-text-xs tw-font-medium tw-rounded-sm">' . __('brand.active') . '</span>';
+                        return '<span class="tw-inline-flex tw-items-center tw-gap-1.5 tw-rounded tw-bg-emerald-50 tw-px-2 tw-py-1 tw-text-xs tw-font-medium tw-capitalize tw-text-emerald-700"><i class="fas fa-circle-check"></i>' . strtolower(__('brand.active')) . '</span>';
                     }
-                    return '<span class="tw-px-2 tw-py-1 tw-bg-gray-100 tw-text-gray-600 tw-text-xs tw-font-medium tw-rounded-full">' . __('brand.hidden') . '</span>';
+                    return '<span class="tw-inline-flex tw-items-center tw-gap-1.5 tw-rounded tw-bg-gray-100 tw-px-2 tw-py-1 tw-text-xs tw-font-semibold tw-text-gray-600"><i class="fas fa-circle-xmark"></i>' . strtolower(__('brand.hidden')) . '</span>';
                 })
 
                 ->editColumn('created_at', function ($brand) {

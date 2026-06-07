@@ -15,8 +15,8 @@ return [
     'updated_at' => 'Cập nhật',
     'action' => 'Tác vụ',
 
-    'active' => 'Đang hoạt động',
-    'inactive' => 'Ngừng hoạt động',
+    'active' => 'Active',
+    'inactive' => 'Inactive',
     'hidden' => 'Đã ẩn',
 
     'edit' => 'Sửa thông tin',

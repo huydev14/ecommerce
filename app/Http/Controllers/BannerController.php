@@ -38,8 +38,8 @@ class BannerController extends Controller
                 })
                 ->editColumn('is_active', function ($banner) {
                     return $banner->is_active
-                        ? '<span class="tw-px-1 tw-py-0.5 tw-bg-green-100 tw-text-green-700 tw-text-xs tw-font-medium tw-rounded-sm">Active</span>'
-                        : '<span class="tw-px-2 tw-py-1 tw-bg-gray-100 tw-text-gray-600 tw-text-xs tw-font-medium tw-rounded-full">Hidden</span>';
+                        ? '<span class="tw-inline-flex tw-items-center tw-gap-1.5 tw-rounded tw-bg-emerald-50 tw-px-2 tw-py-1 tw-text-xs tw-font-medium tw-capitalize tw-text-emerald-700"><i class="fas fa-circle-check"></i>active</span>'
+                        : '<span class="tw-inline-flex tw-items-center tw-gap-1.5 tw-rounded tw-bg-gray-100 tw-px-2 tw-py-1 tw-text-xs tw-font-semibold tw-text-gray-600"><i class="fas fa-circle-xmark"></i>hidden</span>';
                 })
                 ->editColumn('created_at', fn($banner) => $banner->created_at?->format('d/m/Y'))
                 ->editColumn('updated_at', fn($banner) => $banner->updated_at?->format('d/m/Y'))

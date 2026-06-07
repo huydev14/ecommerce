@@ -9,7 +9,7 @@ return [
     'code' => 'Mã kho',
     'address' => 'Địa chỉ',
     'status' => 'Trạng thái',
-    'active' => 'Đang hoạt động',
+    'active' => 'Active',
     'inactive' => 'Tạm ngưng',
     'updated_at' => 'Cập nhật',
     'action' => 'Tác vụ',

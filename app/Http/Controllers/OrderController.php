@@ -50,11 +50,18 @@ class OrderController extends Controller
                 })
                 ->editColumn('status', function ($order) {
                     $classes = [
-                        'pending' => 'tw-bg-amber-100 tw-text-amber-700',
-                        'processing' => 'tw-bg-blue-100 tw-text-blue-700',
-                        'shipping' => 'tw-bg-indigo-100 tw-text-indigo-700',
-                        'completed' => 'tw-bg-green-100 tw-text-green-700',
-                        'cancelled' => 'tw-bg-red-100 tw-text-red-700',
+                        'pending' => 'tw-bg-gray-100 tw-text-gray-600',
+                        'processing' => 'tw-bg-amber-50 tw-text-amber-700',
+                        'shipping' => 'tw-bg-indigo-50 tw-text-indigo-700',
+                        'completed' => 'tw-bg-emerald-50 tw-text-emerald-700',
+                        'cancelled' => 'tw-bg-red-50 tw-text-red-700',
+                    ];
+                    $icons = [
+                        'pending' => 'fas fa-clock',
+                        'processing' => 'fas fa-spinner',
+                        'shipping' => 'fas fa-truck',
+                        'completed' => 'fas fa-circle-check',
+                        'cancelled' => 'fas fa-circle-xmark',
                     ];
                     $labels = [
                         'pending' => 'order.statuses.pending',
@@ -64,13 +71,18 @@ class OrderController extends Controller
                         'cancelled' => 'order.statuses.cancelled',
                     ];
 
-                    return '<span class="tw-px-2 tw-py-1 tw-text-xs tw-font-medium tw-rounded-full ' . ($classes[$order->status] ?? 'tw-bg-gray-100 tw-text-gray-600') . '">' . e(__($labels[$order->status] ?? 'order.unknown')) . '</span>';
+                    return '<span class="tw-inline-flex tw-items-center tw-gap-1.5 tw-rounded tw-px-1 tw-py-1 tw-text-xs tw-font-medium tw-capitalize ' . ($classes[$order->status] ?? 'tw-bg-gray-100 tw-text-gray-600') . '"><i class="' . ($icons[$order->status] ?? 'fas fa-circle-info') . '"></i>' . e(__($labels[$order->status] ?? 'order.unknown')) . '</span>';
                 })
                 ->editColumn('payment_status', function ($order) {
                     $classes = [
-                        'pending' => 'tw-bg-amber-100 tw-text-amber-700',
+                        'pending' => 'tw-bg-gray-100 tw-text-gray-600',
                         'unpaid' => 'tw-bg-gray-100 tw-text-gray-600',
-                        'paid' => 'tw-bg-green-100 tw-text-green-700',
+                        'paid' => 'tw-bg-emerald-50 tw-text-emerald-700',
+                    ];
+                    $icons = [
+                        'pending' => 'fas fa-clock',
+                        'unpaid' => 'fas fa-circle-xmark',
+                        'paid' => 'fas fa-circle-check',
                     ];
                     $labels = [
                         'pending' => 'order.payment_statuses.pending',
@@ -78,7 +90,7 @@ class OrderController extends Controller
                         'paid' => 'order.payment_statuses.paid',
                     ];
 
-                    return '<span class="tw-px-2 tw-py-1 tw-text-xs tw-font-medium tw-rounded-full ' . ($classes[$order->payment_status] ?? 'tw-bg-gray-100 tw-text-gray-600') . '">' . e(__($labels[$order->payment_status] ?? 'order.unknown')) . '</span>';
+                    return '<span class="tw-inline-flex tw-items-center tw-gap-1.5 tw-rounded tw-px-1 tw-py-1 tw-text-xs tw-font-medium tw-capitalize ' . ($classes[$order->payment_status] ?? 'tw-bg-gray-100 tw-text-gray-600') . '"><i class="' . ($icons[$order->payment_status] ?? 'fas fa-circle-info') . '"></i>' . e(__($labels[$order->payment_status] ?? 'order.unknown')) . '</span>';
                 })
                 ->editColumn('payment_method', function ($order) {
                     return __([

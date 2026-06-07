@@ -77,10 +77,10 @@ class ProductVariantController extends Controller
     private function renderStatusBadge(bool $isActive): string
     {
         if ($isActive) {
-            return '<span class="tw-px-1 tw-py-0.5 tw-bg-green-100 tw-text-green-700 tw-text-xs tw-font-medium tw-rounded-sm">' . __('product_variant.active') . '</span>';
+            return '<span class="tw-inline-flex tw-items-center tw-gap-1.5 tw-rounded tw-bg-emerald-50 tw-px-2 tw-py-1 tw-text-xs tw-font-medium tw-text-emerald-700 tw-capitalize"><i class="fas fa-circle-check"></i>' . strtolower(__('product_variant.active')) . '</span>';
         }
 
-        return '<span class="tw-px-2 tw-py-1 tw-bg-gray-100 tw-text-gray-600 tw-text-xs tw-font-medium tw-rounded-full">' . __('product_variant.hidden') . '</span>';
+        return '<span class="tw-inline-flex tw-items-center tw-gap-1.5 tw-rounded tw-bg-gray-100 tw-px-2 tw-py-1 tw-text-xs tw-font-semibold tw-text-gray-600"><i class="fas fa-circle-xmark"></i>' . strtolower(__('product_variant.hidden')) . '</span>';
     }
 
     public function getFilterData(Request $request)

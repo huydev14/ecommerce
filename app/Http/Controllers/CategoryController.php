@@ -35,9 +35,9 @@ class CategoryController extends Controller
                 })
                 ->editColumn('is_active', function ($category) {
                     if ($category->is_active) {
-                        return '<span class="tw-px-1 tw-py-0.5 tw-bg-green-100 tw-text-green-700 tw-text-xs tw-font-medium tw-rounded-sm">' . __('category.active') . '</span>';
+                        return '<span class="tw-inline-flex tw-items-center tw-gap-1.5 tw-rounded tw-bg-emerald-50 tw-px-2 tw-py-1 tw-text-xs tw-font-medium tw-capitalize tw-text-emerald-700"><i class="fas fa-circle-check"></i>' . strtolower(__('category.active')) . '</span>';
                     }
-                    return '<span class="tw-px-2 tw-py-1 tw-bg-gray-100 tw-text-gray-600 tw-text-xs tw-font-medium tw-rounded-full">' . __('category.hidden') . '</span>';
+                    return '<span class="tw-inline-flex tw-items-center tw-gap-1.5 tw-rounded tw-bg-gray-100 tw-px-2 tw-py-1 tw-text-xs tw-font-semibold tw-text-gray-600"><i class="fas fa-circle-xmark"></i>' . strtolower(__('category.hidden')) . '</span>';
                 })
                 ->editColumn('created_at', function ($category) {
                     return $category->created_at ? $category->created_at->format('d/m/Y') : '';
