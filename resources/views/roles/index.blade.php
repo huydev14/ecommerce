@@ -3,10 +3,12 @@
 @section('page-header')
     <x-page-header title="{{ __('role.page_title') }}" description="{{ __('role.page_description') }}">
         @can('roles.create')
+        <div class="tw-flex tw-items-center">
             <a href="{{ route('roles.create') }}"
-                class="tw-inline-flex tw-items-center tw-justify-center tw-gap-2 tw-rounded-[4px] tw-bg-[#0078D4] tw-px-4 tw-py-1 tw-text-[14px] tw-font-medium tw-text-white tw-shadow-sm tw-transition-colors hover:tw-bg-[#106ebe] focus:tw-outline-none focus:tw-ring-2 focus:tw-ring-[#0078D4] focus:tw-ring-offset-2">
+                class="tw-inline-flex tw-items-center tw-justify-center tw-gap-2 tw-rounded-[4px] tw-bg-[#0078D4] tw-px-4 tw-py-2 tw-text-[14px] tw-font-medium tw-text-white tw-shadow-sm tw-transition-colors hover:tw-bg-[#106ebe] focus:tw-outline-none focus:tw-ring-2 focus:tw-ring-[#0078D4] focus:tw-ring-offset-2">
                 <i class="fas fa-plus tw-text-xs"></i> {{ __('role.new_role') }}
             </a>
+        </div>
         @endcan
     </x-page-header>
 @endsection
@@ -25,7 +27,7 @@
                 </div>
             </div>
         @else
-            <div class="tw-grid tw-grid-cols-1 tw-gap-4 lg:tw-grid-cols-2 2xl:tw-grid-cols-3">
+            <div class="tw-grid tw-grid-cols-1 tw-gap-4 lg:tw-grid-cols-3">
                 @foreach ($roles as $role)
                     <article
                         class="tw-group tw-relative tw-flex tw-min-h-[218px] tw-flex-col tw-rounded-[6px] tw-border tw-border-gray-200 tw-bg-white tw-p-5 tw-shadow-sm tw-transition-all tw-duration-200 hover:tw-border-[#c7e0f4] hover:tw-shadow-md">
@@ -88,7 +90,7 @@
 
                             @can('roles.edit')
                                 <a href="{{ route('roles.edit', $role->id) }}"
-                                    class="tw-inline-flex tw-items-center tw-gap-2 tw-rounded-[4px] tw-border tw-border-gray-300 tw-bg-white tw-px-3 tw-py-1.5 tw-text-[13px] tw-font-medium tw-text-gray-700 tw-shadow-sm tw-transition-colors hover:tw-border-[#0078D4] hover:tw-bg-gray-50 hover:tw-text-[#0078D4]">
+                                    class="tw-inline-flex tw-items-center tw-gap-2 tw-rounded-[4px] tw-border tw-border-gray-300 tw-bg-white tw-px-3 tw-py-1 tw-text-[13px] tw-font-medium tw-text-gray-700 tw-shadow-sm tw-transition-colors hover:tw-border-[#0078D4] hover:tw-bg-gray-50 hover:tw-text-[#0078D4]">
                                     {{ __('role.assign_permissions') }}
                                     <i class="fas fa-arrow-right tw-text-[11px]"></i>
                                 </a>

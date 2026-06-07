@@ -3,7 +3,7 @@
         <button type="button" class="nav-link icon-btn" data-widget="pushmenu" aria-label="Toggle menu">
             <i class="fas fa-bars"></i>
         </button>
-        <a href="/" class="brand-link">
+        <a href="/admin" class="brand-link">
             <span class="brand-mark" aria-label="{{ config('app.name') }}">
                 <span class="brand-name">{{ config('app.name') }}</span>
                 <span class="brand-smile"></span>
@@ -27,26 +27,26 @@
 
 
     <ul class="navbar-nav topbar-actions">
+         <li class="nav-item ">
+            <a href="/" class="nav-link icon-btn tw-flex tw-gap-2 !tw-px-1">
+               <x-icon-building-shop/> Back to shop
+            </a>
+        </li>
         <li class="nav-item">
-            <a href="{{ url('horizon') }}" class="nav-link icon-btn tw-flex tw-items-center tw-gap-1 tw-leading-none" target="_blank" title="Horizon Monitoring">
+            <a href="{{ url('horizon') }}" class="nav-link icon-btn tw-flex tw-items-center tw-gap-1 tw-leading-none !tw-px-2" target="_blank" title="Horizon Monitoring">
                 <div><i class="fas fa-chart-line"></i></div>
-                <span>Queue Monitoring</span>
+                <span>Queue</span>
             </a>
         </li>
-        <li class="nav-item">
-            <a href="/" class="nav-link icon-btn">
-                <i class="fas fa-store"></i>
-            </a>
-        </li>
-
-        <li class="nav-item">
-            <button type="button" class="nav-link icon-btn" data-widget="fullscreen" aria-label="Fullscreen">
-                <i class="fas fa-expand-arrows-alt"></i>
+       
+        <li class="nav-item ">
+            <button type="button" class="nav-link icon-btn " data-widget="fullscreen" aria-label="Fullscreen">
+               <x-icon-arrow-expand/>
             </button>
         </li>
 
         <li class="nav-item">
-            <a href="#" data-bs-toggle="dropdown" class="nav-link icon-btn">
+            <a href="#" data-bs-toggle="dropdown" class="nav-link icon-btn !tw-px-1 !tw-py-1">
                 <div class="tw-flex tw-flex-row ">
                     @if (App::getLocale() == 'vi')
                         <i class="fi fi-vn"></i>
