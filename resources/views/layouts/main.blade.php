@@ -28,7 +28,7 @@
             @include('partials/header')
         </header>
 
-        <aside class="sidebar">
+        <aside class="sidebar pb-5">
             @include('partials/sidebar')
         </aside>
 

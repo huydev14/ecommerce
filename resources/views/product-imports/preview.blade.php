@@ -39,7 +39,7 @@
         $initialResolvePercentage = (int) ($resolveProgress['percentage'] ?? 0);
     @endphp
 
-    <div class="tw-h-full tw-px-6 tw-pb-6">
+    <div class="tw-h-full tw-pb-6">
         @if ($showProgress)
             <div x-data="{
                 batchId: @js((string) $batch->id),
@@ -133,12 +133,12 @@
                     this.processed = Number(resolution.processed_rows || 0);
                     this.total = Number(resolution.total_rows || this.total || 0);
                     this.percentage = Number(resolution.percentage || 0);
-
+            
                     if ((event.isResolutionFinished || resolution.status === 'completed' || resolution.status === 'failed') && !this.refreshTimer) {
                         if (this.pollTimer) {
                             clearInterval(this.pollTimer);
                         }
-
+            
                         this.refreshTimer = setTimeout(() => window.location.reload(), 1000);
                     }
                 },
@@ -146,7 +146,7 @@
                     if (!window.axios) {
                         return;
                     }
-
+            
                     window.axios.get(this.progressUrl).then((response) => {
                         this.updateProgress(response.data || {});
                     });
@@ -224,31 +224,31 @@
                     </a>
 
                     @can('product-imports.remove')
-                    @if ($canCancelImport)
-                        <form action="{{ route('product-imports.cancel', $batch->id) }}" method="POST"
-                            onsubmit="return confirm(@js(__('product_import.cancel_confirm')));">
-                            @csrf
-                            @method('DELETE')
-                            <button type="submit"
-                                class="tw-inline-flex tw-items-center tw-justify-center tw-gap-2 tw-rounded tw-border tw-border-red-200 tw-bg-white tw-px-3 tw-py-2 tw-text-sm tw-font-medium tw-text-red-600 tw-shadow-sm hover:tw-bg-red-50 focus:tw-outline-none focus:tw-ring-2 focus:tw-ring-red-500 focus:tw-ring-offset-2">
-                                <i class="fas fa-trash"></i>
-                                {{ __('product_import.cancel_import') }}
-                            </button>
-                        </form>
-                    @endif
+                        @if ($canCancelImport)
+                            <form action="{{ route('product-imports.cancel', $batch->id) }}" method="POST"
+                                onsubmit="return confirm(@js(__('product_import.cancel_confirm')));">
+                                @csrf
+                                @method('DELETE')
+                                <button type="submit"
+                                    class="tw-inline-flex tw-items-center tw-justify-center tw-gap-2 tw-rounded tw-border tw-border-red-200 tw-bg-white tw-px-3 tw-py-2 tw-text-sm tw-font-medium tw-text-red-600 tw-shadow-sm hover:tw-bg-red-50 focus:tw-outline-none focus:tw-ring-2 focus:tw-ring-red-500 focus:tw-ring-offset-2">
+                                    <i class="fas fa-trash"></i>
+                                    {{ __('product_import.cancel_import') }}
+                                </button>
+                            </form>
+                        @endif
                     @endcan
 
                     @can('product-imports.create')
-                    @if ($canConfirmImport)
-                        <form action="{{ route('product-imports.confirm', $batch->id) }}" method="POST">
-                            @csrf
-                            <button type="submit"
-                                class="tw-inline-flex tw-items-center tw-justify-center tw-gap-2 tw-rounded tw-bg-[#0f6cbd] tw-px-4 tw-py-2 tw-text-sm tw-font-semibold tw-text-white tw-shadow-sm hover:tw-bg-[#115ea3] focus:tw-outline-none focus:tw-ring-2 focus:tw-ring-[#0f6cbd] focus:tw-ring-offset-2">
-                                <i class="fas fa-check"></i>
-                                {{ __('product_import.confirm_import') }}
-                            </button>
-                        </form>
-                    @endif
+                        @if ($canConfirmImport)
+                            <form action="{{ route('product-imports.confirm', $batch->id) }}" method="POST">
+                                @csrf
+                                <button type="submit"
+                                    class="tw-inline-flex tw-items-center tw-justify-center tw-gap-2 tw-rounded tw-bg-[#0f6cbd] tw-px-4 tw-py-2 tw-text-sm tw-font-semibold tw-text-white tw-shadow-sm hover:tw-bg-[#115ea3] focus:tw-outline-none focus:tw-ring-2 focus:tw-ring-[#0f6cbd] focus:tw-ring-offset-2">
+                                    <i class="fas fa-check"></i>
+                                    {{ __('product_import.confirm_import') }}
+                                </button>
+                            </form>
+                        @endif
                     @endcan
                 </div>
             </div>
@@ -273,32 +273,32 @@
             </div>
 
             @can('product-imports.create')
-            @if (($missingMasterData['total'] ?? 0) > 0 && $canResolveMasterData)
-                <div class="tw-border-b tw-border-amber-100 tw-bg-amber-50 tw-px-6 tw-py-4">
-                    <div class="tw-flex tw-flex-col lg:tw-flex-row lg:tw-items-center lg:tw-justify-between tw-gap-4">
-                        <div>
-                            <h4 class="tw-text-sm tw-font-semibold tw-text-amber-900">
-                                {{ __('product_import.resolve_title') }}</h4>
-                            <p class="tw-mt-1 tw-text-sm tw-text-amber-800">
-                                {{ __('product_import.resolve_description', [
-                                    'categories' => number_format($missingMasterData['categories']),
-                                    'brands' => number_format($missingMasterData['brands']),
-                                    'units' => number_format($missingMasterData['units']),
-                                    'taxes' => number_format($missingMasterData['taxes']),
-                                ]) }}
-                            </p>
+                @if (($missingMasterData['total'] ?? 0) > 0 && $canResolveMasterData)
+                    <div class="tw-border-b tw-border-amber-100 tw-bg-amber-50 tw-px-6 tw-py-4">
+                        <div class="tw-flex tw-flex-col lg:tw-flex-row lg:tw-items-center lg:tw-justify-between tw-gap-4">
+                            <div>
+                                <h4 class="tw-text-sm tw-font-semibold tw-text-amber-900">
+                                    {{ __('product_import.resolve_title') }}</h4>
+                                <p class="tw-mt-1 tw-text-sm tw-text-amber-800">
+                                    {{ __('product_import.resolve_description', [
+                                        'categories' => number_format($missingMasterData['categories']),
+                                        'brands' => number_format($missingMasterData['brands']),
+                                        'units' => number_format($missingMasterData['units']),
+                                        'taxes' => number_format($missingMasterData['taxes']),
+                                    ]) }}
+                                </p>
+                            </div>
+                            <form action="{{ route('product-imports.resolve-master-data', $batch->id) }}" method="POST">
+                                @csrf
+                                <button type="submit"
+                                    class="tw-inline-flex tw-items-center tw-justify-center tw-gap-2 tw-rounded tw-bg-amber-600 tw-px-4 tw-py-2 tw-text-sm tw-font-semibold tw-text-white tw-shadow-sm hover:tw-bg-amber-700 focus:tw-outline-none focus:tw-ring-2 focus:tw-ring-amber-500 focus:tw-ring-offset-2">
+                                    <i class="fas fa-wand-magic-sparkles"></i>
+                                    {{ __('product_import.resolve_action') }}
+                                </button>
+                            </form>
                         </div>
-                        <form action="{{ route('product-imports.resolve-master-data', $batch->id) }}" method="POST">
-                            @csrf
-                            <button type="submit"
-                                class="tw-inline-flex tw-items-center tw-justify-center tw-gap-2 tw-rounded tw-bg-amber-600 tw-px-4 tw-py-2 tw-text-sm tw-font-semibold tw-text-white tw-shadow-sm hover:tw-bg-amber-700 focus:tw-outline-none focus:tw-ring-2 focus:tw-ring-amber-500 focus:tw-ring-offset-2">
-                                <i class="fas fa-wand-magic-sparkles"></i>
-                                {{ __('product_import.resolve_action') }}
-                            </button>
-                        </form>
                     </div>
-                </div>
-            @endif
+                @endif
             @endcan
 
             <div class="tw-overflow-x-auto">
@@ -322,7 +322,7 @@
                             <th
                                 class="tw-whitespace-nowrap tw-px-5 tw-py-3 tw-text-left tw-text-xs tw-font-semibold tw-uppercase tw-text-gray-500">
                                 {{ __('product_import.preview_columns.row') }}</th>
-                                 <th
+                            <th
                                 class="tw-whitespace-nowrap tw-px-5 tw-py-3 tw-text-left tw-text-xs tw-font-semibold tw-uppercase tw-text-gray-500">
                                 {{ __('product_import.preview_columns.status') }}</th>
                             <th
@@ -334,13 +334,13 @@
                             <th
                                 class="tw-whitespace-nowrap tw-px-5 tw-py-3 tw-text-left tw-text-xs tw-font-semibold tw-uppercase tw-text-gray-500">
                                 {{ __('product_import.preview_columns.sub_category') }}</th>
-                                 <th
+                            <th
                                 class="tw-whitespace-nowrap tw-px-5 tw-py-3 tw-text-left tw-text-xs tw-font-semibold tw-uppercase tw-text-gray-500">
                                 {{ __('product_import.preview_columns.sku') }}</th>
                             <th
                                 class="tw-whitespace-nowrap tw-px-5 tw-py-3 tw-text-left tw-text-xs tw-font-semibold tw-uppercase tw-text-gray-500">
                                 {{ __('product_import.preview_columns.product') }}</th>
-                           
+
                             <th
                                 class="tw-whitespace-nowrap tw-px-5 tw-py-3 tw-text-left tw-text-xs tw-font-semibold tw-uppercase tw-text-gray-500">
                                 {{ __('product_import.preview_columns.variant_price') }}</th>
@@ -358,18 +358,19 @@
                                 'hover:tw-bg-gray-50',
                                 'tw-bg-red-50' => $row->status === 'error',
                             ])>
-                                <td class="tw-whitespace-nowrap tw-px-5 tw-py-3 tw-text-sm tw-font-medium tw-text-gray-900">
+                                <td
+                                    class="tw-whitespace-nowrap tw-px-5 tw-py-3 tw-text-sm tw-font-medium tw-text-gray-900">
                                     #{{ $row->row_number }}</td>
-                                     <td class="tw-whitespace-nowrap tw-px-5 tw-py-3">
+                                <td class="tw-whitespace-nowrap tw-px-5 tw-py-3">
                                     @if ($row->status === 'completed')
                                         <span
-                                            class="tw-inline-flex tw-items-center tw-gap-1.5 tw-rounded tw-bg-emerald-50 tw-px-2 tw-py-1 tw-text-xs tw-font-semibold tw-text-emerald-700">
+                                            class="tw-inline-flex tw-items-center tw-gap-1.5 tw-rounded tw-bg-emerald-50 tw-px-2 tw-py-1 tw-text-xs tw-font-medium tw-capitalize tw-text-emerald-700">
                                             <i class="fas fa-circle-check"></i>
                                             {{ __('product_import.row_status_completed') }}
                                         </span>
                                     @elseif ($row->status === 'valid')
                                         <span
-                                            class="tw-inline-flex tw-items-center tw-gap-1.5 tw-rounded tw-bg-emerald-50 tw-px-2 tw-py-1 tw-text-xs tw-font-semibold tw-text-emerald-700">
+                                            class="tw-inline-flex tw-items-center tw-gap-1.5 tw-rounded tw-bg-emerald-50 tw-px-2 tw-py-1 tw-text-xs tw-font-medium tw-capitalize tw-text-emerald-700">
                                             <i class="fas fa-circle-check"></i>
                                             {{ __('product_import.row_status_valid') }}
                                         </span>
@@ -416,7 +417,7 @@
                                         {{ $row->data['product']['name'] ?? '-' }}
                                     </div>
                                 </td>
-                                
+
                                 <td class="tw-whitespace-nowrap tw-px-5 tw-py-3 tw-text-sm tw-text-gray-700">
                                     {{ isset($row->data['variant']['price']) ? number_format((float) $row->data['variant']['price']) : '-' }}
                                 </td>
@@ -532,14 +533,14 @@
                     type: 'success',
                     title: @js(__('product_import.resolve_completed_title')),
                     description: @js(
-                        __('product_import.resolve_success', [
-                            'rows' => number_format($resolveResult['resolved_rows'] ?? 0),
-                            'categories' => number_format($resolveResult['categories'] ?? 0),
-                            'brands' => number_format($resolveResult['brands'] ?? 0),
-                            'units' => number_format($resolveResult['units'] ?? 0),
-                            'taxes' => number_format($resolveResult['taxes'] ?? 0),
-                        ])
-                    ),
+    __('product_import.resolve_success', [
+        'rows' => number_format($resolveResult['resolved_rows'] ?? 0),
+        'categories' => number_format($resolveResult['categories'] ?? 0),
+        'brands' => number_format($resolveResult['brands'] ?? 0),
+        'units' => number_format($resolveResult['units'] ?? 0),
+        'taxes' => number_format($resolveResult['taxes'] ?? 0),
+    ]),
+),
                     actionType: 'close',
                 });
             @elseif (($resolveResult['status'] ?? null) === 'failed')

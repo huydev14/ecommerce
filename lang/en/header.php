@@ -2,7 +2,8 @@
 
 return [
     'field_service' => 'Admin dashboard',
-    'search_placeholder' => 'Search resources, services and documents (G+/)',
+    'search_placeholder' => 'Search activity logs',
+    'search_shortcut' => 'Search shortcut',
     'vi' => 'Vietnamese',
     'en' => 'English',
     'profile' => 'Profile',

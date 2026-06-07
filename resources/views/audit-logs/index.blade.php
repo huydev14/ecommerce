@@ -71,6 +71,7 @@
                     userCauserData: [],
                     customerCauserData: [],
                 };
+                const initialAuditSearch = @js(request('q', ''));
 
                 const currentCauserOptions = function() {
                     return activeCauserType === causerTypes.customer ? filterData.customerCauserData : filterData.userCauserData;
@@ -93,6 +94,9 @@
                             d.causer_id = $('#f_causer').val() || '';
                             d.causer_type = activeCauserType;
                         },
+                    },
+                    search: {
+                        search: initialAuditSearch,
                     },
                     order: [],
                     columns: [{
@@ -151,6 +155,7 @@
                         lengthChange: false,
                     },
                 });
+                $('#custom-search-input').val(initialAuditSearch);
                 $('#custom-search-input').on('keyup', function() {
                     auditLogTable.search(this.value).draw();
                 });

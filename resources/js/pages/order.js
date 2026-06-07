@@ -80,7 +80,7 @@ $(function () {
         processing: true,
         serverSide: true,
         autoWidth: false,
-        order: [[7, 'desc']],
+        pageLength: 6,
         ajax: {
             url: route('orders.data'),
             data: function (d) {
@@ -104,7 +104,6 @@ $(function () {
         layout: {
             topStart: null,
             topEnd: null,
-            bottomStart: 'pageLength',
             bottomEnd: 'paging',
         },
     });

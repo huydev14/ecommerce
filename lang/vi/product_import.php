@@ -25,7 +25,7 @@ return [
     'guide_toggle' => 'Xem hướng dẫn & tải file mẫu',
     'download_sample' => 'Tải file Excel mẫu',
     'template_title' => 'File mẫu',
-    'template_description' => 'Tải file mẫu để bắt đầu đúng cấu trúc import sản phẩm.',
+    'template_description' => 'Tải xuống file mẫu để import đúng cấu trúc sản phẩm.',
     'download' => 'Tải xuống',
     'template_not_found' => 'File mẫu không tồn tại.',
     'guide_intro_title' => 'Thực hiện theo hướng dẫn cẩn thận trước khi thêm tệp.',

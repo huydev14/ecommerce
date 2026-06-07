@@ -2,7 +2,8 @@
 
 return [
     'field_service' => 'Admin dashboard',
-    'search_placeholder' => 'Tìm kiếm tài nguyên, dịch vụ và tài liệu (G+/)',
+    'search_placeholder' => 'Tìm kiếm nhật ký hoạt động',
+    'search_shortcut' => 'Phím tắt tìm kiếm',
     'vi' => 'Tiếng Việt',
     'en' => 'English',
     'profile' => 'Hồ sơ',
