@@ -120,7 +120,7 @@ class ProductController extends Controller
 
     public function store(Request $request)
     {
-        if (!$request->user()?->can('products.create')) {
+        if (!$request->user()?->can('products.store')) {
             abort(403, 'Bạn không có quyền tạo sản phẩm.');
         }
 

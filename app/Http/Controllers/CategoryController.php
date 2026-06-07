@@ -81,7 +81,7 @@ class CategoryController extends Controller
 
     public function store(Request $request)
     {
-        if (!$request->user()?->can('categories.create')) {
+        if (!$request->user()?->can('categories.store')) {
             abort(403, 'Bạn không có quyền tạo danh mục.');
         }
 

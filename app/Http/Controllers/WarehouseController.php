@@ -80,7 +80,7 @@ class WarehouseController extends Controller
 
     public function store(Request $request)
     {
-        if (!$request->user()?->can('warehouses.create')) {
+        if (!$request->user()?->can('warehouses.store')) {
             abort(403, 'Bạn không có quyền tạo kho.');
         }
 

@@ -104,7 +104,7 @@ class StockMovementController extends Controller
 
     public function store(Request $request)
     {
-        if (! $request->user()?->can('stock-movements.create')) {
+        if (! $request->user()?->can('stock-movements.store')) {
             abort(403, 'Bạn không có quyền tạo biến động kho.');
         }
 

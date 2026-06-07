@@ -60,7 +60,7 @@ class BannerController extends Controller
 
     public function store(Request $request)
     {
-        if (!$request->user()?->can('banners.create')) {
+        if (!$request->user()?->can('banners.store')) {
             abort(403, 'Bạn không có quyền tạo banner.');
         }
 

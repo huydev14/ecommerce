@@ -116,7 +116,7 @@ class ProductVariantController extends Controller
 
     public function store(Request $request)
     {
-        if (!$request->user()?->can('product-variants.create')) {
+        if (!$request->user()?->can('product-variants.store')) {
             abort(403, 'Bạn không có quyền tạo biến thể sản phẩm.');
         }
 

@@ -62,7 +62,7 @@ class UnitController extends Controller
 
     public function store(Request $request)
     {
-        if (! $request->user()?->can('units.create')) {
+        if (! $request->user()?->can('units.store')) {
             abort(403, 'Bạn không có quyền tạo đơn vị.');
         }
 

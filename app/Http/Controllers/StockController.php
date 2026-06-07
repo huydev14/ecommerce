@@ -95,7 +95,7 @@ class StockController extends Controller
 
     public function store(Request $request)
     {
-        if (! $request->user()?->can('stocks.create')) {
+        if (! $request->user()?->can('stocks.store')) {
             abort(403, 'Bạn không có quyền tạo tồn kho.');
         }
 

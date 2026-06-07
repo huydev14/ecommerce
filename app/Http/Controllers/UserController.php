@@ -56,7 +56,7 @@ class UserController extends Controller
 
     public function store(StoreUserRequest $request)
     {
-        if (! $request->user()?->can('users.create')) {
+        if (! $request->user()?->can('users.store')) {
             abort(403, 'Bạn không có quyền tạo người dùng.');
         }
 

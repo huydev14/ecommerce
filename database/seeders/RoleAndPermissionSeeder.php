@@ -43,6 +43,7 @@ class RoleAndPermissionSeeder extends Seeder
             'orders.update',
             'product-imports.view',
             'product-imports.create',
+            'product-imports.store',
             'product-imports.edit',
             'product-imports.update',
             'product-imports.remove',
@@ -52,7 +53,7 @@ class RoleAndPermissionSeeder extends Seeder
         ];
 
         foreach ($crudPermissionModules as $module) {
-            foreach (['view', 'create', 'edit', 'update', 'remove'] as $action) {
+            foreach (['view', 'create', 'store', 'edit', 'update', 'remove'] as $action) {
                 $permissions[] = "{$module}.{$action}";
             }
         }
@@ -86,9 +87,6 @@ class RoleAndPermissionSeeder extends Seeder
             ->orWhere('name', 'like', '%.edit')
             ->orWhereIn('name', ['log.detail'])
             ->get();
-        $hrDemoPermissions = $hrDemoPermissions
-            ->merge(Permission::query()->where('name', 'like', 'product-imports.%')->get())
-            ->unique('id');
 
         $superAdmin->syncPermissions($allPermissions);
 

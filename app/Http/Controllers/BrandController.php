@@ -76,7 +76,7 @@ class BrandController extends Controller
 
     public function store(Request $request)
     {
-        if (!$request->user()?->can('brands.create')) {
+        if (!$request->user()?->can('brands.store')) {
             abort(403, 'Bạn không có quyền tạo thương hiệu.');
         }
 

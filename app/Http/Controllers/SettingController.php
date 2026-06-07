@@ -126,6 +126,44 @@ class SettingController extends Controller
         }
     }
 
+    public function updateVnpay(Request $request)
+    {
+        if (! $request->user()?->can('settings.update')) {
+            abort(403, 'Bạn không có quyền cập nhật cấu hình VNPAY.');
+        }
+
+        $validated = $request->validate([
+            'tmn_code' => 'nullable|string|max:255',
+            'hash_secret' => 'nullable|string|max:255',
+            'url' => 'nullable|url|max:500',
+            'return_url' => 'nullable|url|max:500',
+        ]);
+
+        $oldConfig = Setting::where('key', 'vnpay')->where('group', 'integrations')->first();
+
+        if ($request->filled('hash_secret')) {
+            $validated['hash_secret'] = encrypt($request->hash_secret);
+        } else {
+            $validated['hash_secret'] = $oldConfig->value['hash_secret'] ?? null;
+        }
+
+        try {
+            Setting::updateOrCreate(
+                ['key' => 'vnpay', 'group' => 'integrations'],
+                ['value' => $validated]
+            );
+
+            Cache::forget('config.integrations.vnpay');
+
+            return redirect()
+                ->to(route('settings.index') . '?tab=vnpay')
+                ->with('success', 'Cấu hình VNPAY đã được cập nhật.');
+        } catch (\Exception $e) {
+            Log::error('VNPAY config update error: ' . $e->getMessage());
+            return redirect()->back()->with('error', 'Có lỗi xảy ra khi lưu cấu hình VNPAY.');
+        }
+    }
+
     public function testMail(Request $request)
     {
         if (! $request->user()?->can('settings.update')) {

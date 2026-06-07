@@ -86,7 +86,7 @@ class CustomerController extends Controller
 
     public function store(Request $request)
     {
-        if (!$request->user()?->can('customers.create')) {
+        if (!$request->user()?->can('customers.store')) {
             abort(403, 'Bạn không có quyền tạo khách hàng.');
         }
 

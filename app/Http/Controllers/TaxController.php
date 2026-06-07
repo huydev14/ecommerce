@@ -62,7 +62,7 @@ class TaxController extends Controller
 
     public function store(Request $request)
     {
-        if (! $request->user()?->can('taxes.create')) {
+        if (! $request->user()?->can('taxes.store')) {
             abort(403, 'Bạn không có quyền tạo thuế.');
         }
 
