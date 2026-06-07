@@ -141,7 +141,6 @@ const scrollBestSellers = (direction) => {
 .best-sellers :deep(.client-product-card__image) {
     width: 100%;
     height: 100%;
-    padding: 14px;
 }
 
 .best-sellers :deep(.client-product-card__image img) {

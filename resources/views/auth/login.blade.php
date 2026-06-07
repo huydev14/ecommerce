@@ -95,14 +95,8 @@
         </div>
     </form>
 
-    <div class="tw-mt-6 tw-rounded-lg tw-border tw-border-blue-200 tw-bg-blue-50 tw-p-4">
-        <div class="tw-mb-2 tw-flex tw-items-center tw-gap-2 tw-text-sm tw-font-bold tw-text-blue-700">
-            <svg xmlns="http://www.w3.org/2000/svg" class="tw-h-[18px] tw-w-[18px]" viewBox="0 0 24 24" fill="none"
-                stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-                <path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
-                <circle cx="8.5" cy="7" r="4"></circle>
-                <polyline points="17 11 19 13 23 9"></polyline>
-            </svg>
+    <div class="tw-mt-6 tw-rounded-sm tw-border tw-p-4">
+        <div class="tw-mb-2 tw-flex tw-items-center tw-gap-2 tw-text-sm tw-font-bold tw-text-gray-700">
             <span>Welcome HR!</span>
         </div>
 
@@ -111,7 +105,7 @@
         </p>
 
         <button type="button" id="admin-hr-demo-login"
-            class="tw-flex tw-w-full tw-items-center tw-justify-center tw-gap-2 tw-rounded-md tw-border tw-border-transparent tw-bg-blue-600 tw-px-3 tw-py-2 tw-text-sm tw-font-semibold tw-text-white tw-shadow-sm tw-transition-all tw-duration-200 hover:tw-bg-blue-700 focus:tw-outline-none focus:tw-ring-2 focus:tw-ring-blue-500 focus:tw-ring-offset-2 active:tw-bg-blue-800">
+            class="tw-flex tw-w-full tw-items-center tw-justify-center tw-gap-2 tw-rounded-sm tw-border tw-border-transparent tw-bg-blue-600 tw-px-3 tw-py-2 tw-text-sm tw-font-semibold tw-text-white tw-shadow-sm tw-transition-all tw-duration-200 hover:tw-bg-blue-700 focus:tw-outline-none focus:tw-ring-2 focus:tw-ring-blue-500 focus:tw-ring-offset-2 active:tw-bg-blue-800">
             <svg xmlns="http://www.w3.org/2000/svg" class="tw-h-4 tw-w-4" viewBox="0 0 24 24" fill="none"
                 stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                 <path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"></path>

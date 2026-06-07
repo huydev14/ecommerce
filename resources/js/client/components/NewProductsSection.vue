@@ -115,9 +115,6 @@ const productRows = computed(() => {
     height: 190px;
 }
 
-.new-products :deep(.client-product-card__image) {
-    padding: 14px;
-}
 
 .new-products :deep(.client-product-card__body) {
     min-height: 236px;

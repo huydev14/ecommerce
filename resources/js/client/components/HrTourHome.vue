@@ -28,104 +28,127 @@ const startHrTourHome = () => {
         nextBtnText: 'Tiếp theo',
         prevBtnText: 'Quay lại',
         progressText: '{{current}} / {{total}}',
+        allowClose: false,
+        onDestroyStarted: () => {
+            if (!driverObj.hasNextStep() || confirm('Anh/Chị có chắc muốn bỏ qua phần hướng dẫn này?')) {
+                markTourCompleted();
+                driverObj.destroy();
+            }
+        },
         steps: [
-            {
-                popover: {
-                    title: '👋 Welcome HR!',
-                    description: `
-                        <div class="hr-tour-content">
-                            <p>Cảm ơn Anh/Chị đã tham quan dự án của em. <br>Đây là link để truy cập trang Admin:</p>
-                            
-                            <a class="hr-tour-admin-link" href="${ADMIN_URL}" target="_blank" rel="noopener noreferrer">
-                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path><polyline points="15 3 21 3 21 9"></polyline><line x1="10" y1="14" x2="21" y2="3"></line></svg>
-                                Mở tab admin
-                            </a>
+    {
+        popover: {
+            title: 'Welcome HR! 👋 ',
+            description: `
+                <div class="hr-tour-content">
+                    <p>
+                        Cảm ơn Anh/Chị đã dành thời gian tham quan dự án của em.
+                        <br>
+                        Anh/Chị có thể truy cập trang admin tại đây:
+                    </p>
 
-                            <p>Em xin được giới thiệu nhanh các <strong>tính năng nổi bật nhất</strong> tại phần homepage này nhé!</p>
-                        </div>
-                    `,
-                    side: 'over',
-                    align: 'center',
-                    onPopoverRender: (popover) => {
-                        const adminLink = popover.wrapper.querySelector('.hr-tour-admin-link');
+                    <a class="hr-tour-admin-link" href="${ADMIN_URL}" target="_blank" rel="noopener noreferrer">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
+                            stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path>
+                            <polyline points="15 3 21 3 21 9"></polyline>
+                            <line x1="10" y1="14" x2="21" y2="3"></line>
+                        </svg>
+                        Mở tab Admin
+                    </a>
 
-                        adminLink?.addEventListener('click', () => {
-                            markTourCompleted();
-                            driverObj.destroy();
-                        });
-                    },
-                },
-            },
-            {
-                element: '.open-location-modal',
-                popover: {
-                    title: 'Tích hợp GHN API tính toán phí ship',
-                    description: 'Khi chọn địa chỉ giao hàng, API sẽ trả về phí vận chuyển dựa trên địa chỉ đó.',
-                    side: 'bottom',
-                    align: 'start',
-                },
-            },
-            {
-                element: '.trending-keywords',
-                popover: {
-                    title: 'Lưu trữ trending keywords',
-                    description:
-                        'Mỗi khi khách hàng tìm kiếm, từ khóa sẽ được lưu vào Redis sorted set với điểm số tăng dần. Phần trending keywords sẽ lấy top 10 từ khóa có điểm số cao nhất để hiển thị.',
-                    side: 'bottom',
-                    align: 'start',
-                },
-            },
-            {
-                element: '.client-cart',
-                popover: {
-                    title: 'Tối ưu Giỏ hàng',
-                    description: 'Toàn bộ thao tác CRUD với giỏ hàng được xử lý qua Redis hashset, cho tốc độ phản hồi gần như tức thời.',
-                    side: 'bottom',
-                    align: 'start',
-                },
-            },
-            {
-                element: '.best-sellers',
-                popover: {
-                    title: 'Caching API',
-                    description: 'Các section ở homepage đều được lấy từ cache để giảm tải đáng kể cho database',
-                    side: 'bottom',
-                    align: 'start',
-                },
-            },
-            {
-                element: '.client-product-card__image',
-                popover: {
-                    title: 'Tối ưu hình ảnh',
-                    description: 'Tích hợp Cloudinary để tối ưu toàn bộ hình ảnh',
-                    side: 'bottom',
-                    align: 'start',
-                },
-            },
+                    <p>
+                        Sau đây là một số <strong>tính năng kỹ thuật nổi bật</strong>
+                        mà em đã triển khai ở phần homepage.
+                    </p>
+                </div>
+            `,
+            side: 'over',
+            align: 'center',
+            onPopoverRender: (popover) => {
+                const adminLink = popover.wrapper.querySelector('.hr-tour-admin-link');
 
-            {
-                element: '.client-product-card__shipping',
-                popover: {
-                    title: '',
-                    description: 'Phí ship được tính toán qua GHN API dựa trên địa chỉ đã chọn',
-                    side: 'bottom',
-                    align: 'start',
-                },
+                adminLink?.addEventListener('click', () => {
+                    markTourCompleted();
+                });
             },
-            {
-                popover: {
-                    title: 'Hãy thử đặt hàng ngay nào!',
-
-                    side: 'bottom',
-                    align: 'start',
-                    onNextClick: () => {
-                        markTourCompleted();
-                        driverObj.destroy();
-                        location.reload();
-                    },
-                },
+        },
+    },
+    {
+        element: '.open-location-modal',
+        popover: {
+            title: 'Tính phí vận chuyển bằng GHN API',
+            description:
+                'Người dùng có thể chọn địa chỉ giao hàng, hệ thống sẽ gọi GHN API để tính phí vận chuyển theo khu vực tương ứng.',
+            side: 'bottom',
+            align: 'start',
+        },
+    },
+    {
+        element: '.trending-keywords',
+        popover: {
+            title: 'Lưu và hiển thị từ khóa tìm kiếm phổ biến',
+            description:
+                'Mỗi lượt tìm kiếm của khách hàng được ghi nhận vào Redis Sorted Set. Hệ thống sẽ lấy top 10 từ khóa có điểm số cao nhất để hiển thị.',
+            side: 'bottom',
+            align: 'start',
+        },
+    },
+    {
+        element: '.client-cart',
+        popover: {
+            title: 'Tối ưu Giỏ hàng',
+            description:
+                'Các thao tác thêm, sửa, xóa sản phẩm trong giỏ hàng được xử lý thông qua Redis Hash, giúp giảm truy vấn database và tăng tốc độ phản hồi.',
+            side: 'bottom',
+            align: 'start',
+        },
+    },
+    {
+        element: '.best-sellers',
+        popover: {
+            title: 'Caching dữ liệu homepage',
+            description:
+                'Các section hiển thị ở homepage được lấy từ cache nhằm giảm tải cho database và tăng tốc độ tải trang.',
+            side: 'bottom',
+            align: 'start',
+        },
+    },
+    {
+        element: '.client-product-card__image',
+        popover: {
+            title: 'Tối ưu hình ảnh với Cloudinary',
+            description:
+                'Tất cả hình ảnh được tối ưu với Cloudinary, đảm bảo chất lượng hiển thị.',
+            side: 'bottom',
+            align: 'start',
+        },
+    },
+    {
+        element: '.client-product-card__shipping',
+        popover: {
+            title: 'Hiển thị phí ship theo địa chỉ',
+            description:
+                'Phí vận chuyển được tính toán dựa trên địa chỉ giao hàng mà người dùng đã chọn.',
+            side: 'bottom',
+            align: 'start',
+        },
+    },
+    {
+        popover: {
+            title: 'Trải nghiệm thử quy trình đặt hàng',
+            description:
+                'Anh/Chị có thể thử tìm kiếm sản phẩm, thêm vào giỏ hàng và thực hiện quy trình đặt hàng để xem luồng xử lý thực tế của hệ thống.',
+            side: 'bottom',
+            align: 'start',
+            onNextClick: () => {
+                markTourCompleted();
+                driverObj.destroy();
+                location.reload();
             },
-        ],
+        },
+    },
+],
     });
 
     driverObj.drive();

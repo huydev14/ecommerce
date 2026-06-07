@@ -262,13 +262,10 @@ const loginWithSocial = (provider) => {
     width: 100%;
 }
 
-/* =========================================================
-   CARD HR DEMO LOGIN
-   ========================================================= */
 .hr-demo-card {
     margin-top: 24px;
     padding: 16px;
-    background-color: #f4f8fb; /* Màu nền xanh lam nhạt tạo sự chú ý mà không bị gắt */
+    background-color: #f4f8fb;
     border: 1px solid #c8dbe8;
     border-radius: 8px;
 }
@@ -277,7 +274,7 @@ const loginWithSocial = (provider) => {
     display: flex;
     align-items: center;
     gap: 8px;
-    color: #005fb8; /* Accent color */
+    color: #005fb8;
     font-weight: bold;
     font-size: 14px;
     margin-bottom: 8px;
