@@ -32,6 +32,7 @@ const isLoadingCheckout = ref(false);
 const checkoutError = ref('');
 const isProcessing = ref(false);
 let isSyncingAddressFromApi = false;
+const idempotencyKey = ref('');
 
 const paymentMethods = computed(() => [
     {
@@ -176,11 +177,19 @@ const placeOrder = async () => {
     checkoutError.value = '';
 
     try {
-        const response = await api.post('/checkout', {
-            customer_address_id: selectedAddressId.value,
-            payment_method: selectedPaymentMethod.value,
-            note: orderNote.value,
-        });
+        const response = await api.post(
+            '/checkout',
+            {
+                customer_address_id: selectedAddressId.value,
+                payment_method: selectedPaymentMethod.value,
+                note: orderNote.value,
+            },
+            {
+                headers: {
+                    'Idempotency-Key': idempotencyKey.value,
+                },
+            },
+        );
         const data = response.data.data || {};
         cartStore.clearCart();
 
@@ -210,7 +219,10 @@ const placeOrder = async () => {
     }
 };
 
-onMounted(fetchCheckoutReview);
+onMounted(() => {
+    idempotencyKey.value = `${Date.now()}-${Math.random().toString(36).slice(2)}`;
+    fetchCheckoutReview();
+});
 
 watch(selectedAddressId, (addressId, previousAddressId) => {
     if (!addressId || !previousAddressId || isSyncingAddressFromApi) {
@@ -259,7 +271,9 @@ watch(selectedAddressId, (addressId, previousAddressId) => {
                                 <strong>{{ selectedAddress.receiver_name }}</strong>
                                 <span v-for="line in selectedAddressLines" :key="line">{{ line }}</span>
                                 <span>{{ t('checkout.address_phone', { phone: selectedAddress.receiver_phone }) }}</span>
-                                <span v-if="selectedAddress.delivery_note">{{ t('checkout.address_note', { note: selectedAddress.delivery_note }) }}</span>
+                                <span v-if="selectedAddress.delivery_note">{{
+                                    t('checkout.address_note', { note: selectedAddress.delivery_note })
+                                }}</span>
                             </address>
                         </article>
 

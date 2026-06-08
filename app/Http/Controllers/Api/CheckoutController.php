@@ -10,6 +10,7 @@ use App\Models\ProductVariant;
 use App\Services\CartService;
 use App\Services\GhnService;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Redis;
@@ -115,83 +116,98 @@ class CheckoutController extends Controller
         $user = $request->user();
         $validated = $request->validated();
 
-        $cartKey = $this->cartService->getCartKey($request);
-        $cartItems = Redis::hGetAll($cartKey);
+        $idemKey = $request->header('Idempotency-Key');
 
-        if (empty($cartItems)) {
-            return response()->json(['success' => false, 'message' => 'Giỏ hàng của bạn đang trống.'], 400);
+        if (!$idemKey) {
+            return response()->json(['success' => false, 'message' => 'Thiếu Idempotency-Key trong Header.'], 400);
         }
 
-        $address = CustomerAddress::find($validated['customer_address_id']);
-        if (!$address) {
-            return response()->json(['success' => false, 'message' => 'Không tìm thấy địa chỉ.'], 404);
+        $redisIdemKey = 'checkout_idem_' . $user->id . '_' . $idemKey;
+
+        $cachedResponse = Redis::get($redisIdemKey . '_result');
+        if ($cachedResponse) {
+            return response()->json(json_decode($cachedResponse, true));
         }
 
-        DB::beginTransaction();
+        $idemLock = Cache::lock($redisIdemKey . '_processing', 120);
+        if (!$idemLock->get()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Đơn hàng đang được xử lý.'
+            ], 429);
+        }
 
         try {
-            $subtotal = 0;
-            $totalWeight = 0;
-            $orderItemsData = [];
+            $cartKey = $this->cartService->getCartKey($request);
+            $cartItems = Redis::hGetAll($cartKey);
+
+            if (empty($cartItems)) {
+                return response()->json(['success' => false, 'message' => 'Giỏ hàng của bạn đang trống.'], 400);
+            }
+
+            $address = CustomerAddress::find($validated['customer_address_id']);
+            if (!$address) {
+                return response()->json(['success' => false, 'message' => 'Không tìm thấy địa chỉ.'], 404);
+            }
 
             $variantIds = array_keys($cartItems);
-
             sort($variantIds);
 
-            foreach ($variantIds as $variantId) {
-                $quantity = (int) $cartItems[$variantId];
-
-                $variant = ProductVariant::with([
-                    'product',
-                    'stocks' => function ($query) {
-                        $query->lockForUpdate();
-                    }
-                ])->where('id', $variantId)->first();
-
-                if (!$variant || $variant->available_stock < $quantity) {
-                    $name = $variant->product->name ?? 'Sản phẩm';
-                    throw new \Exception("Sản phẩm '{$name}' không đủ số lượng trong kho.");
-                }
-
-                $remainingToDeduct = $quantity;
-
-                foreach ($variant->stocks as $stock) {
-                    $availableInThisStock = $stock->quantity - $stock->reserved_quantity;
-                    if ($availableInThisStock > 0) {
-                        $deduct = min($availableInThisStock, $remainingToDeduct);
-
-                        $stock->quantity -= $deduct;
-                        $stock->save();
-
-                        $remainingToDeduct -= $deduct;
-                    }
-
-                    if ($remainingToDeduct <= 0) {
-                        break;
-                    }
-                }
-                $variant->save();
-
-                $price = $variant->price;
-                $lineTotal = $price * $quantity;
-                $subtotal += $lineTotal;
-                $totalWeight += $quantity * 200;
-
-                $orderItemsData[] = [
-                    'product_id' => $variant->product_id,
-                    'product_name' => $variant->product->name ?? 'Sản phẩm',
-                    'product_sku' => $variant->sku ?? null,
-                    'price' => $price,
-                    'quantity' => $quantity,
-                    'total_price' => $lineTotal,
-                ];
+            $variantsForWeight = ProductVariant::whereIn('id', $variantIds)->get();
+            $totalWeight = 0;
+            foreach ($variantsForWeight as $v) {
+                $totalWeight += ((int) $cartItems[$v->id]) * 200;
             }
 
             $shippingFeeResponse = $this->ghnService->calculateFee($address->district_id, $address->ward_code, $totalWeight);
             $shippingFee = $shippingFeeResponse['total'] ?? 30000;
 
-            $finalTotal = $subtotal + $shippingFee;
+            $subtotal = 0;
+            $orderItemsData = [];
             $orderNumber = strtoupper(Str::random(8));
+
+            DB::beginTransaction();
+
+            $variants = ProductVariant::with(['product', 'stocks' => fn($q) => $q->lockForUpdate()])
+                ->whereIn('id', $variantIds)
+                ->lockForUpdate()
+                ->orderBy('id', 'asc')
+                ->get()
+                ->keyBy('id');
+
+            foreach ($variantIds as $variantId) {
+                $quantity = (int) $cartItems[$variantId];
+                $variant = $variants->get($variantId);
+
+                if (!$variant || $variant->available_stock < $quantity) {
+                    throw new \Exception("Sản phẩm '" . ($variant->product->name ?? '') . "' không đủ số lượng trong kho.");
+                }
+
+                $remainingToDeduct = $quantity;
+                foreach ($variant->stocks as $stock) {
+                    if ($stock->available_quantity > 0) {
+                        $deduct = min($stock->available_quantity, $remainingToDeduct);
+                        $stock->quantity -= $deduct;
+                        $stock->save();
+                        $remainingToDeduct -= $deduct;
+                    }
+                    if ($remainingToDeduct <= 0)
+                        break;
+                }
+                $variant->save();
+
+                $lineTotal = $variant->price * $quantity;
+                $subtotal += $lineTotal;
+
+                $orderItemsData[] = [
+                    'product_id' => $variant->product_id,
+                    'product_name' => $variant->product->name ?? 'Sản phẩm',
+                    'product_sku' => $variant->sku ?? null,
+                    'price' => $variant->price,
+                    'quantity' => $quantity,
+                    'total_price' => $lineTotal,
+                ];
+            }
 
             $order = Order::create([
                 'order_number' => $orderNumber,
@@ -207,39 +223,31 @@ class CheckoutController extends Controller
                 'notes' => $validated['note'] ?? null,
                 'subtotal' => $subtotal,
                 'shipping_fee' => $shippingFee,
-                'total_amount' => $finalTotal,
+                'total_amount' => $subtotal + $shippingFee,
                 'status' => 'processing',
                 'payment_method' => $validated['payment_method'],
                 'payment_status' => 'pending',
             ]);
 
-            foreach ($orderItemsData as $data) {
-                $order->items()->create($data);
-            }
-
-            Redis::del($cartKey);
+            $order->items()->createMany($orderItemsData);
 
             DB::commit();
+            Redis::del($cartKey);
 
-            if ($validated['payment_method'] === 'cod') {
-                return response()->json([
-                    'success' => true,
-                    'message' => 'Đặt hàng thành công!',
-                    'data' => [
-                        'order_number' => $order->order_number,
-                        'redirect_url' => '/checkout/success?order=' . $order->order_number
-                    ]
-                ]);
-            } else if ($validated['payment_method'] === 'vnpay') {
-                return response()->json([
-                    'success' => true,
-                    'message' => 'Đơn hàng đã được tạo. Vui lòng tiếp tục thanh toán qua VNPAY.',
-                    'data' => [
-                        'order_id' => $order->id,
-                        'order_number' => $order->order_number,
-                    ]
-                ]);
-            }
+            $responseData = [
+                'success' => true,
+                'message' => $validated['payment_method'] === 'cod' ? 'Đặt hàng thành công!' : 'Vui lòng thanh toán qua VNPAY.',
+                'data' => [
+                    'order_id' => $order->id,
+                    'order_number' => $order->order_number,
+                    'redirect_url' => $validated['payment_method'] === 'cod' ? '/checkout/success?order=' . $order->order_number : null
+                ]
+            ];
+
+            Redis::setex($redisIdemKey . '_result', 3600, json_encode($responseData));
+
+            return response()->json($responseData);
+
         } catch (\Exception $e) {
             DB::rollBack();
             Log::error('Lỗi Checkout: ' . $e->getMessage());
@@ -248,6 +256,9 @@ class CheckoutController extends Controller
                 'success' => false,
                 'message' => $e->getMessage()
             ], 422);
+
+        } finally {
+            $idemLock->release();
         }
     }
 
