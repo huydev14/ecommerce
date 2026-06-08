@@ -4,7 +4,7 @@ const shippingFeeRequests = new Map();
 </script>
 
 <script setup>
-import { computed, ref, watch } from 'vue';
+import { computed, onBeforeUnmount, ref, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { APP_CONFIG } from '@/config';
 import api from '@/services/api';
@@ -28,6 +28,8 @@ const emit = defineEmits(['add-to-cart']);
 const shippingFee = ref(null);
 const isShippingFeeLoading = ref(false);
 const shippingFeeError = ref('');
+const showCartIncrement = ref(false);
+let cartIncrementTimer = null;
 
 const productRoute = computed(() =>
     props.product.slug ? { name: 'ProductDetail', params: { slug: props.product.slug } } : { name: 'ProductList' },
@@ -154,7 +156,32 @@ const displayCartLabel = computed(() => props.cartLabel || t('productCard.action
 const displayAddingLabel = computed(() => props.addingLabel || t('productCard.actions_adding'));
 const freeshipLabel = computed(() => t('productCard.badge_freeship'));
 
+const handleAddToCart = () => {
+    showCartIncrement.value = false;
+
+    if (cartIncrementTimer) {
+        clearTimeout(cartIncrementTimer);
+    }
+
+    requestAnimationFrame(() => {
+        showCartIncrement.value = true;
+    });
+
+    cartIncrementTimer = setTimeout(() => {
+        showCartIncrement.value = false;
+        cartIncrementTimer = null;
+    }, 700);
+
+    emit('add-to-cart', props.product);
+};
+
 watch(() => locationStore.currentProvinceId, fetchShippingFee, { immediate: true });
+
+onBeforeUnmount(() => {
+    if (cartIncrementTimer) {
+        clearTimeout(cartIncrementTimer);
+    }
+});
 </script>
 
 <template>
@@ -200,7 +227,7 @@ watch(() => locationStore.currentProvinceId, fetchShippingFee, { immediate: true
             class="client-product-card__cart"
             :disabled="!variantId || isAdding"
             :aria-label="isAdding ? displayAddingLabel : displayCartLabel"
-            @click="emit('add-to-cart', product)"
+            @click="handleAddToCart"
         >
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" aria-hidden="true">
                 <path
@@ -216,6 +243,7 @@ watch(() => locationStore.currentProvinceId, fetchShippingFee, { immediate: true
                     d="M10 21a1 1 0 1 0 0-2 1 1 0 0 0 0 2ZM18 21a1 1 0 1 0 0-2 1 1 0 0 0 0 2Z"
                 />
             </svg>
+            <span v-if="showCartIncrement" class="client-product-card__cart-increment">+1</span>
         </button>
     </article>
 </template>
@@ -410,6 +438,20 @@ watch(() => locationStore.currentProvinceId, fetchShippingFee, { immediate: true
     height: 18px;
 }
 
+.client-product-card__cart-increment {
+    position: absolute;
+    left: 50%;
+    bottom: 20px;
+    color: #007600;
+    font-size: 13px;
+    font-weight: 700;
+    line-height: 1;
+    pointer-events: none;
+    text-shadow: 0 1px 2px rgba(255, 255, 255, 0.9);
+    transform: translateX(-50%);
+    animation: cart-increment-float 0.7s ease-out forwards;
+}
+
 .client-product-card__cart:hover:not(:disabled) {
     color: #007185;
 }
@@ -442,6 +484,22 @@ watch(() => locationStore.currentProvinceId, fetchShippingFee, { immediate: true
 .client-product-card--compact .client-product-card__price strong {
     font-size: 21px;
     line-height: 27px;
+}
+
+@keyframes cart-increment-float {
+    0% {
+        opacity: 0;
+        transform: translate(-50%, 0) scale(0.92);
+    }
+
+    18% {
+        opacity: 1;
+    }
+
+    100% {
+        opacity: 0;
+        transform: translate(-50%, -24px) scale(1.08);
+    }
 }
 
 @media (max-width: 560px) {
