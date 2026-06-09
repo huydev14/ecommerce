@@ -17,7 +17,7 @@ class CustomerSeeder extends Seeder
         Customer::firstOrCreate(
             ['email' => 'trgiahuy14@gmail.com'],
             [
-                'fullname' => 'Customer',
+                'name' => 'Customer',
                 'email' => 'trgiahuy14@gmail.com',
                 'password' => Hash::make('123'),
                 'email_verified_at' => now(),
@@ -28,7 +28,7 @@ class CustomerSeeder extends Seeder
         Customer::firstOrCreate(
             ['email' => 'hr.demo@gmail.com'],
             [
-                'fullname' => 'HR Demo',
+                'name' => 'HR Demo',
                 'email' => 'hr.demo@gmail.com',
                 'password' => Hash::make('hrdemo'),
                 'email_verified_at' => now(),

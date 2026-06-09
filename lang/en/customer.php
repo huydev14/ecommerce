@@ -4,7 +4,7 @@ return [
     'management_title' => 'Customers',
     'permissions_description' => 'View, add, edit, delete and manage customers',
     'customer' => 'Customer',
-    'fullname' => 'Full name',
+    'name' => 'Full name',
     'email' => 'Email',
     'phone' => 'Phone',
     'password' => 'Password',

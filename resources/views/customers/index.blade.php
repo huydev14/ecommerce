@@ -28,7 +28,7 @@
             <table id="customers-table" class="display table table-hover text-nowrap" style="width: 100%;">
                 <thead>
                     <tr>
-                        <th>{{ __('customer.fullname') }}</th>
+                        <th>{{ __('customer.name') }}</th>
                         <th>{{ __('customer.email') }}</th>
                         <th>{{ __('customer.phone') }}</th>
                         <th>{{ __('customer.membership_tier') }}</th>

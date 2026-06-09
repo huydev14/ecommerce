@@ -122,9 +122,9 @@ class OrderController extends Controller
 
     public function getFilterData()
     {
-        $customers = Customer::select('id', DB::raw('COALESCE(fullname, email) as text'))
+        $customers = Customer::select('id', DB::raw('COALESCE(name, email) as text'))
             ->whereIn('id', Order::query()->whereNotNull('customer_id')->select('customer_id'))
-            ->orderBy('fullname')
+            ->orderBy('name')
             ->orderBy('email')
             ->get();
 

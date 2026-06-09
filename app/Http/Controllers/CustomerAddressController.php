@@ -31,7 +31,7 @@ class CustomerAddressController extends Controller
 
             return DataTables::of($addresses)
                 ->addColumn('customer', function ($address) {
-                    return $address->customer?->fullname
+                    return $address->customer?->name
                         ?: $address->customer?->email
                         ?: '<span class="tw-text-gray-400 tw-italic tw-text-sm">---</span>';
                 })
@@ -74,8 +74,8 @@ class CustomerAddressController extends Controller
 
     public function getFilterData()
     {
-        $customers = Customer::select('id', DB::raw('COALESCE(fullname, email) as text'))
-            ->orderBy('fullname')
+        $customers = Customer::select('id', DB::raw('COALESCE(name, email) as text'))
+            ->orderBy('name')
             ->orderBy('email')
             ->get();
 
@@ -289,9 +289,8 @@ class CustomerAddressController extends Controller
 
     private function getCustomerOptions()
     {
-        return Customer::orderBy('fullname')
-            ->orderBy('email')
-            ->get(['id', 'fullname', 'email']);
+        return Customer::orderBy('name')
+            ->get(['id', 'name', 'email']);
     }
 
     private function clearDefaultAddress(int $customerId, ?int $exceptId = null): void

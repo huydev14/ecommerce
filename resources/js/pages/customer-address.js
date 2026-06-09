@@ -239,7 +239,7 @@ $(function () {
         columns: [
             {
                 data: 'customer',
-                name: 'customer.fullname',
+                name: 'customer.name',
                 orderable: false,
                 searchable: false,
             },

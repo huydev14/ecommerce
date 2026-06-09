@@ -14,7 +14,7 @@
         <option value="">{{ __('customer_address.customer_placeholder') }}</option>
         @foreach ($customers as $customer)
             <option value="{{ $customer->id }}" @selected((string) $selectedCustomerId === (string) $customer->id)>
-                {{ $customer->fullname ?: $customer->email }}
+                {{ $customer->name }}
             </option>
         @endforeach
     </select>

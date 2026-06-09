@@ -31,8 +31,8 @@ class CustomerController extends Controller
             }
 
             return DataTables::of($customers)
-                ->editColumn('fullname', function ($customer) {
-                    return e($customer->fullname ?: __('customer.unknown_name'));
+                ->editColumn('name', function ($customer) {
+                    return e($customer->name ?: __('customer.unknown_name'));
                 })
                 ->editColumn('email_verified_at', function ($customer) {
                     return $customer->email_verified_at
@@ -207,7 +207,7 @@ class CustomerController extends Controller
     private function validateCustomer(Request $request, ?Customer $customer = null): array
     {
         return $request->validate([
-            'fullname' => ['nullable', 'string', 'max:255'],
+            'name' => ['nullable', 'string', 'max:255'],
             'email' => ['required', 'email', 'max:255', Rule::unique('customers', 'email')->ignore($customer?->id)],
             'phone' => ['nullable', 'string', 'max:30'],
             'password' => [$customer ? 'nullable' : 'required', 'string', 'min:8', 'max:255'],

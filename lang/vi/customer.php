@@ -4,7 +4,7 @@ return [
     'management_title' => 'Khách hàng',
     'permissions_description' => 'Xem, thêm, sửa, xóa và quản lý khách hàng',
     'customer' => 'Khách hàng',
-    'fullname' => 'Họ và tên',
+    'name' => 'Họ và tên',
     'email' => 'Email',
     'phone' => 'Số điện thoại',
     'password' => 'Mật khẩu',

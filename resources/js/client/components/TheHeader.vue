@@ -22,7 +22,7 @@ const cartPreviewItems = computed(() => cartStore.items.slice(0, 3));
 const currentLocationName = computed(() => locationStore.currentLocationName);
 const currentLanguageLabel = computed(() => locale.value.toUpperCase());
 const nextLanguageLabel = computed(() => (locale.value === 'vi' ? 'EN' : 'VI'));
-const accountDisplayName = computed(() => authStore.user?.fullname || t('header.account_label'));
+const accountDisplayName = computed(() => authStore.user?.name || t('header.account_label'));
 let originalBodyOverflow = '';
 let isBodyScrollLockedByLocationModal = false;
 

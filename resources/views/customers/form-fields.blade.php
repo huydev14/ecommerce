@@ -10,9 +10,9 @@
         </div>
 
         <div class="tw-flex tw-flex-col tw-gap-1">
-            <x-label for="fullname">{{ __('customer.fullname') }}</x-label>
-            <x-input id="fullname" name="fullname" icon="far fa-user" :value="$customer?->fullname"
-                placeholder="{{ __('customer.fullname') }}" />
+            <x-label for="name" class="is-required">{{ __('customer.name') }}</x-label>
+            <x-input id="name" name="name" icon="far fa-user" :value="$customer?->name"
+                placeholder="{{ __('customer.name') }}"/>
         </div>
 
         <div class="tw-flex tw-flex-col tw-gap-1">

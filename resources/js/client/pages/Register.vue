@@ -2,8 +2,8 @@
     <AuthLayout :title="t('register.title')" :errorMessage="errorMessage" :actionText="t('register.actionText')">
         <form @submit.prevent="handleRegister" class="login-form" novalidate>
             <div class="a-input-text-group">
-                <label for="fullname" class="a-form-label">{{ t('register.fullNameLabel') }}</label>
-                <input id="fullname" type="text" v-model="form.fullname" required :placeholder="t('register.fullNamePlaceholder')" class="a-input-text" />
+                <label for="name" class="a-form-label">{{ t('register.fullNameLabel') }}</label>
+                <input id="name" type="text" v-model="form.name" required :placeholder="t('register.fullNamePlaceholder')" class="a-input-text" />
             </div>
 
             <div class="a-input-text-group">
@@ -60,7 +60,7 @@ onMounted(() => {
 const authStore = useAuthStore();
 
 const form = reactive({
-    fullname: '',
+    name: '',
     email: '',
     password: '',
     password_confirmation: '',

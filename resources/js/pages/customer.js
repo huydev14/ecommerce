@@ -133,7 +133,7 @@ $(function () {
             },
         },
         columns: [
-            { data: 'fullname', name: 'fullname' },
+            { data: 'name', name: 'name' },
             { data: 'email', name: 'email' },
             { data: 'phone', name: 'phone' },
             { data: 'membership_tier', name: 'membership_tier' },

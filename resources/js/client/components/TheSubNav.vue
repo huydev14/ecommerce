@@ -10,7 +10,7 @@ const isMenuOpen = ref(false);
 const categories = ref([]);
 const trendingKeywords = ref([]);
 
-const userName = computed(() => authStore.user?.name || authStore.user?.fullname || t('subNav.accountFallback'));
+const userName = computed(() => authStore.user?.name || t('subNav.accountFallback'));
 const userAvatar = computed(() => authStore.user?.avatar || authStore.user?.photo_url || authStore.user?.image || '');
 const userInitial = computed(() => userName.value.trim().charAt(0).toUpperCase() || 'U');
 const languageLabel = computed(() => (locale.value === 'vi' ? t('subNav.language_vi') : t('subNav.language_en')));
