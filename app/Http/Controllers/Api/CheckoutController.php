@@ -7,6 +7,7 @@ use App\Http\Requests\CheckoutRequest;
 use App\Models\CustomerAddress;
 use App\Models\Order;
 use App\Models\ProductVariant;
+use App\Services\AuditLogService;
 use App\Services\CartService;
 use App\Services\GhnService;
 use Illuminate\Http\Request;
@@ -232,6 +233,22 @@ class CheckoutController extends Controller
             $order->items()->createMany($orderItemsData);
 
             DB::commit();
+
+            AuditLogService::log(
+                "Customer checkout: {$order->order_number} (ID: {$order->id})",
+                $order,
+                'checkout',
+                $user,
+                [
+                    'order_number' => $order->order_number,
+                    'subtotal' => $subtotal,
+                    'shipping_fee' => $shippingFee,
+                    'total_amount' => $order->total_amount,
+                    'payment_method' => $validated['payment_method'],
+                    'item_count' => array_sum(array_map('intval', $cartItems)),
+                ]
+            );
+
             Redis::del($cartKey);
 
             $responseData = [

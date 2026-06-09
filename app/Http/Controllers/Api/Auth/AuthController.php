@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api\Auth;
 use App\Http\Controllers\Controller;
 use App\Mail\CustomerOTPMail;
 use App\Models\Customer;
+use App\Services\AuditLogService;
 use App\Services\CartService;
 use Exception;
 use Illuminate\Http\Request;
@@ -92,6 +93,13 @@ class AuthController extends Controller
         $userCartKey = $cartService->getCartKey($request);
         $cartService->mergeCartAfterLogin($guestCartKey, $userCartKey);
 
+        AuditLogService::log(
+            'Customer đã đăng nhập: ' . ($customer->name ?: $customer->email) . " (ID: {$customer->id})",
+            $customer,
+            'auth',
+            $customer
+        );
+
         return $this->responseWithToken($token);
     }
 
@@ -110,7 +118,7 @@ class AuthController extends Controller
         }
 
         $validator = Validator::make($request->all(), [
-            'fullname' => 'required|string|max:255',
+            'name' => 'required|string|max:255',
             'email' => 'required|string|email|max:255|unique:customers,email',
             'password' => 'required|min:6|confirmed',
         ], [
@@ -129,7 +137,7 @@ class AuthController extends Controller
         $validated = $validator->validated();
 
         $customer = Customer::create([
-            'fullname' => $validated['fullname'],
+            'name' => $validated['name'],
             'email' => $validated['email'],
             'password' => Hash::make($validated['password']),
         ]);
@@ -139,7 +147,7 @@ class AuthController extends Controller
 
         Cache::put('otp_' . $email, $otp, now()->addMinutes(10));
 
-        Mail::to($customer->email)->send(new CustomerOTPMail($otp, $customer->fullname));
+        Mail::to($customer->email)->send(new CustomerOTPMail($otp, $customer->name));
 
         return response()->json([
             'success' => true,
@@ -231,7 +239,7 @@ class AuthController extends Controller
         $otp = rand(100000, 999999);
         if ($customer) {
             Cache::put('otp_' . $email, $otp, now()->addMinutes(10));
-            Mail::to($customer->email)->send(new CustomerOTPMail($otp, $customer->fullname));
+            Mail::to($customer->email)->send(new CustomerOTPMail($otp, $customer->name));
         }
 
         RateLimiter::hit($key, 300);
@@ -255,6 +263,16 @@ class AuthController extends Controller
     public function logout()
     {
         try {
+            $customer = $this->guard()->user();
+            if ($customer instanceof Customer) {
+                AuditLogService::log(
+                    'Customer đã đăng xuất: ' . ($customer->name ?: $customer->email) . " (ID: {$customer->id})",
+                    $customer,
+                    'auth',
+                    $customer
+                );
+            }
+
             $this->guard()->logout();
 
             $cookie = cookie()->forget('refresh_token');

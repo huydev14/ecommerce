@@ -4,12 +4,13 @@ namespace App\Services;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Auth;
+use Throwable;
 
 class AuditLogService
 {
     public static function log($description, $model = null, $logName = 'audit', ?Model $causer = null, $properties = []) {
 
-        $causer = $causer ?? Auth::user();
+        $causer = $causer ?? self::currentCauser();
 
         $extra_properties = $properties ?? [];
         $default_properties = [
@@ -18,7 +19,7 @@ class AuditLogService
             'url'        => request()->fullUrl(),
             'method'     => request()->method(),
             'is_ajax'    => request()->ajax(),
-            'session_id' => session()->getId(),
+            'session_id' => request()->hasSession() ? session()->getId() : null,
         ];
 
         $final_properties = array_merge($default_properties, $extra_properties);
@@ -35,5 +36,21 @@ class AuditLogService
 
         $activity->withProperties($final_properties)
             ->log($description);
+    }
+
+    public static function currentCauser(): ?Model
+    {
+        $user = Auth::user();
+        if ($user instanceof Model) {
+            return $user;
+        }
+
+        try {
+            $apiUser = Auth::guard('api')->user();
+        } catch (Throwable) {
+            return null;
+        }
+
+        return $apiUser instanceof Model ? $apiUser : null;
     }
 }

@@ -12,6 +12,7 @@ use Laravel\Socialite\Facades\Socialite;
 use App\Models\User;
 use App\Models\Customer;
 use App\Models\OAuthAccount;
+use App\Services\AuditLogService;
 
 class OAuthController extends Controller
 {
@@ -75,6 +76,13 @@ class OAuthController extends Controller
 
         if ($type === 'customer') {
             $token = auth('api')->login($user);
+            AuditLogService::log(
+                'Khách hàng đăng nhập OAuth: ' . ($user->name ?: $user->email) . " (ID: {$user->id})",
+                $user,
+                'auth',
+                $user,
+                ['provider' => 'oauth']
+            );
             $cookie = cookie('refresh_token', $token, config('jwt.refresh_ttl'));
             return response()
                 ->view('auth.callback', compact('token', 'user'))
@@ -105,7 +113,7 @@ class OAuthController extends Controller
                 $user = Customer::firstOrCreate(
                     ['email' => $oauth->getEmail()],
                     [
-                        'fullname' => $oauth->getName(),
+                        'name' => $oauth->getName(),
                         'avatar' => $oauth->getAvatar(),
                         'email_verified_at' => now(),
                     ]
