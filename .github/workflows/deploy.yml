@@ -17,12 +17,12 @@ jobs:
           script: |
             set -e
 
-            echo ">>> Restarting Docker containers"
-            docker compose down
-            docker compose up -d --build
-
             cd /srv/web-host/www/app84/ecommerce
             git pull origin main
-            
+
             chmod +x ./deploy.sh
             ./deploy.sh
+
+            echo ">>> Restarting Docker containers"
+            cd /srv/web-host/
+            docker compose up php84 -d --build
