@@ -12,12 +12,16 @@ jobs:
         uses: appleboy/ssh-action@master
         with:
           host: ${{ secrets.SERVER_IP }}
-          username: trgiahuy_usr
+          username: root
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           script: |
             set -e
 
-            cd /var/www/trgiahuy_usr/data/www/ecommerce.giahuy.tech
+            echo ">>> Restarting Docker containers"
+            docker compose down
+            docker compose up -d --build
+
+            cd /srv/web-host/www/app84/ecommerce
             git pull origin main
             
             chmod +x ./deploy.sh
