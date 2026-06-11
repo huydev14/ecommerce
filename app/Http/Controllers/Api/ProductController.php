@@ -93,13 +93,8 @@ class ProductController extends Controller
 
         $products = Cache::remember('products_best_sellers_' . $limit, now()->addHour(), function () use ($limit) {
             return Product::query()
-                ->select('products.*')
-                ->selectRaw('SUM(order_items.quantity) as total_sold')
-                ->join('order_items', 'products.id', '=', 'order_items.product_id')
-                ->join('orders', 'orders.id', '=', 'order_items.order_id')
-                ->where('orders.status', 'completed')
+                ->withTotalSoldPastMonth()
                 ->where('products.status', 'published')
-                ->groupBy('products.id')
                 ->orderByDesc('total_sold')
                 ->limit($limit)
                 ->with(['brand', 'category', 'cheapestVariant'])
