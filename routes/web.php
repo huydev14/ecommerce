@@ -7,6 +7,7 @@ use App\Http\Controllers\CategoryController;
 use App\Http\Controllers\BannerController;
 use App\Http\Controllers\CustomerAddressController;
 use App\Http\Controllers\CustomerController;
+use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\OrderController;
 use App\Http\Controllers\ProductController;
 use App\Http\Controllers\ProductImportController;
@@ -43,10 +44,9 @@ Route::get('lang/{locale}', function ($locale) {
 Route::prefix('admin')->middleware('auth')->group(function () {
 
     Route::get('/test-mail', [SettingController::class, 'testMail']);
+
     // ---- Dashboard -----------------------------------
-    Route::get('/', function () {
-        return view('dashboard.index');
-    })->name('dashboard');
+    Route::get('/', [DashboardController::class, 'index'])->name('dashboard');
 
     // ---- Users ---------------------------------------
     Route::prefix('users')->name('users.')->group(function () {
