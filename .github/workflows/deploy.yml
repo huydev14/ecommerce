@@ -17,12 +17,8 @@ jobs:
           script: |
             set -e
 
-            cd /srv/web-host/www/app84/ecommerce
+            cd /www/wwwroot/ecommerce.giahuy.tech
             git pull origin main
 
             chmod +x ./deploy.sh
             ./deploy.sh
-
-            echo ">>> Restarting Docker containers"
-            cd /srv/web-host/
-            docker compose up php84 -d --build
