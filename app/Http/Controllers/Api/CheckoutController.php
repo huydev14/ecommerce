@@ -181,19 +181,30 @@ class CheckoutController extends Controller
                 $variant = $variants->get($variantId);
 
                 if (!$variant || $variant->available_stock < $quantity) {
+                    AuditLogService::log(
+                        "Checkout failed due to insufficient stock for product variant ID: {$variantId}",
+                        null,'checkout_failure',$user,
+                        [
+                            'variant_id' => $variantId,
+                            'requested_quantity' => $quantity,
+                            'available_stock' => $variant?->available_stock ?? 0,
+                        ]
+                    );
                     throw new \Exception("Sản phẩm '" . ($variant->product->name ?? '') . "' không đủ số lượng trong kho.");
                 }
 
+                // Minus stock and record movement
                 $remainingToDeduct = $quantity;
                 foreach ($variant->stocks as $stock) {
                     if ($stock->available_quantity > 0) {
                         $deduct = min($stock->available_quantity, $remainingToDeduct);
-                        $stock->quantity -= $deduct;
-                        $stock->save();
+                        $stock->recordMovement('out', -$deduct, 'Customer checkout');
                         $remainingToDeduct -= $deduct;
                     }
-                    if ($remainingToDeduct <= 0)
+
+                    if ($remainingToDeduct <= 0) {
                         break;
+                    }
                 }
                 $variant->save();
 
