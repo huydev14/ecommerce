@@ -48,6 +48,7 @@ class ProductDetailResource extends JsonResource
                             ? (float) $variant->compare_at_price
                             : ($variant->price > 0 ? round($variant->price / 0.9, 2) : null),
                         'attributes' => $variant->attributes ?: [],
+                        'unit' => $variant->unit ? $variant->unit->name : null,
                     ];
                 });
             }),

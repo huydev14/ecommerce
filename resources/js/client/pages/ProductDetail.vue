@@ -231,90 +231,139 @@ watch(() => locationStore.currentProvinceId, fetchShippingFee);
                 <a href="#" class="pdp-gallery__link">{{ t('productDetail.fullView') }}</a>
             </aside>
 
-            <main class="pdp-details">
+            <div class="pdp-details">
+                <div class="pdp-rating-row">
+                    <span class="rating-score">4.9</span>
+                    <span class="pdp-stars">★★★★★</span>
+                    <a href="#" class="rating-reviews">{{ t('productDetail.ratings', { count: 67 }) }}</a>
+                </div>
+
                 <RouterLink v-if="brandSlug" class="pdp-store" :to="{ name: 'ProductList', query: { brand: brandSlug } }">
                     {{ t('productDetail.visitStore', { brand: brandName }) }}
                 </RouterLink>
                 <span v-else class="pdp-store">{{ t('productDetail.visitStore', { brand: brandName }) }}</span>
-                <h1>{{ product.name }}</h1>
-
-                <div class="pdp-rating">
-                    <span>4.7</span>
-                    <span class="pdp-stars">★★★★★</span>
-                    <a href="#">{{ t('productDetail.ratings', { count: 121 }) }}</a>
-                </div>
-
-                <p class="pdp-bought" v-html="soldCountLabel"></p>
-
-                <hr />
-
-                <div class="pdp-price">{{ formatPrice(activePrice) }}</div>
-                <p class="pdp-muted">{{ t('productDetail.shippingFee', { fee: shippingFeeLabel }) }}</p>
-                <p class="pdp-shipping">{{ t('productDetail.freeReturns') }}</p>
+                <h1 class="pdp-title">{{ product.name }}</h1>
+                <p class="pdp-short-desc">
+                    {{ descriptionItems[0] || t('productDetail.fallback_noDescription') }}
+                </p>
 
                 <section v-if="variantLabels.length" class="pdp-options">
-                    <h2>{{ t('productDetail.options') }}</h2>
-                    <div class="pdp-option-grid">
+                    <h3 class="pdp-options-title">{{ t('productDetail.options') }}</h3>
+                    <div class="pdp-color-grid">
                         <button
                             v-for="variant in variantLabels"
                             :key="variant.id"
                             type="button"
-                            class="pdp-option"
+                            class="pdp-color-swatch"
                             :class="{ 'is-selected': selectedVariantId === variant.id }"
                             @click="selectedVariantId = variant.id"
                         >
-                            <span>{{ variant.label }}</span>
-                            <small>{{ formatPrice(variant.price) }}</small>
+                            {{ variant.label }}
                         </button>
                     </div>
                 </section>
 
-                <dl class="pdp-specs">
-                    <template v-for="[label, value] in specifications" :key="label">
-                        <dt>{{ label }}</dt>
-                        <dd>{{ value }}</dd>
-                    </template>
-                </dl>
+                <div class="pdp-accordions">
+                    <details class="pdp-accordion" open>
+                        <summary>Details <span class="icon-plus">+</span></summary>
+                        <div class="accordion-content">
+                            <ul>
+                                <li v-for="item in descriptionItems" :key="item">{{ item }}</li>
+                            </ul>
+                        </div>
+                    </details>
+                    <details class="pdp-accordion" open>
+                        <summary>Dimension <span class="icon-plus">+</span></summary>
+                        <div class="accordion-content">
+                            <dl class="pdp-specs">
+                                <template v-if="selectedVariant?.unit">
+                                    <dt>Unit</dt>
+                                    <dd>{{ selectedVariant.unit }}</dd>
+                                </template>
+                                <template v-for="[label, value] in specifications" :key="label">
+                                    <dt>{{ label }}</dt>
+                                    <dd>{{ value }}</dd>
+                                </template>
+                            </dl>
+                        </div>
+                    </details>
+                    <details class="pdp-accordion" open>
+                        <summary>Shipping & Returns <span class="icon-plus">+</span></summary>
+                        <div class="accordion-content">
+                            <p>Shipper: {{ APP_CONFIG.appName }}</p>
+                            <p>Free Returns within 60 days.</p>
+                        </div>
+                    </details>
+                </div>
+            </div>
 
-                <section class="pdp-about">
-                    <h2>{{ t('productDetail.about') }}</h2>
-                    <ul>
-                        <li v-for="item in descriptionItems" :key="item">{{ item }}</li>
-                    </ul>
-                </section>
-            </main>
+            <div class="pdp-buybox">
+                <div class="pdp-price-row">
+                    <span class="pdp-price-current">{{ formatPrice(activePrice) }}</span>
+                    <div class="pdp-price-old-group" v-if="selectedVariant?.compare_at_price">
+                        <span class="pdp-price-old">{{ formatPrice(selectedVariant.compare_at_price) }}</span>
+                        <div class="pdp-price-discount">
+                            <span class="discount-value">-{{ Math.round((1 - activePrice / selectedVariant.compare_at_price) * 100) }}%</span>
+                        </div>
+                    </div>
+                </div>
 
-            <aside class="pdp-buybox" :aria-label="t('productDetail.aria_purchaseOptions')">
-                <div class="pdp-buybox__price">{{ formatPrice(activePrice) }}</div>
-                <p class="pdp-muted">{{ t('productDetail.shippingFee', { fee: shippingFeeLabel }) }}</p>
-                <p class="pdp-delivery" v-html="t('productDetail.delivery', { date: 'Wednesday, June 24' })"></p>
-                <a href="#" class="pdp-location">{{ t('productDetail.deliverTo', { location: deliveryLocationName }) }}</a>
-                <p class="pdp-stock">{{ t('productDetail.inStock') }}</p>
+                <div class="pdp-shipping-info">
+                    <h3 class="pdp-shipping-title">Standard Shipping (GHN)</h3>
+                    <div class="pdp-shipping-details">
+                        <svg class="icon-shipping" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" /></svg>
+                        <div class="pdp-shipping-text">
+                            <p class="pdp-delivery-est" v-html="t('productDetail.delivery', { date: 'Aug 22-Aug 25' })"></p>
+                            <p class="pdp-delivery-location">
+                                {{ t('productDetail.deliverTo', { location: deliveryLocationName }) }}
+                            </p>
+                            <p class="pdp-delivery-fee">
+                                {{ t('productDetail.shippingFee', { fee: shippingFeeLabel }) }}
+                            </p>
+                        </div>
+                    </div>
+                </div>
 
-                <label class="pdp-qty">
-                    <span>{{ t('productDetail.quantity') }}</span>
-                    <select v-model="quantity">
-                        <option v-for="value in 10" :key="value" :value="value">{{ value }}</option>
-                    </select>
-                </label>
-
-                <button type="button" class="pdp-cart" :disabled="isAddingToCart" @click="addToCart">
-                    {{ isAddingToCart ? t('productCard.actions_adding') : t('productCard.actions_addToCart') }}
-                </button>
-                <button type="button" class="pdp-buy">{{ t('productDetail.buyNow') }}</button>
+                <div class="pdp-action-row">
+                    <div class="pdp-qty-stepper">
+                        <button type="button" @click="quantity > 1 ? quantity-- : null">-</button>
+                        <input type="number" v-model="quantity" min="1" />
+                        <button type="button" @click="quantity++">+</button>
+                    </div>
+                    
+                    <button type="button" class="pdp-add-cart" :disabled="isAddingToCart" @click="addToCart">
+                        {{ isAddingToCart ? t('productCard.actions_adding') : 'Add to cart' }}
+                        <svg class="icon-bag" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" /></svg>
+                    </button>
+                </div>
 
                 <p v-if="cartMessage" class="pdp-cart-message">{{ cartMessage }}</p>
                 <p v-if="cartError" class="pdp-cart-message is-error">{{ cartError }}</p>
 
-                <dl class="pdp-seller">
-                    <dt>{{ t('productDetail.seller_shipperSeller') }}</dt>
-                    <dd>{{ APP_CONFIG.appName }}</dd>
-                    <dt>{{ t('productDetail.seller_returns') }}</dt>
-                    <dd>{{ t('productDetail.seller_freeRefund') }}</dd>
-                </dl>
+              
 
-                <button type="button" class="pdp-secondary">{{ t('productDetail.addToList') }}</button>
-            </aside>
+                <div class="pdp-confidence">
+                    <h4>Buy with confidence</h4>
+                    <div class="confidence-grid">
+                        <div class="conf-item">
+                            <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M14 10h4.764a2 2 0 011.789 2.894l-3.5 7A2 2 0 0115.263 21h-4.017c-.163 0-.326-.02-.485-.06L7 20m7-10V5a2 2 0 00-2-2h-.095c-.5 0-.905.405-.905.905 0 .714-.211 1.412-.608 2.006L7 11v9m7-10h-2M7 20H5a2 2 0 01-2-2v-6a2 2 0 012-2h2.514" /></svg>
+                            Best Price Guaranteed
+                        </div>
+                        <div class="conf-item">
+                            <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" /></svg>
+                            60-Day Returns
+                        </div>
+                        <div class="conf-item">
+                            <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" /></svg>
+                            3-Year Warranty
+                        </div>
+                        <div class="conf-item">
+                            <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" /><path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
+                            Fully Assembled Design
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
     </section>
 </template>
@@ -329,351 +378,442 @@ watch(() => locationStore.currentProvinceId, fetchShippingFee);
 
 .pdp-shell {
     display: grid;
-    grid-template-columns: minmax(300px, 42vw) minmax(360px, 1fr) 300px;
-    gap: 28px;
-    max-width: 1520px;
+    grid-template-columns: minmax(600px, 1fr) minmax(280px, 1fr) minmax(280px, 1fr);
+    gap: 32px;
+    max-width: 1500px;
     margin: 0 auto;
-    padding: 24px 28px 56px;
+    padding: 32px 24px 64px;
 }
 
 .pdp-gallery {
     position: sticky;
-    top: 16px;
+    top: 24px;
     align-self: start;
 }
 
 .pdp-gallery__main {
     display: grid;
-    min-height: 560px;
     place-items: center;
-    background: #ffffff;
+    background: #f9fafb;
+    border-radius: 16px;
+    overflow: hidden;
+    aspect-ratio: 1;
 }
 
 .pdp-gallery__main img {
-    width: min(100%, 520px);
-    max-height: 540px;
+    width: 100%;
+    height: 100%;
     object-fit: contain;
+    padding: 20px;
 }
 
 .pdp-gallery__thumbs {
-    display: grid;
-    grid-template-columns: repeat(6, 76px);
-    justify-content: center;
-    gap: 10px;
-    margin-top: 18px;
+    display: flex;
+    gap: 12px;
+    margin-top: 16px;
+    overflow-x: auto;
 }
 
 .pdp-thumb {
-    display: grid;
-    width: 76px;
-    height: 76px;
-    place-items: center;
-    border: 1px solid #d5d9d9;
-    border-radius: 8px;
-    background: #ffffff;
+    width: 80px;
+    height: 80px;
+    flex-shrink: 0;
+    border: 2px solid transparent;
+    border-radius: 12px;
+    background: #f9fafb;
     cursor: pointer;
+    overflow: hidden;
+    transition: border-color 0.2s;
 }
 
 .pdp-thumb.is-active {
-    border-color: #007185;
-    box-shadow: 0 0 0 2px #c8f3fa;
+    border-color: #111827;
 }
 
 .pdp-thumb img {
     width: 100%;
     height: 100%;
     object-fit: contain;
-}
-
-.pdp-gallery__link,
-.pdp-store,
-.pdp-rating a,
-.pdp-location {
-    color: #007185;
-    text-decoration: none;
+    padding: 8px;
 }
 
 .pdp-gallery__link {
     display: block;
-    margin-top: 12px;
+    margin-top: 16px;
     text-align: center;
     font-size: 14px;
+    color: #4b5563;
+    text-decoration: underline;
 }
 
-.pdp-details h1 {
-    margin: 4px 0 8px;
-    font-size: 26px;
-    font-weight: 400;
-    line-height: 1.25;
+/* Info Columns */
+.pdp-details, .pdp-buybox {
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+    color: #111827;
 }
 
-.pdp-store,
-.pdp-rating,
-.pdp-bought,
-.pdp-muted,
-.pdp-shipping,
-.pdp-location,
-.pdp-delivery,
-.pdp-seller {
-    font-size: 14px;
+.pdp-buybox {
+    padding: 24px;
+    border: 1px solid #e5e7eb;
+    border-radius: 12px;
+    align-self: start;
+    position: sticky;
+    top: 24px;
 }
 
-.pdp-rating {
+.pdp-rating-row {
     display: flex;
     align-items: center;
-    flex-wrap: wrap;
     gap: 6px;
+    font-size: 14px;
+    font-weight: 500;
 }
 
 .pdp-stars {
-    color: #ff9900;
-    letter-spacing: 0;
+    color: #f90;
+    font-size: 12px;
 }
 
-.pdp-bought {
-    margin: 14px 0 8px;
+.rating-reviews {
+    color: #6b7280;
+    text-decoration: underline;
+    margin-left: 4px;
+    font-weight: 400;
 }
 
-.pdp-details hr {
-    border: 0;
-    border-top: 1px solid #d5d9d9;
-    margin: 12px 0 18px;
+.pdp-store {
+    display: block;
+    font-size: 14px;
+    color: #007185;
+    text-decoration: none;
+    margin-top: 16px;
+    margin-bottom: -4px;
+}
+.pdp-store:hover {
+    text-decoration: underline;
 }
 
-.pdp-price,
-.pdp-buybox__price {
-    font-size: 30px;
+.pdp-title {
+    font-size: 32px;
+    font-weight: 600;
+    margin: 12px 0 16px;
+    line-height: 1.2;
+}
+
+.pdp-short-desc {
+    color: #4b5563;
+    font-size: 15px;
+    line-height: 1.6;
+    margin-bottom: 24px;
+}
+
+.pdp-price-row {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 4px;
+    margin-bottom: 24px;
+}
+
+.pdp-price-current {
+    font-size: 38px;
+    font-weight: 700;
+    color: #e55a3b;
     line-height: 1;
 }
 
-.pdp-shipping,
-.pdp-location {
-    margin: 18px 0 6px;
+.pdp-price-old-group {
+    display: flex;
+    align-items: center;
+    gap: 12px;
 }
 
-.pdp-muted {
-    margin: 0 0 8px;
-    color: #565959;
-    line-height: 1.45;
+.pdp-price-old {
+    font-size: 16px;
+    color: #9ca3af;
+    text-decoration: line-through;
+    font-weight: 400;
 }
 
-.pdp-options {
-    margin-top: 18px;
+.pdp-price-discount {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: #fee2e2;
+    color: #ef4444;
+    padding: 2px 8px;
+    border-radius: 4px;
 }
 
-.pdp-options h2,
-.pdp-about h2 {
-    margin: 0 0 10px;
-    font-size: 20px;
+.pdp-price-discount .discount-value {
+    font-size: 13px;
+    font-weight: 600;
 }
 
-.pdp-option-grid {
+.pdp-options-title {
+    font-size: 16px;
+    font-weight: 600;
+    margin-bottom: 12px;
+}
+
+.pdp-color-grid {
     display: flex;
     flex-wrap: wrap;
+    gap: 10px;
+    margin-bottom: 24px;
+}
+
+.pdp-color-swatch {
+    padding: 8px 16px;
+    border: 1px solid #d1d5db;
+    border-radius: 24px;
+    background: #ffffff;
+    font-size: 14px;
+    color: #374151;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.pdp-color-swatch.is-selected {
+    border-color: #111827;
+    background: #111827;
+    color: #ffffff;
+}
+
+.pdp-shipping-info {
+    margin-bottom: 24px;
+}
+
+.pdp-shipping-title {
+    font-size: 16px;
+    font-weight: 600;
+    margin-bottom: 12px;
+}
+
+.pdp-shipping-details {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+}
+
+.icon-shipping {
+    width: 20px;
+    height: 20px;
+    color: #6b7280;
+    flex-shrink: 0;
+    margin-top: 2px;
+}
+
+.pdp-shipping-text {
+    display: flex;
+    flex-direction: column;
     gap: 8px;
 }
 
-.pdp-option {
-    min-width: 112px;
-    border: 1px solid #8d9096;
-    border-radius: 8px;
-    background: #ffffff;
-    padding: 9px 12px;
-    text-align: left;
+.pdp-delivery-est,
+.pdp-delivery-location,
+.pdp-delivery-fee {
+    font-size: 14px;
+    color: #4b5563;
+    margin: 0;
+    line-height: 1.4;
+}
+
+.pdp-action-row {
+    display: flex;
+    align-items: stretch;
+    gap: 16px;
+    margin-bottom: 20px;
+}
+
+.pdp-qty-stepper {
+    display: flex;
+    align-items: center;
+    border: 1px solid #d1d5db;
+    border-radius: 4px;
+    width: 120px;
+    height: 52px;
+    flex-shrink: 0;
+}
+
+.pdp-qty-unit {
+    font-size: 15px;
+    color: #4b5563;
+    white-space: nowrap;
+}
+
+.pdp-qty-stepper button {
+    width: 40px;
+    height: 100%;
+    background: transparent;
+    border: none;
+    font-size: 20px;
+    color: #4b5563;
     cursor: pointer;
 }
 
-.pdp-option span,
-.pdp-option small {
-    display: block;
+.pdp-qty-stepper input {
+    width: 40px;
+    height: 100%;
+    border: none;
+    text-align: center;
+    font-size: 16px;
+    font-weight: 500;
+    color: #111827;
+    -moz-appearance: textfield;
+}
+.pdp-qty-stepper input::-webkit-inner-spin-button, 
+.pdp-qty-stepper input::-webkit-outer-spin-button { 
+  -webkit-appearance: none; 
+  margin: 0; 
 }
 
-.pdp-option.is-selected {
-    border-color: #007185;
-    box-shadow: 0 0 0 2px #c8f3fa;
-}
-
-.pdp-keep span {
-    display: grid;
-    width: 22px;
-    height: 22px;
-    place-items: center;
-    border-radius: 50%;
-    background: #008a00;
+.pdp-add-cart {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    background: #111827;
     color: #ffffff;
+    border: none;
+    border-radius: 4px;
+    font-size: 16px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.2s;
+}
+
+.pdp-add-cart:hover {
+    background: #374151;
+}
+
+.pdp-add-cart:disabled {
+    opacity: 0.7;
+    cursor: not-allowed;
+}
+
+.icon-bag {
+    width: 20px;
+    height: 20px;
+}
+
+.pdp-confidence {
+    background: #f9fafb;
+    border-radius: 12px;
+    padding: 24px;
+    margin-bottom: 32px;
+}
+
+.pdp-confidence h4 {
+    font-size: 16px;
+    font-weight: 600;
+    margin: 0 0 16px;
+}
+
+.confidence-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+}
+
+.conf-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 13px;
+    color: #4b5563;
+    font-weight: 500;
+}
+
+.conf-item .icon {
+    width: 18px;
+    height: 18px;
+    color: #6b7280;
+    flex-shrink: 0;
+}
+
+.pdp-accordions {
+    border-top: 1px solid #e5e7eb;
+}
+
+.pdp-accordion {
+    border-bottom: 1px solid #e5e7eb;
+}
+
+.pdp-accordion summary {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 20px 0;
+    font-size: 16px;
+    font-weight: 600;
+    cursor: pointer;
+    list-style: none;
+}
+
+.pdp-accordion summary::-webkit-details-marker {
+    display: none;
+}
+
+.pdp-accordion .icon-plus {
+    font-size: 20px;
+    color: #9ca3af;
+    font-weight: 400;
+    transition: transform 0.2s;
+}
+
+.pdp-accordion[open] .icon-plus {
+    transform: rotate(45deg);
+}
+
+.accordion-content {
+    padding-bottom: 20px;
+    font-size: 15px;
+    color: #4b5563;
+    line-height: 1.6;
+}
+
+.accordion-content ul {
+    margin: 0;
+    padding-left: 20px;
 }
 
 .pdp-specs {
     display: grid;
-    grid-template-columns: 150px 1fr;
-    gap: 10px 18px;
-    margin: 20px 0;
-    font-size: 15px;
+    grid-template-columns: 140px 1fr;
+    gap: 12px;
 }
 
 .pdp-specs dt {
-    font-weight: 700;
+    font-weight: 600;
+    color: #111827;
 }
 
 .pdp-specs dd {
     margin: 0;
 }
 
-.pdp-about {
-    border-top: 1px solid #d5d9d9;
-    padding-top: 18px;
-}
-
-.pdp-about ul {
-    margin: 0;
-    padding-left: 20px;
-    line-height: 1.45;
-}
-
-.pdp-buybox {
-    align-self: start;
-    border: 1px solid #d5d9d9;
-    border-radius: 8px;
-    padding: 18px;
-}
-
-.pdp-delivery {
-    margin: 8px 0 14px;
-}
-
-.pdp-stock {
-    margin: 18px 0 10px;
-    color: #007600;
-    font-size: 20px;
-}
-
-.pdp-qty {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    border: 1px solid #8d9096;
-    border-radius: 8px;
-    padding: 6px 10px;
-}
-
-.pdp-qty select {
-    flex: 1;
-    border: 0;
-    background: transparent;
-    font-size: 14px;
-}
-
-.pdp-cart,
-.pdp-buy,
-.pdp-secondary {
-    width: 100%;
-    min-height: 36px;
-    border-radius: 999px;
-    padding: 0 16px;
-    font-size: 14px;
-    cursor: pointer;
-}
-
-.pdp-cart {
-    margin-top: 12px;
-    border: 1px solid #ffd814;
-    background: #ffd814;
-}
-
-.pdp-cart:disabled {
-    cursor: not-allowed;
-    opacity: 0.7;
-}
-
-.pdp-buy {
-    margin-top: 10px;
-    border: 1px solid #ffa41c;
-    background: #ffa41c;
-}
-
 .pdp-cart-message {
-    margin: 10px 0 0;
-    color: #007600;
-    font-size: 13px;
-    line-height: 1.4;
+    margin: -10px 0 20px;
+    color: #059669;
+    font-size: 14px;
+    font-weight: 500;
 }
 
 .pdp-cart-message.is-error {
-    color: #b42318;
+    color: #dc2626;
 }
 
-.pdp-secondary {
-    margin-top: 12px;
-    border: 1px solid #8d9096;
-    background: #ffffff;
-}
-
-.pdp-seller {
-    display: grid;
-    grid-template-columns: 90px 1fr;
-    gap: 10px;
-    margin: 18px 0;
-}
-
-.pdp-seller dt {
-    color: #565959;
-}
-
-.pdp-seller dd {
-    margin: 0;
-}
-
-.pdp-state {
-    display: grid;
-    min-height: 420px;
-    place-items: center;
-    color: #565959;
-    font-size: 16px;
-}
-
-.pdp-state.is-error {
-    color: #b42318;
-}
-
-@media (max-width: 1180px) {
+@media (max-width: 900px) {
     .pdp-shell {
-        grid-template-columns: minmax(260px, 42%) minmax(0, 1fr);
-    }
-
-    .pdp-buybox {
-        grid-column: 2;
-    }
-}
-
-@media (max-width: 820px) {
-    .pdp-shell {
-        display: block;
-        padding: 16px;
+        grid-template-columns: 1fr;
+        padding: 24px 16px;
+        gap: 32px;
     }
 
     .pdp-gallery {
         position: static;
-    }
-
-    .pdp-gallery__main {
-        min-height: 360px;
-    }
-
-    .pdp-gallery__thumbs {
-        grid-template-columns: repeat(4, 68px);
-    }
-
-    .pdp-thumb {
-        width: 68px;
-        height: 68px;
-    }
-
-    .pdp-details h1 {
-        font-size: 22px;
-    }
-
-    .pdp-buybox {
-        margin-top: 22px;
     }
 }
 </style>

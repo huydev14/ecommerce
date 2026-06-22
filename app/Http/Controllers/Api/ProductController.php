@@ -186,7 +186,7 @@ class ProductController extends Controller
             ->withTotalSoldPastMonth()
             ->where('slug', $slug)
             ->where('status', 'published')
-            ->with(['brand', 'category', 'variants'])
+            ->with(['brand', 'category', 'variants.unit'])
             ->firstOrFail();
 
         return response()->json([
