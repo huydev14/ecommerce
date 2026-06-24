@@ -18,7 +18,23 @@ const { locale, t } = useI18n();
 const searchTerm = ref('');
 const isLocationModalOpen = ref(false);
 const isHrTourActive = ref(false);
-const cartPreviewItems = computed(() => cartStore.items.slice(0, 3));
+const cartPreviewItemsGroupedByBrand = computed(() => {
+    const groups = {};
+    cartStore.items.forEach(item => {
+        const brand = item.brand_name || 'No Brand';
+        if (!groups[brand]) {
+            groups[brand] = { items: [], totalCount: 0 };
+        }
+        groups[brand].totalCount++;
+        if (groups[brand].items.length < 2) {
+            groups[brand].items.push(item);
+        }
+    });
+    return groups;
+});
+const previewItemCount = computed(() => {
+    return Object.values(cartPreviewItemsGroupedByBrand.value).reduce((sum, group) => sum + group.items.length, 0);
+});
 const currentLocationName = computed(() => locationStore.currentLocationName);
 const currentLanguageLabel = computed(() => locale.value.toUpperCase());
 const nextLanguageLabel = computed(() => (locale.value === 'vi' ? 'EN' : 'VI'));
@@ -394,11 +410,11 @@ onBeforeUnmount(() => {
                     <div class="tw-mb-3 tw-flex tw-items-center tw-justify-between tw-border-b tw-border-gray-200 tw-pb-3">
                         <div>
                             <h3 class="tw-m-0 tw-text-[18px] tw-font-bold">{{ t('header.cart_title') }}</h3>
-                            <p class="tw-m-0 tw-text-[12px] tw-text-gray-600">
+                           
+                        </div>
+                        <p class="tw-m-0 tw-text-[12px] tw-text-gray-600">
                                 {{ t('header.cart_itemCount', { count: cartStore.totalItems }) }}
                             </p>
-                        </div>
-                        <div class="tw-text-right tw-text-[14px] tw-font-bold">{{ formatPrice(cartStore.subtotal) }}</div>
                     </div>
 
                     <div v-if="cartStore.isLoading" class="tw-py-8 tw-text-center tw-text-[13px] tw-text-gray-600">
@@ -415,42 +431,63 @@ onBeforeUnmount(() => {
                     </div>
 
                     <template v-else>
-                        <div class="tw-grid tw-gap-3">
-                            <div
-                                v-for="item in cartPreviewItems"
-                                :key="item.product_variant_id"
-                                class="tw-grid tw-grid-cols-[64px_1fr] tw-gap-3"
-                            >
-                                <img
-                                    :src="item.thumbnail"
-                                    :alt="item.product_name"
-                                    class="tw-h-16 tw-w-16 tw-rounded tw-border tw-border-gray-200 tw-object-cover"
-                                />
-                                <div class="tw-min-w-0">
-                                    <router-link
-                                        :to="{ name: 'Cart' }"
-                                        class="tw-block tw-truncate tw-text-[13px] tw-font-semibold tw-text-[#0f1111] hover:tw-text-[#c45500]"
-                                    >
-                                        {{ item.product_name }}
+                        <div class="tw-grid tw-gap-4">
+                            <div v-for="(group, brand) in cartPreviewItemsGroupedByBrand" :key="brand" class="tw-grid tw-gap-3">
+                                <h4 class="tw-m-0 tw-text-[13px] tw-font-bold tw-text-gray-800 tw-border-b tw-border-gray-100 tw-pb-1 tw-uppercase">
+                                    {{ brand }}
+                                </h4>
+                                <div
+                                    v-for="item in group.items"
+                                    :key="item.product_variant_id"
+                                    class="tw-grid tw-grid-cols-[64px_1fr] tw-gap-3"
+                                >
+                                    <img
+                                        :src="item.thumbnail"
+                                        :alt="item.product_name"
+                                        class="tw-h-16 tw-w-16 tw-rounded tw-border tw-border-gray-200 tw-object-cover"
+                                    />
+                                    <div class="tw-min-w-0">
+                                        <router-link
+                                            :to="item.product_slug ? { name: 'ProductDetail', params: { slug: item.product_slug } } : { name: 'ProductList' }"
+                                            class="tw-block tw-truncate tw-text-[13px] tw-font-semibold tw-text-[#0f1111] hover:tw-text-[#c45500]"
+                                        >
+                                            {{ item.product_name }}
+                                        </router-link>
+                                        <p class="tw-m-0 tw-text-[12px] tw-text-gray-600">
+                                            {{ t('header.cart_quantity', { quantity: item.quantity }) }}
+                                            <template v-if="item.unit_name"> - Đơn vị: {{ item.unit_name }}</template>
+                                        </p>
+                                        <p class="tw-m-0 tw-text-[13px] tw-font-bold">
+                                            <span v-if="item.compare_at_price" class="tw-text-gray-400 tw-line-through tw-mr-1 tw-text-[11px] tw-font-normal">
+                                                {{ formatPrice(item.compare_at_price * item.quantity) }}
+                                            </span>
+                                            {{ formatPrice(item.line_total) }}
+                                        </p>
+                                    </div>
+                                </div>
+                                <div v-if="group.totalCount > 2" class="tw-text-center -tw-mt-2">
+                                    <router-link :to="{ name: 'Cart' }" class="tw-text-[12px] tw-text-blue-600 hover:tw-underline">
+                                        Xem thêm {{ group.totalCount - 2 }} sản phẩm thuộc {{ brand }}
                                     </router-link>
-                                    <p class="tw-m-0 tw-text-[12px] tw-text-gray-600">
-                                        {{ t('header.cart_quantity', { quantity: item.quantity }) }}
-                                    </p>
-                                    <p class="tw-m-0 tw-text-[13px] tw-font-bold">{{ formatPrice(item.line_total) }}</p>
                                 </div>
                             </div>
                         </div>
 
-                        <p v-if="cartStore.items.length > cartPreviewItems.length" class="tw-mt-3 tw-text-[12px] tw-text-gray-600">
-                            {{ t('header.cart_moreItems', { count: cartStore.items.length - cartPreviewItems.length }) }}
+                        <p v-if="cartStore.items.length > previewItemCount" class="tw-mt-3 tw-text-[12px] tw-text-gray-600">
+                            {{ t('header.cart_moreItems', { count: cartStore.items.length - previewItemCount }) }}
                         </p>
 
-                        <router-link
-                            :to="{ name: 'Cart' }"
-                            class="tw-mt-4 tw-block tw-w-full tw-rounded-full tw-bg-[#ffd814] tw-py-2 tw-text-center tw-text-[14px] tw-font-semibold tw-text-[#0f1111] hover:tw-bg-[#f7ca00]"
-                        >
-                            {{ t('header.cart_viewCart') }}
-                        </router-link>
+                        <div class="tw-mt-4 tw-flex tw-items-center tw-justify-between tw-border-t tw-border-gray-200 tw-pt-3">
+                            <div class="tw-text-[14px] tw-font-bold tw-text-[#0f1111]">
+                                Total: <span class="tw-text-[#B12704]">{{ formatPrice(cartStore.subtotal) }}</span>
+                            </div>
+                            <router-link
+                                :to="{ name: 'Cart' }"
+                                class="tw-rounded-full tw-bg-[#ffd814] tw-px-5 tw-py-2 tw-text-center tw-text-[13px] tw-font-semibold tw-text-[#0f1111] tw-shadow-sm hover:tw-bg-[#f7ca00]"
+                            >
+                                {{ t('header.cart_viewCart') }}
+                            </router-link>
+                        </div>
                     </template>
                 </div>
             </div>

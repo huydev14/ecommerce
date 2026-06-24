@@ -9,6 +9,18 @@ const updatingItems = ref(new Set());
 
 const hasItems = computed(() => cartStore.items.length > 0);
 
+const cartItemsGroupedByBrand = computed(() => {
+    const groups = {};
+    cartStore.items.forEach(item => {
+        const brand = item.brand_name || 'No Brand';
+        if (!groups[brand]) {
+            groups[brand] = [];
+        }
+        groups[brand].push(item);
+    });
+    return groups;
+});
+
 const formatPrice = (price) => {
     const numericPrice = Number(price || 0);
 
@@ -99,29 +111,40 @@ onMounted(() => {
                 </div>
 
                 <template v-else>
-                    <div class="cart-list">
-                        <article v-for="item in cartStore.items" :key="item.product_variant_id" class="cart-item">
-                            <RouterLink :to="{ name: 'ProductList' }" class="cart-item__image">
+                    <div class="cart-list tw-flex tw-flex-col tw-gap-6">
+                        <div v-for="(items, brand) in cartItemsGroupedByBrand" :key="brand" class="tw-flex tw-flex-col tw-gap-4">
+                            <h2 class="tw-m-0 tw-text-[14px] tw-font-bold tw-text-gray-800 tw-border-y tw-border-gray-200 tw-bg-gray-50 tw-px-4 tw-py-3 tw-uppercase">
+                                {{ brand }}
+                            </h2>
+                            <article v-for="item in items" :key="item.product_variant_id" class="cart-item">
+                            <RouterLink :to="item.product_slug ? { name: 'ProductDetail', params: { slug: item.product_slug } } : { name: 'ProductList' }" class="cart-item__image">
                                 <img v-if="item.thumbnail" :src="item.thumbnail" :alt="item.product_name" />
                             </RouterLink>
 
                             <div class="cart-item__content">
                                 <div class="cart-item__top">
                                     <div class="cart-item__details">
-                                        <RouterLink :to="{ name: 'ProductList' }" class="cart-item__name">
+                                        <RouterLink :to="item.product_slug ? { name: 'ProductDetail', params: { slug: item.product_slug } } : { name: 'ProductList' }" class="cart-item__name">
                                             {{ item.product_name }}
                                         </RouterLink>
-                                        <div class="cart-item__meta">
+                                        <p v-if="item.brand_name" class="tw-m-0 tw-text-[12px] tw-text-gray-500">
+                                            {{ item.brand_name }}
+                                        </p>
+                                        <div class="cart-item__meta tw-flex tw-items-center tw-gap-2 tw-flex-wrap">
                                             <span v-if="item.variant_name" class="cart-variant">{{ item.variant_name }}</span>
-                                            <span class="cart-stock" :class="{ 'is-out': !item.is_available }">
-                                                {{ item.is_available ? t('cart.stock_in') : t('cart.stock_out') }}
-                                            </span>
+                                            <span v-if="item.unit_name" class="tw-text-[12px] tw-text-gray-500">Đơn vị: {{ item.unit_name }}</span>
+                                            
                                         </div>
                                     </div>
 
                                     <div class="cart-item__price">
                                         <span>{{ t('cart.price') }}</span>
-                                        <strong>{{ formatPrice(item.line_total) }}</strong>
+                                        <div class="tw-flex tw-flex-col tw-items-end">
+                                            <span v-if="item.compare_at_price" class="tw-text-gray-400 tw-line-through tw-text-[12px] tw-font-normal">
+                                                {{ formatPrice(item.compare_at_price * item.quantity) }}
+                                            </span>
+                                            <strong>{{ formatPrice(item.line_total) }}</strong>
+                                        </div>
                                     </div>
                                 </div>
 
@@ -162,6 +185,7 @@ onMounted(() => {
                                 </div>
                             </div>
                         </article>
+                        </div>
                     </div>
 
                     <div class="cart-mobile-subtotal">
@@ -337,24 +361,6 @@ onMounted(() => {
     color: #565959;
     font-size: 13px;
     line-height: 18px;
-}
-
-.cart-stock {
-    display: inline-flex;
-    align-items: center;
-    min-height: 24px;
-    border-radius: 999px;
-    background: #eefbf3;
-    padding: 3px 9px;
-    color: #007600;
-    font-size: 13px;
-    font-weight: 600;
-    line-height: 18px;
-}
-
-.cart-stock.is-out {
-    background: #fff1f1;
-    color: #b42318;
 }
 
 .cart-actions {

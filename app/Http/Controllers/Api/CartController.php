@@ -39,7 +39,7 @@ class CartController extends Controller
 
         // Get variants info from DB
         $variantIds = array_keys($cartItems);
-        $variants = ProductVariant::with(['product', 'stocks'])
+        $variants = ProductVariant::with(['product.brand', 'stocks', 'unit'])
             ->whereIn('id', $variantIds)
             ->get();
 
@@ -55,9 +55,13 @@ class CartController extends Controller
             $formattedItems[] = [
                 'product_variant_id' => $variant->id,
                 'product_name' => $variant->product->name,
+                'product_slug' => $variant->product->slug,
+                'brand_name' => $variant->product->brand ? $variant->product->brand->name : 'No Brand',
                 'variant_name' => $variant->attributes['variant_name'] ?? $variant->sku,
                 'thumbnail' => $variant->product->optimized_thumbnail_url,
                 'price' => (float) $variant->price,
+                'compare_at_price' => $variant->compare_at_price ?: null,
+                'unit_name' => $variant->unit ? $variant->unit->name : null,
                 'quantity' => $quantity,
                 'max_stock' => $availableStock,
                 'line_total' => $lineTotal,
@@ -81,7 +85,7 @@ class CartController extends Controller
      */
     public function store(Request $request)
     {
-       $request->validate([
+        $request->validate([
             'product_variant_id' => 'required|integer',
             'quantity' => 'required|integer|min:1'
         ]);
@@ -108,7 +112,7 @@ class CartController extends Controller
         $cartKey = $this->cartService->getCartKey($request);
         $quantity = $request->input('quantity');
 
-        $result = $this->cartService->updateItemQuantity($cartKey,$variantId,$quantity);
+        $result = $this->cartService->updateItemQuantity($cartKey, $variantId, $quantity);
 
         return response()->json($result['data'], $result['status']);
     }
