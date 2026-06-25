@@ -1,142 +1,3 @@
-<script setup>
-import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue';
-import { useI18n } from 'vue-i18n';
-import { useRouter } from 'vue-router';
-import { useAuthStore } from '../stores/auth';
-import { useCartStore } from '../stores/cart';
-import { useLocationStore } from '@/stores/location';
-import { APP_CONFIG } from '@/config';
-import LocationModal from '@/components/Modals/LocationModal.vue';
-
-const HR_TOUR_REPLAY_EVENT = 'hr-tour:replay';
-const HR_TOUR_ACTIVE_CHANGE_EVENT = 'hr-tour:active-change';
-const authStore = useAuthStore();
-const cartStore = useCartStore();
-const locationStore = useLocationStore();
-const router = useRouter();
-const { locale, t } = useI18n();
-const searchTerm = ref('');
-const isLocationModalOpen = ref(false);
-const isHrTourActive = ref(false);
-const cartPreviewItemsGroupedByBrand = computed(() => {
-    const groups = {};
-    cartStore.items.forEach(item => {
-        const brand = item.brand_name || 'No Brand';
-        if (!groups[brand]) {
-            groups[brand] = { items: [], totalCount: 0 };
-        }
-        groups[brand].totalCount++;
-        if (groups[brand].items.length < 2) {
-            groups[brand].items.push(item);
-        }
-    });
-    return groups;
-});
-const previewItemCount = computed(() => {
-    return Object.values(cartPreviewItemsGroupedByBrand.value).reduce((sum, group) => sum + group.items.length, 0);
-});
-const currentLocationName = computed(() => locationStore.currentLocationName);
-const currentLanguageLabel = computed(() => locale.value.toUpperCase());
-const nextLanguageLabel = computed(() => (locale.value === 'vi' ? 'EN' : 'VI'));
-const accountDisplayName = computed(() => authStore.user?.name || t('header.account_label'));
-let originalBodyOverflow = '';
-let isBodyScrollLockedByLocationModal = false;
-
-const accountMenuItems = computed(() => [
-    {
-        title: t('header.account_orders'),
-        iconPath: 'M9 5h6m-8 4h10m-10 4h10M7 3h10a2 2 0 012 2v14l-4-2-3 2-3-2-4 2V5a2 2 0 012-2z',
-        to: { name: 'MyOrders' },
-    },
-    {
-        title: t('header.account_security'),
-        iconPath:
-            'M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z',
-        href: '#',
-    },
-    {
-        title: t('header.account_addresses'),
-        iconPath: 'M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z M15 11a3 3 0 11-6 0 3 3 0 016 0z',
-        to: { name: 'CustomerAddresses' },
-    },
-    {
-        title: t('header.account_payments'),
-        iconPath: 'M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z',
-        href: '#',
-    },
-]);
-
-const submitSearch = () => {
-    const keyword = searchTerm.value.trim();
-    router.push({ name: 'ProductList', query: keyword ? { keyword } : {} });
-};
-
-const toggleLanguage = () => {
-    const nextLocale = locale.value === 'vi' ? 'en' : 'vi';
-    locale.value = nextLocale;
-    localStorage.setItem('user_locale', nextLocale);
-    document.documentElement.lang = nextLocale;
-};
-
-const replayHrTour = () => {
-    window.dispatchEvent(new CustomEvent(HR_TOUR_REPLAY_EVENT));
-};
-
-const handleHrTourActiveChange = (event) => {
-    isHrTourActive.value = Boolean(event.detail?.isActive);
-};
-
-const formatPrice = (price) => {
-    const numericPrice = Number(price || 0);
-
-    return new Intl.NumberFormat('vi-VN', {
-        style: 'currency',
-        currency: 'VND',
-        maximumFractionDigits: 0,
-    }).format(numericPrice);
-};
-
-onMounted(() => {
-    document.documentElement.lang = locale.value;
-    cartStore.fetchCart().catch(() => {});
-    window.addEventListener(HR_TOUR_ACTIVE_CHANGE_EVENT, handleHrTourActiveChange);
-});
-
-const lockBodyScroll = () => {
-    if (isBodyScrollLockedByLocationModal) {
-        return;
-    }
-
-    originalBodyOverflow = document.body.style.overflow;
-    document.body.style.overflow = 'hidden';
-    isBodyScrollLockedByLocationModal = true;
-};
-
-const unlockBodyScroll = () => {
-    if (!isBodyScrollLockedByLocationModal) {
-        return;
-    }
-
-    document.body.style.overflow = originalBodyOverflow;
-    originalBodyOverflow = '';
-    isBodyScrollLockedByLocationModal = false;
-};
-
-watch(isLocationModalOpen, (isOpen) => {
-    if (isOpen) {
-        lockBodyScroll();
-        return;
-    }
-
-    unlockBodyScroll();
-});
-
-onBeforeUnmount(() => {
-    window.removeEventListener(HR_TOUR_ACTIVE_CHANGE_EVENT, handleHrTourActiveChange);
-    unlockBodyScroll();
-});
-</script>
-
 <template>
     <div class="tw-bg-[#131921] tw-text-white">
         <div class="tw-flex tw-min-w-0 tw-items-center tw-justify-center tw-gap-1 tw-px-2 tw-py-2 md:tw-gap-2 md:tw-px-4 xl:tw-gap-4">
@@ -526,3 +387,142 @@ onBeforeUnmount(() => {
 
     <LocationModal v-if="isLocationModalOpen" @close="isLocationModalOpen = false" />
 </template>
+
+<script setup>
+import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue';
+import { useI18n } from 'vue-i18n';
+import { useRouter } from 'vue-router';
+import { useAuthStore } from '../stores/auth';
+import { useCartStore } from '../stores/cart';
+import { useLocationStore } from '@/stores/location';
+import { APP_CONFIG } from '@/config';
+import LocationModal from '@/components/Modals/LocationModal.vue';
+
+const HR_TOUR_REPLAY_EVENT = 'hr-tour:replay';
+const HR_TOUR_ACTIVE_CHANGE_EVENT = 'hr-tour:active-change';
+const authStore = useAuthStore();
+const cartStore = useCartStore();
+const locationStore = useLocationStore();
+const router = useRouter();
+const { locale, t } = useI18n();
+const searchTerm = ref('');
+const isLocationModalOpen = ref(false);
+const isHrTourActive = ref(false);
+const cartPreviewItemsGroupedByBrand = computed(() => {
+    const groups = {};
+    cartStore.items.forEach(item => {
+        const brand = item.brand_name || 'No Brand';
+        if (!groups[brand]) {
+            groups[brand] = { items: [], totalCount: 0 };
+        }
+        groups[brand].totalCount++;
+        if (groups[brand].items.length < 2) {
+            groups[brand].items.push(item);
+        }
+    });
+    return groups;
+});
+const previewItemCount = computed(() => {
+    return Object.values(cartPreviewItemsGroupedByBrand.value).reduce((sum, group) => sum + group.items.length, 0);
+});
+const currentLocationName = computed(() => locationStore.currentLocationName);
+const currentLanguageLabel = computed(() => locale.value.toUpperCase());
+const nextLanguageLabel = computed(() => (locale.value === 'vi' ? 'EN' : 'VI'));
+const accountDisplayName = computed(() => authStore.user?.name || t('header.account_label'));
+let originalBodyOverflow = '';
+let isBodyScrollLockedByLocationModal = false;
+
+const accountMenuItems = computed(() => [
+    {
+        title: t('header.account_orders'),
+        iconPath: 'M9 5h6m-8 4h10m-10 4h10M7 3h10a2 2 0 012 2v14l-4-2-3 2-3-2-4 2V5a2 2 0 012-2z',
+        to: { name: 'MyOrders' },
+    },
+    {
+        title: t('header.account_security'),
+        iconPath:
+            'M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z',
+        href: '#',
+    },
+    {
+        title: t('header.account_addresses'),
+        iconPath: 'M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z M15 11a3 3 0 11-6 0 3 3 0 016 0z',
+        to: { name: 'CustomerAddresses' },
+    },
+    {
+        title: t('header.account_payments'),
+        iconPath: 'M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z',
+        href: '#',
+    },
+]);
+
+const submitSearch = () => {
+    const keyword = searchTerm.value.trim();
+    router.push({ name: 'ProductList', query: keyword ? { keyword } : {} });
+};
+
+const toggleLanguage = () => {
+    const nextLocale = locale.value === 'vi' ? 'en' : 'vi';
+    locale.value = nextLocale;
+    localStorage.setItem('user_locale', nextLocale);
+    document.documentElement.lang = nextLocale;
+};
+
+const replayHrTour = () => {
+    window.dispatchEvent(new CustomEvent(HR_TOUR_REPLAY_EVENT));
+};
+
+const handleHrTourActiveChange = (event) => {
+    isHrTourActive.value = Boolean(event.detail?.isActive);
+};
+
+const formatPrice = (price) => {
+    const numericPrice = Number(price || 0);
+
+    return new Intl.NumberFormat('vi-VN', {
+        style: 'currency',
+        currency: 'VND',
+        maximumFractionDigits: 0,
+    }).format(numericPrice);
+};
+
+onMounted(() => {
+    document.documentElement.lang = locale.value;
+    cartStore.fetchCart().catch(() => {});
+    window.addEventListener(HR_TOUR_ACTIVE_CHANGE_EVENT, handleHrTourActiveChange);
+});
+
+const lockBodyScroll = () => {
+    if (isBodyScrollLockedByLocationModal) {
+        return;
+    }
+
+    originalBodyOverflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    isBodyScrollLockedByLocationModal = true;
+};
+
+const unlockBodyScroll = () => {
+    if (!isBodyScrollLockedByLocationModal) {
+        return;
+    }
+
+    document.body.style.overflow = originalBodyOverflow;
+    originalBodyOverflow = '';
+    isBodyScrollLockedByLocationModal = false;
+};
+
+watch(isLocationModalOpen, (isOpen) => {
+    if (isOpen) {
+        lockBodyScroll();
+        return;
+    }
+
+    unlockBodyScroll();
+});
+
+onBeforeUnmount(() => {
+    window.removeEventListener(HR_TOUR_ACTIVE_CHANGE_EVENT, handleHrTourActiveChange);
+    unlockBodyScroll();
+});
+</script>

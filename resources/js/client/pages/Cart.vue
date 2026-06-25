@@ -11,7 +11,7 @@ const hasItems = computed(() => cartStore.items.length > 0);
 
 const cartItemsGroupedByBrand = computed(() => {
     const groups = {};
-    cartStore.items.forEach(item => {
+    cartStore.items.forEach((item) => {
         const brand = item.brand_name || 'No Brand';
         if (!groups[brand]) {
             groups[brand] = [];
@@ -79,7 +79,8 @@ const removeItem = async (item) => {
     }
 };
 
-const isUpdating = (item) => updatingItems.value.has(item.product_variant_id);
+const deliveryFee = 30000;
+const orderTotal = computed(() => cartStore.subtotal + (cartStore.subtotal > 0 ? deliveryFee : 0));
 
 onMounted(() => {
     cartStore.fetchCart().catch(() => {});
@@ -113,97 +114,130 @@ onMounted(() => {
                 <template v-else>
                     <div class="cart-list tw-flex tw-flex-col tw-gap-6">
                         <div v-for="(items, brand) in cartItemsGroupedByBrand" :key="brand" class="tw-flex tw-flex-col tw-gap-4">
-                            <h2 class="tw-m-0 tw-text-[14px] tw-font-bold tw-text-gray-800 tw-border-y tw-border-gray-200 tw-bg-gray-50 tw-px-4 tw-py-3 tw-uppercase">
+                            <h2
+                                class="tw-m-0 tw-border-y tw-border-gray-200 tw-bg-gray-50 tw-px-4 tw-py-3 tw-text-[14px] tw-font-bold tw-uppercase tw-text-gray-800"
+                            >
                                 {{ brand }}
                             </h2>
                             <article v-for="item in items" :key="item.product_variant_id" class="cart-item">
-                            <RouterLink :to="item.product_slug ? { name: 'ProductDetail', params: { slug: item.product_slug } } : { name: 'ProductList' }" class="cart-item__image">
-                                <img v-if="item.thumbnail" :src="item.thumbnail" :alt="item.product_name" />
-                            </RouterLink>
+                                <RouterLink
+                                    :to="
+                                        item.product_slug
+                                            ? { name: 'ProductDetail', params: { slug: item.product_slug } }
+                                            : { name: 'ProductList' }
+                                    "
+                                    class="cart-item__image tw-border tw-border-gray-200"
+                                >
+                                    <img v-if="item.thumbnail" :src="item.thumbnail" :alt="item.product_name" />
+                                </RouterLink>
 
-                            <div class="cart-item__content">
-                                <div class="cart-item__top">
-                                    <div class="cart-item__details">
-                                        <RouterLink :to="item.product_slug ? { name: 'ProductDetail', params: { slug: item.product_slug } } : { name: 'ProductList' }" class="cart-item__name">
-                                            {{ item.product_name }}
-                                        </RouterLink>
-                                        <p v-if="item.brand_name" class="tw-m-0 tw-text-[12px] tw-text-gray-500">
-                                            {{ item.brand_name }}
-                                        </p>
-                                        <div class="cart-item__meta tw-flex tw-items-center tw-gap-2 tw-flex-wrap">
-                                            <span v-if="item.variant_name" class="cart-variant">{{ item.variant_name }}</span>
-                                            <span v-if="item.unit_name" class="tw-text-[12px] tw-text-gray-500">Đơn vị: {{ item.unit_name }}</span>
-                                            
+                                <div class="tw-flex tw-w-full tw-min-w-0 tw-flex-row tw-justify-between">
+                                    <div class="tw-flex tw-min-w-0 tw-flex-col tw-justify-between">
+                                        <div class="cart-item__details tw-min-w-0">
+                                            <RouterLink
+                                                :to="
+                                                    item.product_slug
+                                                        ? { name: 'ProductDetail', params: { slug: item.product_slug } }
+                                                        : { name: 'ProductList' }
+                                                "
+                                                class="cart-item__name tw-text-base"
+                                            >
+                                                {{ item.product_name }}
+                                            </RouterLink>
+                                            <p v-if="item.brand_name" class="tw-m-0 tw-text-sm tw-capitalize tw-text-gray-500">
+                                                Brand: {{ item.brand_name }}
+                                            </p>
+                                            <div class="cart-item__meta tw-flex tw-flex-wrap tw-items-center tw-gap-2">
+                                                <span v-if="item.variant_name" class="cart-variant tw-block">{{ item.variant_name }}</span>
+                                            </div>
+                                        </div>
+
+                                        <div class="tw-mt-4 tw-text-left">
+                                            <div class="tw-flex tw-items-end tw-gap-2">
+                                                <strong class="tw-text-[20px] tw-font-bold tw-text-gray-900">{{
+                                                    formatPrice(item.line_total)
+                                                }}</strong>
+                                                <span
+                                                    v-if="item.compare_at_price"
+                                                    class="tw-mb-[3px] tw-text-[12px] tw-font-normal tw-text-gray-400 tw-line-through"
+                                                >
+                                                    {{ formatPrice(item.compare_at_price * item.quantity) }}
+                                                </span>
+                                            </div>
                                         </div>
                                     </div>
 
-                                    <div class="cart-item__price">
-                                        <span>{{ t('cart.price') }}</span>
-                                        <div class="tw-flex tw-flex-col tw-items-end">
-                                            <span v-if="item.compare_at_price" class="tw-text-gray-400 tw-line-through tw-text-[12px] tw-font-normal">
-                                                {{ formatPrice(item.compare_at_price * item.quantity) }}
-                                            </span>
-                                            <strong>{{ formatPrice(item.line_total) }}</strong>
+                                    <div class="tw-ml-4 tw-flex tw-shrink-0 tw-flex-col tw-items-end tw-justify-between">
+                                        <button
+                                            type="button"
+                                            class="tw--mr-2 tw--mt-2 tw-p-2 tw-text-red-500 tw-transition-colors hover:tw-text-red-700"
+                                            @click="removeItem(item)"
+                                        >
+                                            <i class="fa-solid fa-trash-can tw-text-[18px]" aria-hidden="true"></i>
+                                        </button>
+
+                                        <div>
+                                            <p v-if="item.unit_name" class="tw-block tw-text-xs tw-text-gray-500 tw-text-center">
+                                                Đơn vị: {{ item.unit_name }}
+                                            </p>
+                                            <label class="cart-quantity tw-mt-2">
+                                                <button
+                                                    type="button"
+                                                    class="cart-quantity__button hover:tw-bg-yellow-500"
+                                                    :disabled="Number(item.quantity || 1) <= 1"
+                                                    :aria-label="`Decrease ${item.product_name}`"
+                                                    @click="changeQuantity(item, -1)"
+                                                >
+                                                    <i class="fa-solid fa-minus" aria-hidden="true"></i>
+                                                </button>
+                                                <input
+                                                    type="number"
+                                                    min="1"
+                                                    :max="item.max_stock"
+                                                    :value="item.quantity"
+                                                    @change="updateQuantity(item, $event)"
+                                                />
+                                                <button
+                                                    type="button"
+                                                    class="cart-quantity__button hover:tw-bg-yellow-500"
+                                                    :disabled="Number(item.quantity || 1) >= Number(item.max_stock || 1)"
+                                                    :aria-label="`Increase ${item.product_name}`"
+                                                    @click="changeQuantity(item, 1)"
+                                                >
+                                                    <i class="fa-solid fa-plus" aria-hidden="true"></i>
+                                                </button>
+                                            </label>
                                         </div>
                                     </div>
                                 </div>
-
-                                <div class="cart-actions">
-                                    <label class="cart-quantity">
-                                        <span>{{ t('cart.quantity') }}</span>
-                                        <button
-                                            type="button"
-                                            class="cart-quantity__button hover:tw-bg-yellow-500"
-                                            :disabled="isUpdating(item) || Number(item.quantity || 1) <= 1"
-                                            :aria-label="`Decrease ${item.product_name}`"
-                                            @click="changeQuantity(item, -1)"
-                                        >
-                                            <i class="fa-solid fa-minus" aria-hidden="true"></i>
-                                        </button>
-                                        <input
-                                            type="number"
-                                            min="1"
-                                            :max="item.max_stock"
-                                            :value="item.quantity"
-                                            :disabled="isUpdating(item)"
-                                            @change="updateQuantity(item, $event)"
-                                        />
-                                        <button
-                                            type="button"
-                                            class="cart-quantity__button hover:tw-bg-yellow-500"
-                                            :disabled="isUpdating(item) || Number(item.quantity || 1) >= Number(item.max_stock || 1)"
-                                            :aria-label="`Increase ${item.product_name}`"
-                                            @click="changeQuantity(item, 1)"
-                                        >
-                                            <i class="fa-solid fa-plus" aria-hidden="true"></i>
-                                        </button>
-                                    </label>
-                                    <button type="button" class="cart-remove" :disabled="isUpdating(item)" @click="removeItem(item)">
-                                        <i class="fa-solid fa-trash-can" aria-hidden="true"></i>
-                                        <span>{{ t('cart.remove') }}</span>
-                                    </button>
-                                </div>
-                            </div>
-                        </article>
+                            </article>
                         </div>
                     </div>
 
                     <div class="cart-mobile-subtotal">
-                        {{ t('cart.subtotalWithCount', { count: cartStore.totalItems }) }}: <strong>{{ formatPrice(cartStore.subtotal) }}</strong>
+                        {{ t('cart.subtotalWithCount', { count: cartStore.totalItems }) }}:
+                        <strong>{{ formatPrice(cartStore.subtotal) }}</strong>
                     </div>
                 </template>
             </main>
 
             <aside v-if="hasItems" class="cart-summary">
-                <div class="cart-summary__panel">
-                    <h2>{{ t('cart.subtotalWithCount', { count: cartStore.totalItems }) }}</h2>
-                    <dl>
-                        <div>
-                            <dt>{{ t('cart.price') }}</dt>
-                            <dd>{{ formatPrice(cartStore.subtotal) }}</dd>
+                <div class="cart-summary__panel tw-mb-4">
+                    <h2 class="tw-mb-4">{{ t('cart.orderSummary') }}</h2>
+                    <dl class="tw-flex tw-flex-col tw-gap-3">
+                        <div class="tw-flex tw-justify-between">
+                            <dt class="tw-text-gray-500">{{ t('cart.subtotalWithCount', { count: cartStore.totalItems }) }}</dt>
+                            <dd class="tw-font-bold tw-text-gray-900">{{ formatPrice(cartStore.subtotal) }}</dd>
+                        </div>
+                        <div class="tw-flex tw-justify-between tw-pb-4 tw-border-b tw-border-gray-200">
+                            <dt class="tw-text-gray-500">{{ t('cart.deliveryFee') }}</dt>
+                            <dd class="tw-font-bold tw-text-gray-900">{{ formatPrice(deliveryFee) }}</dd>
                         </div>
                     </dl>
-                    <div class="cart-summary__total">{{ formatPrice(cartStore.subtotal) }}</div>
+                    <div class="cart-summary__total tw-flex tw-justify-between tw-items-center tw-mt-4">
+                        <span class="tw-text-lg tw-font-bold tw-text-gray-900">{{ t('cart.total') }}</span>
+                        <span class="tw-text-[24px] tw-font-bold tw-text-gray-900">{{ formatPrice(orderTotal) }}</span>
+                    </div>
                 </div>
                 <RouterLink :to="{ name: 'Checkout' }" class="cart-checkout">{{ t('cart.checkout') }}</RouterLink>
                 <RouterLink :to="{ name: 'ProductList' }" class="cart-secondary">{{ t('cart.continueShopping') }}</RouterLink>
@@ -225,7 +259,7 @@ onMounted(() => {
     grid-template-columns: minmax(0, 1fr) 320px;
     align-items: start;
     gap: 18px;
-    max-width: 1480px;
+    max-width: 1200px;
     margin: 0 auto;
     padding: 24px 22px;
 }
@@ -289,11 +323,9 @@ onMounted(() => {
     width: 156px;
     height: 156px;
     place-items: center;
-    border: 1px solid #edf0f2;
-    border-radius: 6px;
+    border-radius: 4px;
     background: #f7f7f7;
     overflow: hidden;
-    padding: 12px;
     text-decoration: none;
 }
 
@@ -322,15 +354,12 @@ onMounted(() => {
 }
 
 .cart-item__name {
-    display: -webkit-box;
     overflow: hidden;
     color: #0f1111;
     font-size: 18px;
     font-weight: 600;
     line-height: 25px;
     text-decoration: none;
-    -webkit-box-orient: vertical;
-    -webkit-line-clamp: 2;
 }
 
 .cart-item__name:hover,
@@ -408,7 +437,7 @@ onMounted(() => {
         transform 0.15s ease;
 }
 
-.cart-quantity__button:hover{
+.cart-quantity__button:hover {
     transform: translateY(-1px);
 }
 

@@ -144,6 +144,9 @@
         "quantity": "Số lượng",
         "remove": "Xóa",
         "subtotalWithCount": "Tạm tính ({count} sản phẩm)",
+        "orderSummary": "Tóm tắt đơn hàng",
+        "deliveryFee": "Phí vận chuyển",
+        "total": "Tổng cộng",
         "checkout": "Tiến hành thanh toán",
         "stock_in": "Còn hàng",
         "stock_out": "Hết hàng"

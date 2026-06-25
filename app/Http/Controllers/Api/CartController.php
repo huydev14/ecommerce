@@ -52,6 +52,13 @@ class CartController extends Controller
             $availableStock = $variant->available_stock;
             $lineTotal = $variant->price * $quantity;
 
+            $displayCompareAtPrice = null;
+            if ($variant->compare_at_price !== null) {
+                $displayCompareAtPrice = (float) $variant->compare_at_price;
+            } elseif ($variant->price > 0) {
+                $displayCompareAtPrice = round($variant->price / 0.9, 2);
+            }
+
             $formattedItems[] = [
                 'product_variant_id' => $variant->id,
                 'product_name' => $variant->product->name,
@@ -60,7 +67,7 @@ class CartController extends Controller
                 'variant_name' => $variant->attributes['variant_name'] ?? $variant->sku,
                 'thumbnail' => $variant->product->optimized_thumbnail_url,
                 'price' => (float) $variant->price,
-                'compare_at_price' => $variant->compare_at_price ?: null,
+                'compare_at_price' => $displayCompareAtPrice,
                 'unit_name' => $variant->unit ? $variant->unit->name : null,
                 'quantity' => $quantity,
                 'max_stock' => $availableStock,
