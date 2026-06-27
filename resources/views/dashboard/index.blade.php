@@ -104,74 +104,79 @@
             overflow: hidden;
             color: #242424;
             background: #ffffff;
-            border: 1px solid #e5e5e5;
-            border-radius: 4px;
-            box-shadow: 0 1.6px 3.6px rgba(0, 0, 0, 0.13), 0 0.3px 0.9px rgba(0, 0, 0, 0.11);
-            font-family: "Segoe UI", system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+            border: 1px solid rgba(0, 0, 0, 0.06);
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.02), 0 0 2px rgba(0, 0, 0, 0.04);
+            font-family: "Segoe UI Variable Text", "Segoe UI Variable", "Segoe UI", system-ui, -apple-system, sans-serif;
             text-decoration: none;
-            transition: border-color 160ms ease, box-shadow 160ms ease, transform 160ms ease;
         }
 
         .dashboard-widget:hover {
             color: #242424;
-            border-color: #c7e0f4;
-            box-shadow: 0 3.2px 7.2px rgba(0, 0, 0, 0.13), 0 0.6px 1.8px rgba(0, 0, 0, 0.11);
+            background-color: #fdfdfd;
+            border-color: rgba(0, 0, 0, 0.08);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.04), 0 0 2px rgba(0, 0, 0, 0.04);
+            transform: translateY(-2px);
             text-decoration: none;
-            transform: translateY(-1px);
         }
 
         .dashboard-widget:focus-visible {
             outline: 2px solid #0f6cbd;
-            outline-offset: 2px;
+            outline-offset: -2px;
+            border-radius: 8px;
         }
 
         .dashboard-widget__bar {
             position: absolute;
-            inset: 0 auto 0 0;
+            inset: 24px auto 24px 0;
             width: 4px;
             background: var(--widget-accent);
+            border-radius: 0 4px 4px 0;
+            transition: height 250ms ease;
         }
 
         .dashboard-widget__body {
             display: flex;
             align-items: center;
             min-width: 0;
-            gap: 14px;
-            padding: 18px 18px 18px 20px;
+            gap: 16px;
+            padding: 16px 20px 16px 24px;
         }
 
         .dashboard-widget__icon {
             display: inline-flex;
             align-items: center;
             justify-content: center;
-            width: 40px;
-            height: 40px;
-            flex: 0 0 40px;
+            width: 44px;
+            height: 44px;
+            flex: 0 0 44px;
             color: var(--widget-accent);
-            background: color-mix(in srgb, var(--widget-accent) 12%, #ffffff);
-            border-radius: 4px;
-            font-size: 16px;
+            background: color-mix(in srgb, var(--widget-accent) 10%, transparent);
+            border-radius: 6px;
+            font-size: 18px;
         }
 
         .dashboard-widget__copy {
             display: flex;
             min-width: 0;
             flex-direction: column;
-            gap: 3px;
+            gap: 2px;
         }
 
         .dashboard-widget__label {
             color: #616161;
             font-size: 13px;
-            font-weight: 600;
+            font-weight: 500;
             line-height: 18px;
         }
 
         .dashboard-widget__value {
             color: #242424;
-            font-size: 26px;
-            font-weight: 700;
-            line-height: 32px;
+            font-family: "Segoe UI Variable Display", "Segoe UI", system-ui, sans-serif;
+            font-size: 28px;
+            font-weight: 600;
+            line-height: 34px;
+            letter-spacing: -0.5px;
         }
 
         .dashboard-widget__meta {
@@ -190,16 +195,20 @@
             width: 32px;
             height: 32px;
             flex: 0 0 32px;
-            margin-right: 12px;
-            color: #707070;
-            border-radius: 4px;
+            margin-right: 16px;
+            color: #8c8c8c;
+            border-radius: 6px;
             font-size: 12px;
-            transition: background-color 160ms ease, color 160ms ease;
+            transition: all 200ms ease;
+            opacity: 0;
+            transform: translateX(-8px);
         }
 
         .dashboard-widget:hover .dashboard-widget__go {
             color: #0f6cbd;
-            background: #eff6fc;
+            background: color-mix(in srgb, #0f6cbd 8%, transparent);
+            opacity: 1;
+            transform: translateX(0);
         }
 
         @media (max-width: 1199.98px) {
@@ -215,12 +224,17 @@
             }
 
             .dashboard-widget {
-                min-height: 96px;
+                min-height: 100px;
             }
 
             .dashboard-widget__value {
-                font-size: 22px;
-                line-height: 28px;
+                font-size: 24px;
+                line-height: 30px;
+            }
+
+            .dashboard-widget__go {
+                opacity: 1;
+                transform: translateX(0);
             }
         }
     </style>
