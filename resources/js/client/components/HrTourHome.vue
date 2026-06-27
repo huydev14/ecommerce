@@ -17,7 +17,7 @@ const markTourCompleted = () => {
 
 const setTourActive = (isActive) => {
     isTourActive.value = isActive;
-    window.dispatchEvent(new CustomEvent(HR_TOUR_ACTIVE_CHANGE_EVENT, { detail: { isActive } }));
+    globalThis.dispatchEvent(new CustomEvent(HR_TOUR_ACTIVE_CHANGE_EVENT, { detail: { isActive } }));
 };
 
 const destroyTour = () => {
@@ -38,7 +38,7 @@ const handleReplayTour = () => {
 };
 
 onMounted(() => {
-    window.addEventListener(HR_TOUR_REPLAY_EVENT, handleReplayTour);
+    globalThis.addEventListener(HR_TOUR_REPLAY_EVENT, handleReplayTour);
 
     const hasSeenTour = localStorage.getItem(HR_TOUR_COMPLETED_KEY);
 
@@ -50,7 +50,7 @@ onMounted(() => {
 });
 
 onUnmounted(() => {
-    window.removeEventListener(HR_TOUR_REPLAY_EVENT, handleReplayTour);
+    globalThis.removeEventListener(HR_TOUR_REPLAY_EVENT, handleReplayTour);
     destroyTour();
 });
 
@@ -103,8 +103,7 @@ const startHrTourHome = () => {
                     </a>
 
                     <p>
-                        Sau đây là một số <strong>tính năng kỹ thuật nổi bật</strong>
-                        mà em đã triển khai ở phần homepage.
+                        Sau đây là một số <strong>tính năng kỹ thuật nổi bật</strong> mà em đã triển khai ở phần homepage.
                     </p>
                 </div>
             `,
@@ -183,13 +182,13 @@ const startHrTourHome = () => {
         popover: {
             title: 'Trải nghiệm thử quy trình đặt hàng',
             description:
-                'Anh/Chị có thể thử tìm kiếm sản phẩm, thêm vào giỏ hàng và thực hiện quy trình đặt hàng để xem luồng xử lý thực tế của hệ thống.',
+                'Anh/Chị có thể thử tìm kiếm sản phẩm, thêm vào giỏ hàng và thực hiện đặt hàng để xem luồng xử lý thực tế của hệ thống.',
             side: 'bottom',
             align: 'start',
             onNextClick: () => {
                 markTourCompleted();
                 driverObj.destroy();
-                location.reload();
+                window.scrollTo({ top: 0, behavior: 'smooth' });
             },
         },
     },
@@ -205,9 +204,8 @@ const startHrTourHome = () => {
 </template>
 
 <style>
-/* Khung popup chính - Hiệu ứng Mica/Acrylic */
 .driver-popover {
-    border-radius: 8px !important; /* Chuẩn corner radius Win 11 */
+    border-radius: 8px !important;
     font-family:
         'Segoe UI Variable',
         'Segoe UI',
@@ -216,18 +214,17 @@ const startHrTourHome = () => {
         Roboto,
         sans-serif !important;
     background-color: rgba(255, 255, 255, 0.95) !important;
-    backdrop-filter: blur(20px) !important; /* Làm mờ nền đằng sau */
-    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.14) !important; /* Elevation shadow */
-    border: 1px solid rgba(0, 0, 0, 0.05) !important; /* Viền siêu mỏng */
+    backdrop-filter: blur(20px) !important;
+    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.14) !important;
+    border: 1px solid rgba(0, 0, 0, 0.05) !important;
     padding: 16px !important;
-    max-width: 360px !important; /* Flyout của Windows thường gọn gàng */
+    max-width: 360px !important;
 }
 
-/* Tiêu đề */
 .driver-popover-title {
     font-size: 16px !important;
     font-weight: 600 !important;
-    color: #1a1a1a !important; /* Đen nhạt, không dùng đen tuyệt đối */
+    color: #1a1a1a !important;
     margin-bottom: 8px !important;
 }
 
