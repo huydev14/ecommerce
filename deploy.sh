@@ -1,6 +1,15 @@
 #!/bin/bash
 set -e
 
+echo "---- Installing npm dependencies ----"
+npm install
+
+echo "---- Compiling frontend assets ----"
+npm run build
+
+echo "---- Clearing node_modules ----"
+rm -rf node_modules
+
 echo "---- Running migrations ----"
 php artisan migrate --force
 
