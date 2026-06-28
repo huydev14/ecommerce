@@ -229,7 +229,7 @@ onMounted(() => {
                             <dt class="tw-text-gray-500">{{ t('cart.subtotalWithCount', { count: cartStore.totalItems }) }}</dt>
                             <dd class="tw-font-bold tw-text-gray-900">{{ formatPrice(cartStore.subtotal) }}</dd>
                         </div>
-                        <div class="tw-flex tw-justify-between tw-pb-4 tw-border-b tw-border-gray-200">
+                        <div class="tw-flex tw-justify-between">
                             <dt class="tw-text-gray-500">{{ t('cart.deliveryFee') }}</dt>
                             <dd class="tw-font-bold tw-text-gray-900">{{ formatPrice(deliveryFee) }}</dd>
                         </div>
@@ -320,8 +320,7 @@ onMounted(() => {
 
 .cart-item__image {
     display: grid;
-    width: 156px;
-    height: 156px;
+    aspect-ratio: 1/1;
     place-items: center;
     border-radius: 4px;
     background: #f7f7f7;

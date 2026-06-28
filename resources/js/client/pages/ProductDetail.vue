@@ -1,13 +1,14 @@
 <script setup>
 import { computed, onMounted, ref, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
-import { useRoute } from 'vue-router';
+import { useRoute, useRouter } from 'vue-router';
 import api from '@/services/api';
 import { APP_CONFIG } from '@/config';
 import { useCartStore } from '@/stores/cart';
 import { useLocationStore } from '@/stores/location';
 
 const route = useRoute();
+const router = useRouter();
 const cartStore = useCartStore();
 const locationStore = useLocationStore();
 const { t } = useI18n();
@@ -19,7 +20,7 @@ const selectedImage = ref('');
 const selectedVariantId = ref(null);
 const quantity = ref(1);
 const isAddingToCart = ref(false);
-const cartMessage = ref('');
+const isBuyingNow = ref(false);
 const cartError = ref('');
 const shippingFee = ref(null);
 const isShippingFeeLoading = ref(false);
@@ -177,7 +178,6 @@ const shippingFeeLabel = computed(() => {
 });
 
 const addToCart = async () => {
-    cartMessage.value = '';
     cartError.value = '';
 
     if (!selectedVariant.value?.id) {
@@ -189,11 +189,29 @@ const addToCart = async () => {
 
     try {
         await cartStore.addItem(selectedVariant.value.id, Number(quantity.value || 1));
-        cartMessage.value = t('productDetail.messages_addedToCart');
     } catch (error) {
         cartError.value = error.response?.data?.message || t('productDetail.errors_addToCart');
     } finally {
         isAddingToCart.value = false;
+    }
+};
+
+const buyNow = async () => {
+    cartError.value = '';
+
+    if (!selectedVariant.value?.id) {
+        cartError.value = t('productDetail.errors_selectVariant');
+        return;
+    }
+
+    isBuyingNow.value = true;
+
+    try {
+        await cartStore.addItem(selectedVariant.value.id, Number(quantity.value || 1));
+        router.push({ name: 'Cart' });
+    } catch (error) {
+        cartError.value = error.response?.data?.message || t('productDetail.errors_addToCart');
+        isBuyingNow.value = false;
     }
 };
 
@@ -232,79 +250,79 @@ watch(() => locationStore.currentProvinceId, fetchShippingFee);
             </aside>
 
             <div class="pdp-details">
-                <div class="pdp-rating-row">
-                    <span class="rating-score">4.9</span>
-                    <span class="pdp-stars">★★★★★</span>
-                    <a href="#" class="rating-reviews">{{ t('productDetail.ratings', { count: 67 }) }}</a>
-                </div>
+                <h1 class="pdp-title !tw-text-[24px] !tw-font-medium !tw-mb-1 !tw-mt-0 !tw-leading-[1.3]">{{ product.name }}</h1>
 
-                <RouterLink v-if="brandSlug" class="pdp-store" :to="{ name: 'ProductList', query: { brand: brandSlug } }">
+                <RouterLink v-if="brandSlug" class="pdp-store !tw-mt-0 !tw-mb-2 !tw-text-[14px]" :to="{ name: 'ProductList', query: { brand: brandSlug } }">
                     {{ t('productDetail.visitStore', { brand: brandName }) }}
                 </RouterLink>
-                <span v-else class="pdp-store">{{ t('productDetail.visitStore', { brand: brandName }) }}</span>
-                <h1 class="pdp-title">{{ product.name }}</h1>
-                <p class="pdp-short-desc">
-                    {{ descriptionItems[0] || t('productDetail.fallback_noDescription') }}
-                </p>
+                <span v-else class="pdp-store !tw-mt-0 !tw-mb-2 !tw-text-[14px]">{{ t('productDetail.visitStore', { brand: brandName }) }}</span>
 
-                <section v-if="variantLabels.length" class="pdp-options">
-                    <h3 class="pdp-options-title">{{ t('productDetail.options') }}</h3>
-                    <div class="pdp-color-grid">
+                <div class="pdp-rating-row tw-mb-3 tw-flex tw-items-center">
+                    <span class="rating-score tw-text-sm">4.9</span>
+                    <span class="pdp-stars">★★★★★</span>
+                    <span class="tw-text-[#007185] hover:tw-underline tw-cursor-pointer tw-mx-1 tw-flex tw-items-center tw-text-sm">
+                        <svg viewBox="0 0 1024 1024" class="tw-w-3 tw-h-3 tw-ml-0.5 tw-mr-1" version="1.1" xmlns="http://www.w3.org/2000/svg"><path d="M903.232 256l56.768 50.432L512 768 64 306.432 120.768 256 512 659.072z" fill="currentColor"/></svg>
+                        {{ t('productDetail.ratings', { count: 67 }) }}
+                    </span>
+                    <span class="tw-text-gray-400 tw-mx-1">|</span>
+                    <a href="#" class="rating-reviews tw-text-[#007185] hover:tw-underline tw-text-sm !tw-ml-0">Search this page</a>
+                </div>
+                
+                <div class="tw-text-sm tw-font-semibold tw-text-gray-900 tw-mb-4" v-html="soldCountLabel"></div>
+                
+                <hr class="tw-border-gray-300 tw-mb-4" />
+
+                <div class="tw-mb-4 tw-flex tw-flex-col">
+                    <span class="tw-text-3xl tw-font-medium tw-text-black">{{ formatPrice(activePrice) }}</span>
+                    <div class="tw-mt-2 tw-text-sm tw-text-gray-600">
+                        Giá trên đã bao gồm thuế
+                    </div>
+                </div>
+
+                <section v-if="variantLabels.length" class="pdp-options tw-mb-5">
+                    <h3 class="pdp-options-title tw-text-[15px] tw-font-normal tw-text-gray-900 tw-mb-3">Size: <span class="tw-font-bold">{{ getVariantLabel(selectedVariant) }}</span></h3>
+                    <div class="pdp-color-grid tw-gap-2">
                         <button
                             v-for="variant in variantLabels"
                             :key="variant.id"
                             type="button"
-                            class="pdp-color-swatch"
-                            :class="{ 'is-selected': selectedVariantId === variant.id }"
+                            class="pdp-color-swatch !tw-rounded !tw-border !tw-border-gray-400 !tw-flex !tw-flex-col !tw-items-start !tw-px-3 !tw-py-2 hover:!tw-bg-gray-50"
+                            :class="selectedVariantId === variant.id ? '!tw-border-[#007185] !tw-bg-[#f0f8fa] !tw-shadow-[0_0_0_1px_#007185]' : ''"
                             @click="selectedVariantId = variant.id"
                         >
-                            {{ variant.label }}
+                            <span class="tw-font-bold tw-text-black">{{ variant.label }}</span>
+                            <span class="tw-text-[#B12704] tw-text-[13px] tw-font-medium">{{ formatPrice(variant.price) }}</span>
                         </button>
                     </div>
                 </section>
 
-                <div class="pdp-accordions">
-                    <details class="pdp-accordion" open>
-                        <summary>Details <span class="icon-plus">+</span></summary>
-                        <div class="accordion-content">
-                            <ul>
-                                <li v-for="item in descriptionItems" :key="item">{{ item }}</li>
-                            </ul>
-                        </div>
-                    </details>
-                    <details class="pdp-accordion" open>
-                        <summary>Dimension <span class="icon-plus">+</span></summary>
-                        <div class="accordion-content">
-                            <dl class="pdp-specs">
-                                <template v-if="selectedVariant?.unit">
-                                    <dt>Unit</dt>
-                                    <dd>{{ selectedVariant.unit }}</dd>
-                                </template>
-                                <template v-for="[label, value] in specifications" :key="label">
-                                    <dt>{{ label }}</dt>
-                                    <dd>{{ value }}</dd>
-                                </template>
-                            </dl>
-                        </div>
-                    </details>
-                    <details class="pdp-accordion" open>
-                        <summary>Shipping & Returns <span class="icon-plus">+</span></summary>
-                        <div class="accordion-content">
-                            <p>Shipper: {{ APP_CONFIG.appName }}</p>
-                            <p>Free Returns within 60 days.</p>
-                        </div>
-                    </details>
+                <div class="tw-mb-5">
+                    <dl class="pdp-specs tw-text-sm !tw-gap-y-2">
+                        <template v-if="selectedVariant?.unit">
+                            <dt class="tw-text-black">Unit</dt>
+                            <dd class="tw-text-gray-700">{{ selectedVariant.unit }}</dd>
+                        </template>
+                        <template v-for="[label, value] in specifications" :key="label">
+                            <dt class="tw-text-black">{{ label }}</dt>
+                            <dd class="tw-text-gray-700">{{ value }}</dd>
+                        </template>
+                    </dl>
+                </div>
+                <hr class="tw-border-gray-300 tw-mb-4" />
+
+                <div class="tw-mb-5">
+                    <h3 class="tw-text-base tw-font-bold tw-text-gray-900 tw-mb-2">About this item</h3>
+                    <ul class="tw-list-disc tw-pl-5 tw-text-sm tw-text-gray-900">
+                        <li v-for="item in descriptionItems" :key="item" class="tw-mb-1">{{ item }}</li>
+                    </ul>
                 </div>
             </div>
 
             <div class="pdp-buybox">
                 <div class="pdp-price-row">
-                    <span class="pdp-price-current">{{ formatPrice(activePrice) }}</span>
+                    <span class="tw-text-2xl tw-font-bold tw-text-red-600">{{ formatPrice(activePrice) }}</span>
                     <div class="pdp-price-old-group" v-if="selectedVariant?.compare_at_price">
-                        <span class="pdp-price-old">{{ formatPrice(selectedVariant.compare_at_price) }}</span>
-                        <div class="pdp-price-discount">
-                            <span class="discount-value">-{{ Math.round((1 - activePrice / selectedVariant.compare_at_price) * 100) }}%</span>
-                        </div>
+                        <span class="pdp-price-old tw-text-sm">{{ formatPrice(selectedVariant.compare_at_price) }}</span>
                     </div>
                 </div>
 
@@ -324,45 +342,44 @@ watch(() => locationStore.currentProvinceId, fetchShippingFee);
                     </div>
                 </div>
 
-                <div class="pdp-action-row">
-                    <div class="pdp-qty-stepper">
-                        <button type="button" @click="quantity > 1 ? quantity-- : null">-</button>
-                        <input type="number" v-model="quantity" min="1" />
-                        <button type="button" @click="quantity++">+</button>
+                <div class="tw-text-[#007600] tw-text-lg tw-mb-4 tw-font-medium">
+                    {{ selectedVariant?.stock_quantity === 0 ? 'Out of Stock' : 'In Stock' }}
+                </div>
+
+                <div class="pdp-action-row tw-flex-col !tw-gap-3">
+                    <div class="tw-flex tw-items-center tw-gap-3">
+                        <span class="tw-text-sm tw-text-gray-700 tw-font-medium">Quantity:</span>
+                        <div class="pdp-qty-stepper !tw-h-9 !tw-w-auto">
+                            <button type="button" @click="quantity > 1 ? quantity-- : null">-</button>
+                            <input type="number" v-model="quantity" min="1" class="!tw-w-10" />
+                            <button type="button" @click="quantity++">+</button>
+                        </div>
                     </div>
                     
-                    <button type="button" class="pdp-add-cart" :disabled="isAddingToCart" @click="addToCart">
+                    <button type="button" class="pdp-add-cart !tw-rounded-full !tw-border-none tw-bg-[#ffd814] tw-transition-colors hover:tw-bg-[#f7ca00] !tw-py-2.5 !tw-text-[15px]" :disabled="isAddingToCart" @click="addToCart">
                         {{ isAddingToCart ? t('productCard.actions_adding') : 'Add to cart' }}
-                        <svg class="icon-bag" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" /></svg>
+                    </button>
+
+                    <button type="button" class="pdp-add-cart !tw-rounded-full !tw-border-none tw-bg-[#ffa41c] tw-transition-colors hover:tw-bg-[#fa8900] !tw-py-2.5 !tw-text-[15px]" :disabled="isBuyingNow" @click="buyNow">
+                        {{ isBuyingNow ? t('productCard.actions_adding') : 'Buy Now' }}
                     </button>
                 </div>
 
-                <p v-if="cartMessage" class="pdp-cart-message">{{ cartMessage }}</p>
-                <p v-if="cartError" class="pdp-cart-message is-error">{{ cartError }}</p>
-
-              
-
-                <div class="pdp-confidence">
-                    <h4>Buy with confidence</h4>
-                    <div class="confidence-grid">
-                        <div class="conf-item">
-                            <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M14 10h4.764a2 2 0 011.789 2.894l-3.5 7A2 2 0 0115.263 21h-4.017c-.163 0-.326-.02-.485-.06L7 20m7-10V5a2 2 0 00-2-2h-.095c-.5 0-.905.405-.905.905 0 .714-.211 1.412-.608 2.006L7 11v9m7-10h-2M7 20H5a2 2 0 01-2-2v-6a2 2 0 012-2h2.514" /></svg>
-                            Best Price Guaranteed
-                        </div>
-                        <div class="conf-item">
-                            <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" /></svg>
-                            60-Day Returns
-                        </div>
-                        <div class="conf-item">
-                            <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" /></svg>
-                            3-Year Warranty
-                        </div>
-                        <div class="conf-item">
-                            <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" /><path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
-                            Fully Assembled Design
-                        </div>
-                    </div>
+                <div class="pdp-seller-info tw-mt-5 tw-text-[13px] tw-grid tw-grid-cols-[70px_1fr] tw-gap-y-1.5 tw-gap-x-3">
+                    <span class="tw-text-gray-500">Ships from</span>
+                    <span class="tw-text-gray-900">{{ APP_CONFIG.appName }}</span>
+                    
+                    <span class="tw-text-gray-500">Sold by</span>
+                    <RouterLink v-if="brandSlug" :to="{ name: 'ProductList', query: { brand: brandSlug } }" class="tw-text-[#007185] hover:tw-underline tw-cursor-pointer">
+                        {{ brandName }}
+                    </RouterLink>
+                    <span v-else class="tw-text-[#007185] hover:tw-underline tw-cursor-pointer">{{ brandName }}</span>
+                    
+                    <span class="tw-text-gray-500">Returns</span>
+                    <span class="tw-text-[#007185] hover:tw-underline tw-cursor-pointer">30-day refund / replacement</span>
                 </div>
+
+                <p v-if="cartError" class="pdp-cart-message is-error">{{ cartError }}</p>
             </div>
         </div>
     </section>
@@ -378,7 +395,7 @@ watch(() => locationStore.currentProvinceId, fetchShippingFee);
 
 .pdp-shell {
     display: grid;
-    grid-template-columns: minmax(600px, 1fr) minmax(280px, 1fr) minmax(280px, 1fr);
+    grid-template-columns: minmax(570px, 1fr) minmax(510px, 1fr) minmax(150px, 1fr);
     gap: 32px;
     max-width: 1500px;
     margin: 0 auto;
@@ -455,7 +472,7 @@ watch(() => locationStore.currentProvinceId, fetchShippingFee);
 .pdp-buybox {
     padding: 24px;
     border: 1px solid #e5e7eb;
-    border-radius: 12px;
+    border-radius:4px;
     align-self: start;
     position: sticky;
     top: 24px;
@@ -494,17 +511,10 @@ watch(() => locationStore.currentProvinceId, fetchShippingFee);
 }
 
 .pdp-title {
-    font-size: 32px;
+    font-size: 26px;
     font-weight: 600;
     margin: 12px 0 16px;
     line-height: 1.2;
-}
-
-.pdp-short-desc {
-    color: #4b5563;
-    font-size: 15px;
-    line-height: 1.6;
-    margin-bottom: 24px;
 }
 
 .pdp-price-row {
@@ -512,14 +522,7 @@ watch(() => locationStore.currentProvinceId, fetchShippingFee);
     flex-direction: column;
     align-items: flex-start;
     gap: 4px;
-    margin-bottom: 24px;
-}
-
-.pdp-price-current {
-    font-size: 38px;
-    font-weight: 700;
-    color: #e55a3b;
-    line-height: 1;
+    margin-bottom: 15px;
 }
 
 .pdp-price-old-group {
@@ -529,25 +532,9 @@ watch(() => locationStore.currentProvinceId, fetchShippingFee);
 }
 
 .pdp-price-old {
-    font-size: 16px;
     color: #9ca3af;
     text-decoration: line-through;
     font-weight: 400;
-}
-
-.pdp-price-discount {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    background: #fee2e2;
-    color: #ef4444;
-    padding: 2px 8px;
-    border-radius: 4px;
-}
-
-.pdp-price-discount .discount-value {
-    font-size: 13px;
-    font-weight: 600;
 }
 
 .pdp-options-title {
@@ -623,7 +610,6 @@ watch(() => locationStore.currentProvinceId, fetchShippingFee);
     display: flex;
     align-items: stretch;
     gap: 16px;
-    margin-bottom: 20px;
 }
 
 .pdp-qty-stepper {
@@ -631,8 +617,8 @@ watch(() => locationStore.currentProvinceId, fetchShippingFee);
     align-items: center;
     border: 1px solid #d1d5db;
     border-radius: 4px;
-    width: 120px;
-    height: 52px;
+    width: 110px;
+    height: 45px;
     flex-shrink: 0;
 }
 
@@ -657,9 +643,8 @@ watch(() => locationStore.currentProvinceId, fetchShippingFee);
     height: 100%;
     border: none;
     text-align: center;
-    font-size: 16px;
+    font-size: 14px;
     font-weight: 500;
-    color: #111827;
     -moz-appearance: textfield;
 }
 .pdp-qty-stepper input::-webkit-inner-spin-button, 
@@ -674,18 +659,13 @@ watch(() => locationStore.currentProvinceId, fetchShippingFee);
     align-items: center;
     justify-content: center;
     gap: 8px;
-    background: #111827;
-    color: #ffffff;
-    border: none;
+    color: #000;
+    border: 1px solid #ffd814;
     border-radius: 4px;
     font-size: 16px;
     font-weight: 600;
     cursor: pointer;
     transition: background 0.2s;
-}
-
-.pdp-add-cart:hover {
-    background: #374151;
 }
 
 .pdp-add-cart:disabled {
@@ -696,25 +676,6 @@ watch(() => locationStore.currentProvinceId, fetchShippingFee);
 .icon-bag {
     width: 20px;
     height: 20px;
-}
-
-.pdp-confidence {
-    background: #f9fafb;
-    border-radius: 12px;
-    padding: 24px;
-    margin-bottom: 32px;
-}
-
-.pdp-confidence h4 {
-    font-size: 16px;
-    font-weight: 600;
-    margin: 0 0 16px;
-}
-
-.confidence-grid {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 16px;
 }
 
 .conf-item {
