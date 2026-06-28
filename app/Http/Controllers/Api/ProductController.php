@@ -23,46 +23,36 @@ class ProductController extends Controller
 
         $keyword = $request->input('keyword');
 
-        if($keyword) {
+        // Increase keyword score
+        if ($keyword) {
             $normalized_keyword = mb_strtolower(trim($keyword));
 
-            if(mb_strlen($normalized_keyword) >= 3) {
+            if (mb_strlen($normalized_keyword) >= 3) {
                 Redis::zIncrBy('trending_keywords', 1, $normalized_keyword);
             }
         }
 
-        $products = Product::query()
-            ->select('products.*')
+        $brandLimit = $request->integer('brandLimit', 10);
+
+        $brandIdsInResult = $this->buildBaseQuery($categoryIds, $keyword)
+            ->distinct()
+            ->pluck('brand_id')
+            ->filter();
+
+        $availableBrands = Brand::whereIn('id', $brandIdsInResult)
+            ->where('is_active', true)
+            ->limit($brandLimit)
+            ->get(['name', 'slug']);
+
+        $products = $this->buildBaseQuery($categoryIds, $keyword)
             ->withTotalSoldPastMonth()
             ->with(['cheapestVariant', 'brand'])
-            ->where('status', 'published')
-
-            // Filter by categories
-            ->when(!empty($categoryIds), fn($q) => $q->whereIn('category_id', $categoryIds))
-
-            // Filter by keyword
-            ->when($keyword, function ($query, $keyword){
-                $query->where(function ($q) use ($keyword){
-                    $q->where('name' , 'LIKE', $keyword . '%');
-                });
-            })
-
-            // Filter by brands
             ->when($request->input('brand', $request->input('brands')), function ($q, $brands) {
                 $brandSlugs = is_array($brands) ? $brands : explode(',', str_replace(' ', '', $brands));
                 $q->whereHas('brand', fn($q) => $q->whereIn('slug', $brandSlugs));
             })
             ->latest()
-            ->paginate(24);
-
-        $brandLimit = $request->integer('brandLimit', 10);
-
-        $availableBrands = Brand::where('is_active', true)
-            ->when(!empty($categoryIds), function ($q) use ($categoryIds) {
-                $q->whereHas('products', fn($p) => $p->whereIn('category_id', $categoryIds));
-            })
-            ->limit($brandLimit)
-            ->get(['name', 'slug']);
+            ->paginate(20);
 
         return response()->json([
             'success' => true,
@@ -78,7 +68,18 @@ class ProductController extends Controller
         ]);
     }
 
-    public function getTrendingKeywords () {
+    private function buildBaseQuery($categoryIds, $keyword)
+    {
+        return Product::query()
+            ->where('status', 'published')
+            ->when(!empty($categoryIds), fn($q) => $q->whereIn('category_id', $categoryIds))
+            ->when($keyword, function ($query, $keyword) {
+                $query->where('name', 'LIKE', $keyword . '%');
+            });
+    }
+
+    public function getTrendingKeywords()
+    {
         $trending_keywords = Redis::zRevRange('trending_keywords', 0, 8);
 
         return response()->json([
