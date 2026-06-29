@@ -51,6 +51,27 @@ class ProductController extends Controller
                 $brandSlugs = is_array($brands) ? $brands : explode(',', str_replace(' ', '', $brands));
                 $q->whereHas('brand', fn($q) => $q->whereIn('slug', $brandSlugs));
             })
+            ->when($request->filled('min_price'), function ($q) use ($request) {
+                $q->whereHas('variants', fn($q) => $q->where('price', '>=', $request->min_price));
+            })
+            ->when($request->filled('max_price'), function ($q) use ($request) {
+                $q->whereHas('variants', fn($q) => $q->where('price', '<=', $request->max_price));
+            })
+            ->when($request->boolean('is_featured'), function ($q) {
+                $q->where('is_featured', true);
+            })
+            ->when($request->boolean('is_new'), function ($q) {
+                $q->orderByDesc('products.created_at');
+            })
+            ->when($request->boolean('is_best_seller'), function ($q) {
+                $q->where(function($query) {
+                    $query->selectRaw('COALESCE(SUM(quantity), 0)')
+                          ->from('order_items')
+                          ->join('orders', 'orders.id', '=', 'order_items.order_id')
+                          ->whereColumn('order_items.product_id', 'products.id')
+                          ->where('orders.status', 'completed');
+                }, '>', 0)->orderByDesc('total_sold');
+            })
             ->latest()
             ->paginate(20);
 

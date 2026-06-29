@@ -11,25 +11,6 @@ const router = useRouter();
 const cartStore = useCartStore();
 const { t } = useI18n();
 
-const filters = computed(() => [
-    {
-        title: t('productList.filters_price_title'),
-        links: [
-            t('productList.filters_price_under500'),
-            t('productList.filters_price_from500To1m'),
-            t('productList.filters_price_over1m'),
-        ],
-    },
-    {
-        title: t('productList.filters_status_title'),
-        options: [t('productList.filters_status_inStock'), t('productList.filters_status_new'), t('productList.filters_status_bestSeller')],
-    },
-    {
-        title: t('productList.filters_offer_title'),
-        links: [t('productList.filters_offer_discount'), t('productList.filters_offer_fastDelivery'), t('productList.filters_offer_highRating')],
-    },
-]);
-
 const products = ref([]);
 const brandOptions = ref([]);
 const meta = ref({
@@ -41,6 +22,33 @@ const isLoading = ref(false);
 const errorMessage = ref('');
 const addingProductIds = ref(new Set());
 const cartMessages = ref({});
+
+const minPrice = ref(route.query.min_price || '');
+const maxPrice = ref(route.query.max_price || '');
+const isFeatured = ref(route.query.is_featured === 'true');
+const isNew = ref(route.query.is_new === 'true');
+const isBestSeller = ref(route.query.is_best_seller === 'true');
+
+const maxSliderLimit = 16000000;
+
+const sliderMin = computed({
+    get: () => Number(minPrice.value) || 0,
+    set: (val) => {
+        if (val > sliderMax.value) {
+            minPrice.value = sliderMax.value;
+        } else {
+            minPrice.value = val;
+        }
+    },
+});
+
+const sliderMax = computed({
+    get: () => (maxPrice.value === '' || maxPrice.value === undefined ? maxSliderLimit : Number(maxPrice.value)),
+    set: (val) => {
+        if (val < sliderMin.value) maxPrice.value = sliderMin.value;
+        else maxPrice.value = val;
+    },
+});
 
 const categorySlug = computed(() => route.query.category || '');
 const keyword = computed(() => String(route.query.keyword || route.query.q || '').trim());
@@ -92,6 +100,30 @@ const toggleBrand = (brandSlug) => {
     router.push({ name: 'ProductList', query });
 };
 
+const updateFilters = () => {
+    const query = {
+        ...route.query,
+        page: undefined,
+    };
+
+    if (minPrice.value) query.min_price = minPrice.value;
+    else delete query.min_price;
+
+    if (maxPrice.value) query.max_price = maxPrice.value;
+    else delete query.max_price;
+
+    if (isFeatured.value) query.is_featured = 'true';
+    else delete query.is_featured;
+
+    if (isNew.value) query.is_new = 'true';
+    else delete query.is_new;
+
+    if (isBestSeller.value) query.is_best_seller = 'true';
+    else delete query.is_best_seller;
+
+    router.push({ name: 'ProductList', query });
+};
+
 const isAddingToCart = (product) => addingProductIds.value.has(product.id);
 
 const setCartMessage = (productId, message, type = 'success') => {
@@ -137,6 +169,11 @@ const fetchProducts = async () => {
                 ...(keyword.value ? { keyword: keyword.value } : {}),
                 ...(categorySlug.value ? { category: categorySlug.value } : {}),
                 ...(selectedBrands.value.length ? { brand: selectedBrands.value.join(',') } : {}),
+                ...(minPrice.value ? { min_price: minPrice.value } : {}),
+                ...(maxPrice.value ? { max_price: maxPrice.value } : {}),
+                ...(isFeatured.value ? { is_featured: isFeatured.value } : {}),
+                ...(isNew.value ? { is_new: isNew.value } : {}),
+                ...(isBestSeller.value ? { is_best_seller: isBestSeller.value } : {}),
             },
         });
 
@@ -163,7 +200,18 @@ const fetchProducts = async () => {
 
 onMounted(fetchProducts);
 
-watch(() => [route.query.category, route.query.keyword, route.query.q, route.query.page, route.query.brand], fetchProducts);
+watch(
+    () => route.query,
+    () => {
+        minPrice.value = route.query.min_price || '';
+        maxPrice.value = route.query.max_price || '';
+        isFeatured.value = route.query.is_featured === 'true';
+        isNew.value = route.query.is_new === 'true';
+        isBestSeller.value = route.query.is_best_seller === 'true';
+        fetchProducts();
+    },
+    { deep: true },
+);
 </script>
 
 <template>
@@ -195,21 +243,41 @@ watch(() => [route.query.category, route.query.keyword, route.query.q, route.que
                     <p v-else class="filter-empty">{{ t('productList.empty_brands') }}</p>
                 </section>
 
-                <section v-for="group in filters" :key="group.title" class="filter-group">
-                    <h2>{{ group.title }}</h2>
+                <section class="filter-group">
+                    <h2>{{ t('productList.filters_price_title') }}</h2>
+                    <div class="dual-range-slider">
+                        <input type="range" min="0" :max="maxSliderLimit" step="100000" v-model="sliderMin" @change="updateFilters" />
+                        <input type="range" min="0" :max="maxSliderLimit" step="100000" v-model="sliderMax" @change="updateFilters" />
+                    </div>
+                    <div class="price-range">
+                        <div class="price-input-wrapper">
+                            <input type="number" v-model="minPrice" placeholder="Min" @change="updateFilters" />
+                            <span class="currency-suffix">VND</span>
+                        </div>
+                        <span> - </span>
+                        <div class="price-input-wrapper">
+                            <input type="number" v-model="maxPrice" placeholder="Max" @change="updateFilters" />
+                            <span class="currency-suffix">VND</span>
+                        </div>
+                    </div>
+                </section>
 
-                    <div v-if="group.options" class="filter-options">
-                        <label v-for="option in group.options" :key="option" class="filter-check">
-                            <input type="checkbox" />
-                            <span>{{ option }}</span>
+                <section class="filter-group">
+                    <h2>{{ t('productList.filters_status_title') }}</h2>
+                    <div class="filter-options">
+                        <label class="filter-check">
+                            <input type="checkbox" v-model="isFeatured" @change="updateFilters" />
+                            <span>Nổi bật</span>
+                        </label>
+                        <label class="filter-check">
+                            <input type="checkbox" v-model="isNew" @change="updateFilters" />
+                            <span>Hàng mới</span>
+                        </label>
+                        <label class="filter-check">
+                            <input type="checkbox" v-model="isBestSeller" @change="updateFilters" />
+                            <span>Hàng bán chạy</span>
                         </label>
                     </div>
-
-                    <div v-if="group.links" class="filter-links">
-                        <a v-for="link in group.links" :key="link" href="#">{{ link }}</a>
-                    </div>
-
-                    <button v-if="group.hasMore" type="button" class="filter-more">{{ t('productList.showMore') }}</button>
                 </section>
 
                 <section class="filter-group">
@@ -392,6 +460,95 @@ watch(() => [route.query.category, route.query.keyword, route.query.q, route.que
 .stars {
     color: #ff9900;
     letter-spacing: 0;
+}
+
+.price-range {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.price-input-wrapper {
+    position: relative;
+    display: flex;
+    align-items: center;
+    width: 100%;
+}
+
+.price-input-wrapper input {
+    width: 100%;
+    height: 32px;
+    border: 1px solid #d5d9d9;
+    border-radius: 4px;
+    padding: 0 38px 0 8px;
+    font-size: 13px;
+    outline: none;
+}
+
+.currency-suffix {
+    position: absolute;
+    right: 8px;
+    font-size: 11px;
+    color: #565959;
+    pointer-events: none;
+    user-select: none;
+}
+
+.price-range input:focus {
+    border-color: #007185;
+    box-shadow: 0 0 0 2px rgba(0, 113, 133, 0.2);
+}
+
+.dual-range-slider {
+    position: relative;
+    height: 30px;
+    margin-bottom: 12px;
+    display: flex;
+    align-items: center;
+}
+
+.dual-range-slider::before {
+    content: '';
+    position: absolute;
+    width: 100%;
+    height: 4px;
+    background: #d5d9d9;
+    border-radius: 2px;
+    z-index: 1;
+}
+
+.dual-range-slider input[type='range'] {
+    position: absolute;
+    width: 100%;
+    pointer-events: none;
+    appearance: none;
+    -webkit-appearance: none;
+    background: transparent;
+    z-index: 2;
+    margin: 0;
+}
+
+.dual-range-slider input[type='range']::-webkit-slider-thumb {
+    pointer-events: all;
+    appearance: none;
+    -webkit-appearance: none;
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    background: #007185;
+    cursor: pointer;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+}
+
+.dual-range-slider input[type='range']::-moz-range-thumb {
+    pointer-events: all;
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    background: #007185;
+    cursor: pointer;
+    border: none;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
 }
 
 .color-grid {
