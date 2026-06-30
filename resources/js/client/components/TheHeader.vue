@@ -76,13 +76,23 @@
 
             <form
                 @submit.prevent="submitSearch"
-                class="tw-hidden tw-h-[40px] tw-min-w-0 tw-flex-grow tw-overflow-hidden tw-rounded-md tw-bg-white focus-within:tw-ring-2 focus-within:tw-ring-[#f3a847] md:tw-flex lg:tw-max-w-[620px] xl:tw-max-w-[760px]"
+                class="tw-flex tw-h-[40px] tw-min-w-0 tw-flex-grow tw-overflow-hidden tw-rounded-md tw-bg-white focus-within:tw-ring-2 focus-within:tw-ring-[#f3a847] lg:tw-max-w-[620px] xl:tw-max-w-[760px]"
             >
+                <select
+                    v-model="searchCategory"
+                    :style="{ width: searchCategoryWidth }"
+                    class="tw-cursor-pointer tw-border-0 tw-border-r tw-border-gray-300 tw-bg-gray-100 tw-pl-2 tw-pr-7 tw-text-[12px] tw-text-gray-700 tw-outline-none hover:tw-bg-gray-200 focus:tw-border-gray-300 focus:tw-outline-none focus:tw-ring-0"
+                >
+                    <option value="all">All</option>
+                    <option value="product">Product</option>
+                    <option value="brand">Brand</option>
+                </select>
+
                 <input
                     v-model="searchTerm"
                     type="text"
-                    :placeholder="t('header.search_placeholder')"
-                    class="tw-min-w-0 tw-flex-grow tw-px-3 tw-text-[15px] tw-text-black focus:tw-outline-none"
+                    :placeholder="currentPlaceholder"
+                    class="tw-min-w-0 tw-flex-grow tw-border-none tw-px-3 tw-text-[15px] tw-text-black focus:tw-outline-none focus:tw-ring-0"
                 />
 
                 <button
@@ -271,11 +281,10 @@
                     <div class="tw-mb-3 tw-flex tw-items-center tw-justify-between tw-border-b tw-border-gray-200 tw-pb-3">
                         <div>
                             <h3 class="tw-m-0 tw-text-[18px] tw-font-bold">{{ t('header.cart_title') }}</h3>
-                           
                         </div>
                         <p class="tw-m-0 tw-text-[12px] tw-text-gray-600">
-                                {{ t('header.cart_itemCount', { count: cartStore.totalItems }) }}
-                            </p>
+                            {{ t('header.cart_itemCount', { count: cartStore.totalItems }) }}
+                        </p>
                     </div>
 
                     <div v-if="cartStore.isLoading" class="tw-py-8 tw-text-center tw-text-[13px] tw-text-gray-600">
@@ -294,7 +303,9 @@
                     <template v-else>
                         <div class="tw-grid tw-gap-4">
                             <div v-for="(group, brand) in cartPreviewItemsGroupedByBrand" :key="brand" class="tw-grid tw-gap-3">
-                                <h4 class="tw-m-0 tw-text-[13px] tw-font-bold tw-text-gray-800 tw-border-b tw-border-gray-100 tw-pb-1 tw-uppercase">
+                                <h4
+                                    class="tw-m-0 tw-border-b tw-border-gray-100 tw-pb-1 tw-text-[13px] tw-font-bold tw-uppercase tw-text-gray-800"
+                                >
                                     {{ brand }}
                                 </h4>
                                 <div
@@ -309,7 +320,11 @@
                                     />
                                     <div class="tw-min-w-0">
                                         <router-link
-                                            :to="item.product_slug ? { name: 'ProductDetail', params: { slug: item.product_slug } } : { name: 'ProductList' }"
+                                            :to="
+                                                item.product_slug
+                                                    ? { name: 'ProductDetail', params: { slug: item.product_slug } }
+                                                    : { name: 'ProductList' }
+                                            "
                                             class="tw-block tw-truncate tw-text-[13px] tw-font-semibold tw-text-[#0f1111] hover:tw-text-[#c45500]"
                                         >
                                             {{ item.product_name }}
@@ -319,14 +334,17 @@
                                             <template v-if="item.unit_name"> - Đơn vị: {{ item.unit_name }}</template>
                                         </p>
                                         <p class="tw-m-0 tw-text-[13px] tw-font-bold">
-                                            <span v-if="item.compare_at_price" class="tw-text-gray-400 tw-line-through tw-mr-1 tw-text-[11px] tw-font-normal">
+                                            <span
+                                                v-if="item.compare_at_price"
+                                                class="tw-mr-1 tw-text-[11px] tw-font-normal tw-text-gray-400 tw-line-through"
+                                            >
                                                 {{ formatPrice(item.compare_at_price * item.quantity) }}
                                             </span>
                                             {{ formatPrice(item.line_total) }}
                                         </p>
                                     </div>
                                 </div>
-                                <div v-if="group.totalCount > 2" class="tw-text-center -tw-mt-2">
+                                <div v-if="group.totalCount > 2" class="-tw-mt-2 tw-text-center">
                                     <router-link :to="{ name: 'Cart' }" class="tw-text-[12px] tw-text-blue-600 hover:tw-underline">
                                         Xem thêm {{ group.totalCount - 2 }} sản phẩm thuộc {{ brand }}
                                     </router-link>
@@ -353,36 +371,6 @@
                 </div>
             </div>
         </div>
-
-        <div class="tw-bg-[#131921] tw-px-2 tw-pb-2 md:tw-hidden">
-            <form
-                @submit.prevent="submitSearch"
-                class="tw-flex tw-h-[40px] tw-overflow-hidden tw-rounded-md tw-bg-white focus-within:tw-ring-2 focus-within:tw-ring-[#f3a847]"
-            >
-                <input
-                    v-model="searchTerm"
-                    type="text"
-                    :placeholder="t('header.search_placeholder')"
-                    class="tw-flex-grow tw-px-3 tw-text-black focus:tw-outline-none"
-                />
-                <button type="submit" class="tw-flex tw-w-[45px] tw-items-center tw-justify-center tw-bg-[#febd69]">
-                    <svg
-                        xmlns="http://www.w3.org/2000/svg"
-                        class="tw-h-5 tw-w-5 tw-text-[#333333]"
-                        fill="none"
-                        viewBox="0 0 24 24"
-                        stroke="currentColor"
-                    >
-                        <path
-                            stroke-linecap="round"
-                            stroke-linejoin="round"
-                            stroke-width="2"
-                            d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
-                        />
-                    </svg>
-                </button>
-            </form>
-        </div>
     </div>
 
     <LocationModal v-if="isLocationModalOpen" @close="isLocationModalOpen = false" />
@@ -400,17 +388,38 @@ import LocationModal from '@/components/Modals/LocationModal.vue';
 
 const HR_TOUR_REPLAY_EVENT = 'hr-tour:replay';
 const HR_TOUR_ACTIVE_CHANGE_EVENT = 'hr-tour:active-change';
+
 const authStore = useAuthStore();
 const cartStore = useCartStore();
 const locationStore = useLocationStore();
+
 const router = useRouter();
 const { locale, t } = useI18n();
+
 const searchTerm = ref('');
+const searchCategory = ref('product');
+
+const searchCategoryWidth = computed(() => {
+    switch (searchCategory.value) {
+        case 'all': return '56px';
+        case 'brand': return '68px';
+        case 'product': default: return '82px';
+    }
+});
+const currentPlaceholder = computed(() => {
+    if (searchCategory.value === 'product') {
+        return t('header.search_placeholder_product');
+    }
+    if (searchCategory.value === 'brand') {
+        return t('header.search_placeholder_brand');
+    }
+    return t('header.search_placeholder_all');
+});
 const isLocationModalOpen = ref(false);
 const isHrTourActive = ref(false);
 const cartPreviewItemsGroupedByBrand = computed(() => {
     const groups = {};
-    cartStore.items.forEach(item => {
+    cartStore.items.forEach((item) => {
         const brand = item.brand_name || 'No Brand';
         if (!groups[brand]) {
             groups[brand] = { items: [], totalCount: 0 };
