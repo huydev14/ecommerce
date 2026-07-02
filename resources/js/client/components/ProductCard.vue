@@ -154,7 +154,6 @@ const imageUrl = computed(() => {
 const displayBadgeText = computed(() => props.badgeText || t('productCard.badge_new'));
 const displayCartLabel = computed(() => props.cartLabel || t('productCard.actions_addToCart'));
 const displayAddingLabel = computed(() => props.addingLabel || t('productCard.actions_adding'));
-const freeshipLabel = computed(() => t('productCard.badge_freeship'));
 
 const handleAddToCart = () => {
     showCartIncrement.value = false;

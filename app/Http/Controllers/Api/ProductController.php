@@ -32,6 +32,7 @@ class ProductController extends Controller
             }
         }
 
+        // Get brands checkboxes
         $brandLimit = $request->integer('brandLimit', 10);
 
         $brandIdsInResult = $this->buildBaseQuery($categoryIds, $keyword)
@@ -44,6 +45,7 @@ class ProductController extends Controller
             ->limit($brandLimit)
             ->get(['name', 'slug']);
 
+        // Get products with filters
         $products = $this->buildBaseQuery($categoryIds, $keyword)
             ->withTotalSoldPastMonth()
             ->with(['cheapestVariant', 'brand'])
