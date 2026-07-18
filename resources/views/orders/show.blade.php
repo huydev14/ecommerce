@@ -1,5 +1,5 @@
 <form id="form-update-order" action="{{ route('orders.update', $order->id) }}" method="POST"
-    class="tw-flex tw-flex-col" novalidate>
+    class="tw-flex tw-flex-col tw-h-full" novalidate>
     @csrf
     @method('PUT')
 
@@ -21,7 +21,7 @@
         @endcan
     </div>
 
-    <div class="tw-px-6 tw-py-5 tw-bg-white tw-space-y-6">
+    <div class="tw-px-6 tw-py-5 tw-bg-white tw-overflow-y-auto tw-flex-1 tw-space-y-6">
         <div class="tw-grid tw-grid-cols-1 lg:tw-grid-cols-3 tw-gap-4">
             <div class="tw-rounded-sm tw-border tw-border-gray-200 tw-p-4">
                 <div class="tw-text-xs tw-font-semibold tw-uppercase tw-tracking-wide tw-text-gray-500">{{ __('order.customer') }}</div>
@@ -107,7 +107,7 @@
                 <table class="tw-min-w-full tw-divide-y tw-divide-gray-200 tw-text-sm">
                     <thead class="tw-bg-gray-50">
                         <tr>
-                            <th class="tw-px-4 tw-py-2 tw-text-left tw-font-semibold tw-text-gray-600">{{ __('order.product') }}</th>
+                            <th class="tw-px-4 tw-py-2 tw-w-2/5 tw-text-left tw-font-semibold tw-text-gray-600">{{ __('order.product') }}</th>
                             <th class="tw-px-4 tw-py-2 tw-text-left tw-font-semibold tw-text-gray-600">{{ __('order.sku') }}</th>
                             <th class="tw-px-4 tw-py-2 tw-text-right tw-font-semibold tw-text-gray-600">{{ __('order.price') }}</th>
                             <th class="tw-px-4 tw-py-2 tw-text-right tw-font-semibold tw-text-gray-600">{{ __('order.quantity') }}</th>
@@ -118,10 +118,10 @@
                         @foreach ($order->items as $item)
                             <tr>
                                 <td class="tw-px-4 tw-py-3 tw-text-gray-900">{{ $item->product_name }}</td>
-                                <td class="tw-px-4 tw-py-3 tw-text-gray-500">{{ $item->product_sku ?: '---' }}</td>
-                                <td class="tw-px-4 tw-py-3 tw-text-right tw-text-gray-700">{{ number_format((float) $item->price, 0, ',', '.') }} ₫</td>
-                                <td class="tw-px-4 tw-py-3 tw-text-right tw-text-gray-700">{{ $item->quantity }}</td>
-                                <td class="tw-px-4 tw-py-3 tw-text-right tw-font-medium tw-text-gray-900">{{ number_format((float) $item->total_price, 0, ',', '.') }} ₫</td>
+                                <td class="tw-px-4 tw-py-3 tw-text-gray-500 tw-whitespace-nowrap">{{ $item->product_sku ?: '---' }}</td>
+                                <td class="tw-px-4 tw-py-3 tw-text-right tw-text-gray-700 tw-whitespace-nowrap">{{ number_format((float) $item->price, 0, ',', '.') }} ₫</td>
+                                <td class="tw-px-4 tw-py-3 tw-text-right tw-text-gray-700 tw-whitespace-nowrap">{{ $item->quantity }}</td>
+                                <td class="tw-px-4 tw-py-3 tw-text-right tw-font-medium tw-text-gray-900 tw-whitespace-nowrap">{{ number_format((float) $item->total_price, 0, ',', '.') }} ₫</td>
                             </tr>
                         @endforeach
                     </tbody>

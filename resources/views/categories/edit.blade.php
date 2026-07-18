@@ -10,47 +10,35 @@
         </div>
 
         <div>
-            <button type="submit" id="submit-edit-category"
-                class="tw-bg-[#0078D4] tw-border tw-border-transparent tw-px-4 tw-py-1.5 tw-text-sm tw-font-medium tw-text-white hover:tw-bg-[#106ebe] tw-transition-colors tw-rounded-sm shadow-sm">
+            <button type="submit" id="submit-edit-category" class="fluent-btn-submit">
                 {{ __('category.save_edit') }}
             </button>
         </div>
     </div>
 
     <div class="tw-px-6 tw-py-5 tw-bg-white tw-overflow-y-auto tw-flex-1 tw-space-y-5">
-        <div>
-            <label for="name" class="tw-block tw-text-sm tw-font-medium tw-text-gray-700 tw-mb-1.5">
-                {{ __('category.category_name') }} <span class="tw-text-red-500">*</span>
-            </label>
-            <input type="text" name="name" id="name" required value="{{ $category->name }}"
-                placeholder="{{ __('category.name_placeholder') }}"
-                class="tw-w-full tw-rounded-md tw-border-gray-300 tw-shadow-sm focus:tw-border-[#0078D4] focus:tw-ring-[#0078D4] tw-text-sm tw-px-3 tw-py-2 tw-transition-colors tw-outline-none">
+        <div class="tw-flex tw-flex-col tw-gap-1">
+            <x-label for="name" class="is-required">{{ __('category.category_name') }}</x-label>
+            <x-input id="name" name="name" required :value="$category->name"
+                placeholder="{{ __('category.name_placeholder') }}" />
         </div>
 
-        <div>
-            <label for="description" class="tw-block tw-text-sm tw-font-medium tw-text-gray-700 tw-mb-1.5">
-                {{ __('category.description') }} <span class="tw-text-red-500">*</span>
-            </label>
-            <textarea name="description" id="description" rows="3" required placeholder="{{ __('category.description_placeholder') }}"
-                class="tw-w-full tw-rounded-md tw-border-gray-300 tw-shadow-sm focus:tw-border-[#0078D4] focus:tw-ring-[#0078D4] tw-text-sm tw-px-3 tw-py-2 tw-transition-colors tw-outline-none">{{ $category->description }}</textarea>
+        <div class="tw-flex tw-flex-col tw-gap-1">
+            <x-label for="description" class="is-required">{{ __('category.description') }}</x-label>
+            <x-textarea id="description" name="description" rows="3" required
+                placeholder="{{ __('category.description_placeholder') }}">{{ $category->description }}</x-textarea>
         </div>
 
         <div class="tw-grid tw-grid-cols-1 md:tw-grid-cols-2 tw-gap-4">
-            <div>
-                <label for="parent_id" class="tw-block tw-text-sm tw-font-medium tw-text-gray-700 tw-mb-1.5">{{ __('category.parent') }}</label>
-                <select name="parent_id" id="parent_id"
-                    class="tw-w-full tw-rounded-md tw-border-gray-300 tw-shadow-sm focus:tw-border-[#0078D4] focus:tw-ring-[#0078D4] tw-text-sm tw-px-3 tw-py-2 tw-transition-colors tw-outline-none">
-                    <option value="">{{ __('category.parent_none') }}</option>
-                    @foreach ($parents as $parent)
-                        <option value="{{ $parent->id }}" @selected($category->parent_id == $parent->id)>{{ $parent->name }}</option>
-                    @endforeach
-                </select>
-            </div>
+            <x-select id="parent_id" name="parent_id" title="{{ __('category.parent') }}">
+                @foreach ($parents as $parent)
+                    <option value="{{ $parent->id }}" @selected($category->parent_id == $parent->id)>{{ $parent->name }}</option>
+                @endforeach
+            </x-select>
 
-            <div>
-                <label for="sort_order" class="tw-block tw-text-sm tw-font-medium tw-text-gray-700 tw-mb-1.5">{{ __('category.order') }}</label>
-                <input type="number" min="0" name="sort_order" id="sort_order" value="{{ $category->sort_order }}"
-                    class="tw-w-full tw-rounded-md tw-border-gray-300 tw-shadow-sm focus:tw-border-[#0078D4] focus:tw-ring-[#0078D4] tw-text-sm tw-px-3 tw-py-2 tw-transition-colors tw-outline-none">
+            <div class="tw-flex tw-flex-col tw-gap-1">
+                <x-label for="sort_order">{{ __('category.order') }}</x-label>
+                <x-input type="number" min="0" id="sort_order" name="sort_order" :value="$category->sort_order" />
             </div>
         </div>
 

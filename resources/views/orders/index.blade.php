@@ -46,7 +46,7 @@
         </div>
     </div>
 
-    <x-modal>
+    <x-modal max-width="tw-max-w-5xl">
         <div id="order-modal-content"></div>
     </x-modal>
 
