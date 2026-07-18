@@ -58,7 +58,7 @@ class OrderController extends Controller
                     ];
                     $icons = [
                         'pending' => 'fas fa-clock',
-                        'processing' => 'fas fa-spinner',
+                        'processing' => '',
                         'shipping' => 'fas fa-truck',
                         'completed' => 'fas fa-circle-check',
                         'cancelled' => 'fas fa-circle-xmark',
