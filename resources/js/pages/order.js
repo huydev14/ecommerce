@@ -87,18 +87,25 @@ $(function () {
                 d.status = $('#f_orderStatus').val() || '';
                 d.payment_status = $('#f_paymentStatus').val() || '';
                 d.payment_method = $('#f_paymentMethod').val() || '';
-                d.customer_id = $('#f_customer').val() || '';
             },
         },
         columns: [
-            { data: 'order_number', name: 'order_number' },
+            {
+                data: 'order_number',
+                name: 'order_number',
+                render: function (data, type, row) {
+                    return (
+                        '<div class="tw-flex tw-flex-col tw-items-start tw-gap-1">' +
+                        row.status +
+                        data +
+                        '<span class="tw-text-xs tw-text-gray-400">' + row.created_at + '</span>' +
+                        '</div>'
+                    );
+                },
+            },
             { data: 'customer', name: 'customer_name', orderable: false },
-            { data: 'status', name: 'status' },
-            { data: 'payment_status', name: 'payment_status' },
-            { data: 'payment_method', name: 'payment_method' },
-            { data: 'item_summary', name: 'items_count', orderable: false, searchable: false },
+            { data: 'order_items', name: 'items_count', orderable: false, searchable: false },
             { data: 'total_amount', name: 'total_amount' },
-            { data: 'created_at', name: 'created_at' },
             { data: 'action', name: 'action', orderable: false, searchable: false, className: 'tw-text-center' },
         ],
         layout: {
@@ -114,7 +121,7 @@ $(function () {
 
     $('#toggle-filter-btn').on('click', function () {
         $('#filter-panel').slideToggle('fast');
-        $('#f_orderStatus, #f_paymentStatus, #f_paymentMethod, #f_customer').val('').trigger('change.select2');
+        $('#f_orderStatus, #f_paymentStatus, #f_paymentMethod').val('').trigger('change.select2');
         orderTable.ajax.reload();
     });
 
@@ -126,10 +133,9 @@ $(function () {
         renderOptions('#f_orderStatus', res.statuses);
         renderOptions('#f_paymentStatus', res.payment_statuses);
         renderOptions('#f_paymentMethod', res.payment_methods);
-        renderOptions('#f_customer', res.customers);
     });
 
-    $(document).on('click', '#show-order-btn', function () {
+    $(document).on('click', '#show-order-btn, .show-order-status', function () {
         openOrderModal($(this).data('show-url'));
     });
 

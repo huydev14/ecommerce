@@ -2,11 +2,9 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Customer;
 use App\Models\Order;
 use Exception;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Validation\Rule;
 use Yajra\DataTables\DataTables;
@@ -22,8 +20,7 @@ class OrderController extends Controller
     {
         if ($request->ajax()) {
             $orders = Order::select('orders.*')
-                ->withCount('items')
-                ->withSum('items as item_quantity', 'quantity');
+                ->with('items.product');
 
             if ($request->filled('status')) {
                 $orders->where('orders.status', $request->status);
@@ -37,13 +34,9 @@ class OrderController extends Controller
                 $orders->where('orders.payment_method', $request->payment_method);
             }
 
-            if ($request->filled('customer_id')) {
-                $orders->where('orders.customer_id', $request->customer_id);
-            }
-
             return DataTables::of($orders)
                 ->editColumn('order_number', function ($order) {
-                    return '<span class="tw-font-semibold tw-text-gray-900">#' . e($order->order_number) . '</span>';
+                    return '<span class="tw-text-gray-900">#' . e($order->order_number) . '</span>';
                 })
                 ->addColumn('customer', function ($order) {
                     return view('orders._customer', compact('order'))->render();
@@ -71,43 +64,36 @@ class OrderController extends Controller
                         'cancelled' => 'order.statuses.cancelled',
                     ];
 
-                    return '<span class="tw-inline-flex tw-items-center tw-gap-1.5 tw-rounded tw-px-1 tw-py-1 tw-text-xs tw-font-medium tw-capitalize ' . ($classes[$order->status] ?? 'tw-bg-gray-100 tw-text-gray-600') . '"><i class="' . ($icons[$order->status] ?? 'fas fa-circle-info') . '"></i>' . e(__($labels[$order->status] ?? 'order.unknown')) . '</span>';
-                })
-                ->editColumn('payment_status', function ($order) {
-                    $classes = [
-                        'pending' => 'tw-bg-gray-100 tw-text-gray-600',
-                        'unpaid' => 'tw-bg-gray-100 tw-text-gray-600',
-                        'paid' => 'tw-bg-emerald-50 tw-text-emerald-700',
-                    ];
-                    $icons = [
-                        'pending' => 'fas fa-clock',
-                        'unpaid' => 'fas fa-circle-xmark',
-                        'paid' => 'fas fa-circle-check',
-                    ];
-                    $labels = [
-                        'pending' => 'order.payment_statuses.pending',
-                        'unpaid' => 'order.payment_statuses.unpaid',
-                        'paid' => 'order.payment_statuses.paid',
-                    ];
-
-                    return '<span class="tw-inline-flex tw-items-center tw-gap-1.5 tw-rounded tw-px-1 tw-py-1 tw-text-xs tw-font-medium tw-capitalize ' . ($classes[$order->payment_status] ?? 'tw-bg-gray-100 tw-text-gray-600') . '"><i class="' . ($icons[$order->payment_status] ?? 'fas fa-circle-info') . '"></i>' . e(__($labels[$order->payment_status] ?? 'order.unknown')) . '</span>';
-                })
-                ->editColumn('payment_method', function ($order) {
-                    return __([
-                        'cod' => 'order.payment_methods.cod',
-                        'bank_transfer' => 'order.payment_methods.bank_transfer',
-                        'vnpay' => 'order.payment_methods.vnpay',
-                        'momo' => 'order.payment_methods.momo',
-                    ][$order->payment_method] ?? 'order.unknown');
+                    return '<span class="show-order-status tw-inline-flex tw-cursor-pointer tw-items-center tw-gap-1.5 tw-rounded tw-px-1 tw-py-1 tw-text-xs tw-font-medium tw-capitalize tw-transition-opacity hover:tw-opacity-70 ' . ($classes[$order->status] ?? 'tw-bg-gray-100 tw-text-gray-600') . '" data-show-url="' . route('orders.show', $order->id) . '"><i class="' . ($icons[$order->status] ?? 'fas fa-circle-info') . '"></i>' . e(__($labels[$order->status] ?? 'order.unknown')) . '</span>';
                 })
                 ->editColumn('total_amount', function ($order) {
                     return number_format((float) $order->total_amount, 0, ',', '.') . ' ₫';
                 })
-                ->addColumn('item_summary', function ($order) {
-                    return __('order.item_summary', [
-                        'count' => (int) ($order->items_count ?? 0),
-                        'quantity' => (int) ($order->item_quantity ?? 0),
-                    ]);
+                ->addColumn('order_items', function ($order) {
+                    $rows = $order->items->map(function ($item) {
+                        $productName = $item->product?->name ?? $item->product_name;
+                        $variantName = $item->product_name;
+                        $hasVariant = $variantName !== $productName;
+
+                        $html = '<div class="tw-flex tw-items-center tw-justify-between tw-gap-4">'
+                            . '<span class="tw-truncate tw-font-medium tw-text-gray-900">' . e($productName) . '</span>'
+                            . '<div class="tw-flex tw-items-center tw-gap-4 tw-whitespace-nowrap tw-text-gray-500">'
+                            . '<span class="tw-flex tw-items-center tw-gap-1.5">'
+                            . '<span class="tw-inline-flex tw-min-w-[18px] tw-items-center tw-justify-center tw-rounded tw-bg-gray-100 tw-px-1 tw-py-0.5 tw-text-[11px] tw-font-semibold tw-text-gray-700">' . $item->quantity . '</span>'
+                            . '<span>x ' . number_format((float) $item->price, 0, ',', '.') . ' ₫</span>'
+                            . '</span>'
+                            . '<span class="tw-text-gray-400">' . e($item->product_sku ?: '---') . '</span>'
+                            . '</div>'
+                            . '</div>';
+
+                        if ($hasVariant) {
+                            $html .= '<div class="tw-truncate tw-pl-3 tw-text-[11px] tw-italic tw-text-gray-400">↳ ' . e($variantName) . '</div>';
+                        }
+
+                        return $html;
+                    })->implode('<div class="tw-h-1"></div>');
+
+                    return '<div class="tw-flex tw-max-w-sm tw-flex-col tw-text-xs">' . $rows . '</div>';
                 })
                 ->editColumn('created_at', function ($order) {
                     return $order->created_at ? $order->created_at->format('d/m/Y H:i') : '';
@@ -115,21 +101,14 @@ class OrderController extends Controller
                 ->editColumn('action', function ($order) {
                     return view('orders._orders-action', compact('order'))->render();
                 })
-                ->rawColumns(['order_number', 'customer', 'status', 'payment_status', 'action'])
+                ->rawColumns(['order_number', 'customer', 'status', 'order_items', 'action'])
                 ->make(true);
         }
     }
 
     public function getFilterData()
     {
-        $customers = Customer::select('id', DB::raw('COALESCE(name, email) as text'))
-            ->whereIn('id', Order::query()->whereNotNull('customer_id')->select('customer_id'))
-            ->orderBy('name')
-            ->orderBy('email')
-            ->get();
-
         return response()->json([
-            'customers' => $customers,
             'statuses' => [
                 ['id' => 'pending', 'text' => __('order.statuses.pending')],
                 ['id' => 'processing', 'text' => __('order.statuses.processing')],
