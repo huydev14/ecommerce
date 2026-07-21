@@ -70,7 +70,10 @@ class OrderController extends Controller
                     return number_format((float) $order->total_amount, 0, ',', '.') . ' ₫';
                 })
                 ->addColumn('order_items', function ($order) {
-                    $rows = $order->items->map(function ($item) {
+                    $maxVisible = 4;
+                    $remaining = max(0, $order->items->count() - $maxVisible);
+
+                    $rows = $order->items->take($maxVisible)->map(function ($item) {
                         $productName = $item->product?->name ?? $item->product_name;
                         $variantName = $item->product_name;
                         $hasVariant = $variantName !== $productName;
@@ -82,7 +85,7 @@ class OrderController extends Controller
                             . '<span class="tw-inline-flex tw-min-w-[18px] tw-items-center tw-justify-center tw-rounded tw-bg-gray-100 tw-px-1 tw-py-0.5 tw-text-[11px] tw-font-semibold tw-text-gray-700">' . $item->quantity . '</span>'
                             . '<span>x ' . number_format((float) $item->price, 0, ',', '.') . ' ₫</span>'
                             . '</span>'
-                            . '<span class="tw-text-gray-400">' . e($item->product_sku ?: '---') . '</span>'
+                            . '<span class="tw-text-gray-400">SKU: ' . e($item->product_sku ?: '---') . '</span>'
                             . '</div>'
                             . '</div>';
 
@@ -92,6 +95,10 @@ class OrderController extends Controller
 
                         return $html;
                     })->implode('<div class="tw-h-1"></div>');
+
+                    if ($remaining > 0) {
+                        $rows .= '<div class="tw-h-1"></div><span class="show-order-status tw-cursor-pointer tw-pt-0.5 tw-text-[11px] tw-font-medium tw-text-gray-400 hover:tw-text-gray-600" data-show-url="' . route('orders.show', $order->id) . '">+' . $remaining . ' ' . __('order.more_items') . '</span>';
+                    }
 
                     return '<div class="tw-flex tw-max-w-sm tw-flex-col tw-text-xs">' . $rows . '</div>';
                 })

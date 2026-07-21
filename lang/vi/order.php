@@ -26,6 +26,7 @@ return [
     'quantity' => 'Số lượng',
     'line_total' => 'Thành tiền',
     'item_summary' => ':count dòng / :quantity sản phẩm',
+    'more_items' => 'sản phẩm khác',
 
     'detail_title' => 'Đơn hàng #:number',
     'detail_subtitle' => 'Đặt lúc :date',

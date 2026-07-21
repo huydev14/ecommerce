@@ -26,6 +26,7 @@ return [
     'quantity' => 'Quantity',
     'line_total' => 'Line total',
     'item_summary' => ':count lines / :quantity items',
+    'more_items' => 'more items',
 
     'detail_title' => 'Order #:number',
     'detail_subtitle' => 'Placed at :date',
