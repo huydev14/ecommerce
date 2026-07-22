@@ -10,6 +10,7 @@ export default {
         './resources/views/**/*.blade.php',
         './resources/js/client/**/*.vue',
         './resources/js/pages/**/*.js',
+        './app/**/*.php',
     ],
 
     theme: {
@@ -18,8 +19,8 @@ export default {
                 sans: ['Figtree', ...defaultTheme.fontFamily.sans],
             },
             colors: {
-                'p': '#136F9A',
-            }
+                p: '#136F9A',
+            },
         },
     },
 

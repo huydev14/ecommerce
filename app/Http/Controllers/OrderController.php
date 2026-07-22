@@ -20,7 +20,7 @@ class OrderController extends Controller
     {
         if ($request->ajax()) {
             $orders = Order::select('orders.*')
-                ->with('items.product');
+                ->with('items.product.brand');
 
             if ($request->filled('status')) {
                 $orders->where('orders.status', $request->status);
@@ -44,7 +44,7 @@ class OrderController extends Controller
                 ->editColumn('status', function ($order) {
                     $classes = [
                         'pending' => 'tw-bg-gray-100 tw-text-gray-600',
-                        'processing' => 'tw-bg-amber-50 tw-text-amber-700',
+                        'processing' => 'tw-bg-amber-200 tw-text-gray-900',
                         'shipping' => 'tw-bg-indigo-50 tw-text-indigo-700',
                         'completed' => 'tw-bg-emerald-50 tw-text-emerald-700',
                         'cancelled' => 'tw-bg-red-50 tw-text-red-700',
@@ -64,7 +64,7 @@ class OrderController extends Controller
                         'cancelled' => 'order.statuses.cancelled',
                     ];
 
-                    return '<span class="show-order-status tw-inline-flex tw-cursor-pointer tw-items-center tw-gap-1.5 tw-rounded tw-px-1 tw-py-1 tw-text-xs tw-font-medium tw-capitalize tw-transition-opacity hover:tw-opacity-70 ' . ($classes[$order->status] ?? 'tw-bg-gray-100 tw-text-gray-600') . '" data-show-url="' . route('orders.show', $order->id) . '"><i class="' . ($icons[$order->status] ?? 'fas fa-circle-info') . '"></i>' . e(__($labels[$order->status] ?? 'order.unknown')) . '</span>';
+                    return '<span class="show-order-status tw-inline-flex tw-cursor-pointer tw-items-center tw-gap-1.5 tw-rounded-sm tw-px-1 tw-py-1 tw-text-xs tw-font-medium tw-capitalize tw-transition-opacity hover:tw-opacity-70 ' . ($classes[$order->status] ?? 'tw-bg-gray-100 tw-text-gray-600') . '" data-show-url="' . route('orders.show', $order->id) . '"><i class="' . ($icons[$order->status] ?? 'fas fa-circle-info') . '"></i>' . e(__($labels[$order->status] ?? 'order.unknown')) . '</span>';
                 })
                 ->editColumn('total_amount', function ($order) {
                     return number_format((float) $order->total_amount, 0, ',', '.') . ' ₫';
@@ -77,24 +77,30 @@ class OrderController extends Controller
                         $productName = $item->product?->name ?? $item->product_name;
                         $variantName = $item->product_name;
                         $hasVariant = $variantName !== $productName;
+                        $brandName = $item->product?->brand?->name;
+                        $thumbnail = $item->product?->optimized_thumbnail_url;
 
-                        $html = '<div class="tw-flex tw-items-center tw-justify-between tw-gap-4">'
-                            . '<span class="tw-truncate tw-font-medium tw-text-gray-900">' . e($productName) . '</span>'
-                            . '<div class="tw-flex tw-items-center tw-gap-4 tw-whitespace-nowrap tw-text-gray-500">'
+                        $image = $thumbnail
+                            ? '<img src="' . e($thumbnail) . '" alt="' . e($productName) . '" class="tw-h-10 tw-w-10 tw-flex-shrink-0 tw-rounded tw-border tw-border-gray-200 tw-object-cover" />'
+                            : '<span class="tw-flex tw-h-10 tw-w-10 tw-flex-shrink-0 tw-items-center tw-justify-center tw-rounded tw-border tw-border-gray-200 tw-bg-gray-50 tw-text-gray-300"><i class="fas fa-image"></i></span>';
+
+                        $html = '<div class="tw-flex tw-items-start tw-gap-2">'
+                            . $image
+                            . '<div class="tw-min-w-0 tw-flex-1">'
+                            . ($brandName ? '<div class="tw-truncate tw-text-[11px] tw-text-gray-400">' . e($brandName) . '</div>' : '')
+                            . '<div class="tw-truncate tw-font-medium tw-text-blue-600">' . e($productName) . '</div>'
+                            . ($hasVariant ? '<div class="tw-truncate tw-text-[11px] tw-italic tw-text-gray-400">↳ ' . e($variantName) . '</div>' : '')
+                            . '<div class="tw-mt-0.5 tw-flex tw-items-center tw-justify-between tw-gap-4 tw-whitespace-nowrap tw-text-gray-500">'
                             . '<span class="tw-flex tw-items-center tw-gap-1.5">'
-                            . '<span class="tw-inline-flex tw-min-w-[18px] tw-items-center tw-justify-center tw-rounded tw-bg-gray-100 tw-px-1 tw-py-0.5 tw-text-[11px] tw-font-semibold tw-text-gray-700">' . $item->quantity . '</span>'
-                            . '<span>x ' . number_format((float) $item->price, 0, ',', '.') . ' ₫</span>'
+                            . ($item->quantity > 1 ? '<span class="tw-inline-flex tw-h-4 tw-w-4 tw-items-center tw-justify-center tw-rounded-sm tw-bg-amber-300 tw-text-[10px] tw-font-semibold tw-text-gray-900">' . $item->quantity . '</span><span>x ' . number_format((float) $item->price, 0, ',', '.') . ' ₫</span>' : '<span>' . number_format((float) $item->price, 0, ',', '.') . ' ₫</span>')
                             . '</span>'
                             . '<span class="tw-text-gray-400">SKU: ' . e($item->product_sku ?: '---') . '</span>'
                             . '</div>'
+                            . '</div>'
                             . '</div>';
 
-                        if ($hasVariant) {
-                            $html .= '<div class="tw-truncate tw-pl-3 tw-text-[11px] tw-italic tw-text-gray-400">↳ ' . e($variantName) . '</div>';
-                        }
-
                         return $html;
-                    })->implode('<div class="tw-h-1"></div>');
+                    })->implode('<div class="tw-h-2"></div>');
 
                     if ($remaining > 0) {
                         $rows .= '<div class="tw-h-1"></div><span class="show-order-status tw-cursor-pointer tw-pt-0.5 tw-text-[11px] tw-font-medium tw-text-gray-400 hover:tw-text-gray-600" data-show-url="' . route('orders.show', $order->id) . '">+' . $remaining . ' ' . __('order.more_items') . '</span>';
