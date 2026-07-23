@@ -1,7 +1,7 @@
 <?php
 
 return [
-    'management_title' => 'Order management',
+    'management_title' => 'Orders',
     'placeholder' => 'Choose an option',
     'unknown' => 'Unknown',
 
@@ -27,16 +27,51 @@ return [
     'line_total' => 'Line total',
     'item_summary' => ':count lines / :quantity items',
     'more_items' => 'more items',
+    'show_more' => 'Show :count more items',
+    'show_less' => 'Show less',
 
     'detail_title' => 'Order #:number',
     'detail_subtitle' => 'Placed at :date',
     'save_update' => 'Save changes',
+    'print' => 'Print',
+    'close' => 'Close',
+    'weight' => 'Weight',
+    'total_weight' => 'Total weight',
+    'notes_placeholder' => 'No notes',
+    'contact' => 'Contact',
+
+    'fulfillment_title' => 'Confirm order',
+    'fulfillment_method_label' => 'Fulfillment method',
+    'fulfillment_pickup' => 'Courier pickup',
+    'fulfillment_self' => 'Self delivery',
+    'fulfillment_pickup_hint' => 'A courier will pick up the package at the warehouse within 2-4 hours after confirmation.',
+    'shipping_unit' => 'Shipping carrier',
+    'confirm_order_btn' => 'Confirm order',
+
+    'cancel_order_title' => 'Cancel order',
+    'cancel_reason_placeholder' => '-- Select a cancel reason --',
+    'cancel_reason_other_placeholder' => 'Enter cancel reason...',
+    'cancel_order_btn' => 'Cancel order',
+    'cancel_reasons' => [
+        'customer_request' => 'Customer changed their mind',
+        'out_of_stock' => 'Out of stock',
+        'unreachable' => 'Could not reach the customer',
+        'duplicate' => 'Duplicate order',
+        'other' => 'Other reason',
+    ],
+
+    'action_history' => 'Action history',
+    'no_history' => 'No action history yet',
+
+    'feature_in_progress_title' => 'Feature in progress',
+    'feature_in_progress_description' => 'This feature is coming soon.',
 
     'statuses' => [
-        'pending' => 'Pending',
+        'pending_payment' => 'Pending payment',
+        'new' => 'New',
         'processing' => 'Processing',
         'shipping' => 'Shipping',
-        'completed' => 'Completed',
+        'delivered' => 'Delivered',
         'cancelled' => 'Cancelled',
     ],
     'payment_statuses' => [
@@ -53,8 +88,6 @@ return [
 
     'status_required' => 'Please choose an order status.',
     'status_invalid' => 'Invalid order status.',
-    'payment_status_required' => 'Please choose a payment status.',
-    'payment_status_invalid' => 'Invalid payment status.',
 
     'update_success' => 'Order updated successfully!',
     'system_error' => 'System error',

@@ -98,7 +98,7 @@ $(function () {
                         '<div class="tw-flex tw-flex-col tw-items-start tw-gap-1">' +
                         row.status +
                         data +
-                        '<span class="tw-text-xs tw-text-gray-400">' + row.created_at + '</span>' +
+                        '<span class="tw-text-sm tw-text-gray-400">' + row.created_at + '</span>' +
                         '</div>'
                     );
                 },

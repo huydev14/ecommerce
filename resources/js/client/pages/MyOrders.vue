@@ -15,7 +15,17 @@ const payingOrderId = ref(null);
 
 const totalSpent = computed(() => orders.value.reduce((total, order) => total + Number(order.total || 0), 0));
 
-const activeOrderCount = computed(() => orders.value.filter((order) => ['pending', 'processing'].includes(order.status)).length);
+// Order status codes: 1 = pending payment, 2 = new, 3 = processing, 4 = shipping, 5 = delivered, 6 = cancelled
+const STATUS_SLUGS = {
+    1: 'pending-payment',
+    2: 'new',
+    3: 'processing',
+    4: 'shipping',
+    5: 'delivered',
+    6: 'cancelled',
+};
+
+const activeOrderCount = computed(() => orders.value.filter((order) => ![5, 6].includes(order.status)).length);
 
 const formatCurrency = (value) =>
     new Intl.NumberFormat('vi-VN', {
@@ -38,16 +48,18 @@ const imageUrl = (image) => {
 
 const statusLabel = (status) => {
     const labels = {
-        pending: 'orders.status_pending',
-        processing: 'orders.status_processing',
-        completed: 'orders.status_completed',
-        cancelled: 'orders.status_cancelled',
+        1: 'orders.status_pending_payment',
+        2: 'orders.status_new',
+        3: 'orders.status_processing',
+        4: 'orders.status_shipping',
+        5: 'orders.status_delivered',
+        6: 'orders.status_cancelled',
     };
 
-    return labels[status] ? t(labels[status]) : status || t('orders.status_processing');
+    return labels[status] ? t(labels[status]) : t('orders.status_new');
 };
 
-const statusClass = (status) => `orders-status--${status || 'processing'}`;
+const statusClass = (status) => `orders-status--${STATUS_SLUGS[status] || 'new'}`;
 const paymentStatusLabel = (status) => (status === 'paid' ? t('orders.payment_status_paid') : t('orders.payment_status_unpaid'));
 const paymentStatusClass = (status) => `orders-payment-status--${status === 'paid' ? 'paid' : 'unpaid'}`;
 const canPayWithVnpay = (order) => order.payment_method_code === 'vnpay' && order.payment_status !== 'paid' && order.order_id;
@@ -580,12 +592,27 @@ onMounted(fetchOrders);
     line-height: 18px;
 }
 
-.orders-status--pending {
+.orders-status--pending-payment {
+    background: #f3f4f6;
+    color: #4b5563;
+}
+
+.orders-status--new {
+    background: #e0edff;
+    color: #1d4ed8;
+}
+
+.orders-status--processing {
     background: #fff4d6;
     color: #7a4d00;
 }
 
-.orders-status--completed {
+.orders-status--shipping {
+    background: #e6e9ff;
+    color: #3730a3;
+}
+
+.orders-status--delivered {
     background: #e9f8ef;
     color: #0f6b3f;
 }

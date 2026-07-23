@@ -38,8 +38,8 @@
         </div>
     </div>
 
-    <x-modal max-width="tw-max-w-5xl">
-        <div id="order-modal-content"></div>
+    <x-modal max-width="tw-max-w-7xl">
+        <div id="order-modal-content" class="tw-flex tw-min-h-0 tw-flex-1 tw-flex-col"></div>
     </x-modal>
 
     @push('scripts')

@@ -131,9 +131,6 @@ ul ol,
 ul ul {
     margin-bottom: 0;
 }
-dt {
-    font-weight: 700;
-}
 dd {
     margin-bottom: 0.5rem;
     margin-left: 0;
@@ -142,9 +139,6 @@ blockquote {
     margin: 0 0 1rem;
 }
 b,
-strong {
-    font-weight: bolder;
-}
 small {
     font-size: 80%;
 }
@@ -19349,9 +19343,7 @@ body.text-sm .control-sidebar {
 .form-group-sm .form-control + .form-control-feedback.svg-inline--fa {
     line-height: calc(1.8125rem + 2px);
 }
-label:not(.form-check-label):not(.custom-file-label) {
-    font-weight: 700;
-}
+
 .warning-feedback {
     font-size: 80%;
     color: #ffc107;

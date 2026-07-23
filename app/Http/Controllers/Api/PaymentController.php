@@ -172,7 +172,7 @@ class PaymentController extends Controller
         // Update order status
         if ($inputData['vnp_ResponseCode'] == '00' && $inputData['vnp_TransactionStatus'] == '00') {
             $order->payment_status = 'paid';
-            $order->status = 'processing';
+            $order->status = Order::STATUS_PROCESSING;
             Log::info("VNPAY IPN: Thanh toán thành công đơn hàng {$orderId}");
         } else {
             $order->payment_status = 'failed';

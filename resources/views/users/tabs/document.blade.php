@@ -36,9 +36,9 @@
                 </div>
                 <div class="tw-flex tw-items-center tw-gap-1 tw-ml-4">
                     <button
-                        class="tw-w-8 tw-h-8 tw-rounded tw-flex tw-items-center tw-justify-center tw-text-gray-400 hover:tw-bg-gray-200 hover:tw-text-gray-700 tw-transition-colors"
+                        class="tw-w-8 tw-h-8 tw-rounded-none tw-border tw-border-gray-300 tw-flex tw-items-center tw-justify-center tw-text-gray-400 hover:tw-bg-gray-200 hover:tw-text-gray-700 tw-transition-colors"
                         title="Xem trước">
-                        <i class="fas fa-eye"></i>
+                        <x-icon-eye />
                     </button>
                     <button
                         class="tw-w-8 tw-h-8 tw-rounded tw-flex tw-items-center tw-justify-center tw-text-gray-400 hover:tw-bg-blue-50 hover:tw-text-[#0063B1] tw-transition-colors"
@@ -67,9 +67,9 @@
                 </div>
                 <div class="tw-flex tw-items-center tw-gap-1 tw-ml-4">
                     <button
-                        class="tw-w-8 tw-h-8 tw-rounded tw-flex tw-items-center tw-justify-center tw-text-gray-400 hover:tw-bg-gray-200 hover:tw-text-gray-700 tw-transition-colors"
+                        class="tw-w-8 tw-h-8 tw-rounded-none tw-border tw-border-gray-300 tw-flex tw-items-center tw-justify-center tw-text-gray-400 hover:tw-bg-gray-200 hover:tw-text-gray-700 tw-transition-colors"
                         title="Xem trước">
-                        <i class="fas fa-eye"></i>
+                        <x-icon-eye />
                     </button>
                     <button
                         class="tw-w-8 tw-h-8 tw-rounded tw-flex tw-items-center tw-justify-center tw-text-gray-400 hover:tw-bg-blue-50 hover:tw-text-[#0063B1] tw-transition-colors"
@@ -108,9 +108,9 @@
                 </div>
                 <div class="tw-flex tw-items-center tw-gap-1 tw-ml-4">
                     <button
-                        class="tw-w-8 tw-h-8 tw-rounded tw-flex tw-items-center tw-justify-center tw-text-gray-400 hover:tw-bg-gray-200 hover:tw-text-gray-700 tw-transition-colors"
+                        class="tw-w-8 tw-h-8 tw-rounded-none tw-border tw-border-gray-300 tw-flex tw-items-center tw-justify-center tw-text-gray-400 hover:tw-bg-gray-200 hover:tw-text-gray-700 tw-transition-colors"
                         title="Xem trước">
-                        <i class="fas fa-eye"></i>
+                        <x-icon-eye />
                     </button>
                     <button
                         class="tw-w-8 tw-h-8 tw-rounded tw-flex tw-items-center tw-justify-center tw-text-gray-400 hover:tw-bg-blue-50 hover:tw-text-[#0063B1] tw-transition-colors"

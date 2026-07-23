@@ -1,7 +1,7 @@
 <?php
 
 return [
-    'management_title' => 'Quản lý đơn hàng',
+    'management_title' => 'Đơn hàng',
     'placeholder' => 'Chọn một giá trị',
     'unknown' => 'Không xác định',
 
@@ -27,16 +27,51 @@ return [
     'line_total' => 'Thành tiền',
     'item_summary' => ':count dòng / :quantity sản phẩm',
     'more_items' => 'sản phẩm khác',
+    'show_more' => 'Xem thêm :count sản phẩm khác',
+    'show_less' => 'Thu gọn',
 
     'detail_title' => 'Đơn hàng #:number',
     'detail_subtitle' => 'Đặt lúc :date',
     'save_update' => 'Lưu thay đổi',
+    'print' => 'In đơn',
+    'close' => 'Đóng',
+    'weight' => 'Khối lượng',
+    'total_weight' => 'Tổng khối lượng',
+    'notes_placeholder' => 'Không có ghi chú',
+    'contact' => 'Liên hệ',
+
+    'fulfillment_title' => 'Xác nhận đơn hàng',
+    'fulfillment_method_label' => 'Hình thức lấy hàng',
+    'fulfillment_pickup' => 'Shipper đến lấy',
+    'fulfillment_self' => 'Tự giao hàng',
+    'fulfillment_pickup_hint' => 'Shipper sẽ đến lấy hàng tại kho trong vòng 2-4 giờ sau khi xác nhận.',
+    'shipping_unit' => 'Đơn vị vận chuyển',
+    'confirm_order_btn' => 'Xác nhận đơn',
+
+    'cancel_order_title' => 'Hủy đơn hàng',
+    'cancel_reason_placeholder' => '-- Chọn lý do hủy --',
+    'cancel_reason_other_placeholder' => 'Nhập lý do hủy...',
+    'cancel_order_btn' => 'Hủy đơn hàng',
+    'cancel_reasons' => [
+        'customer_request' => 'Khách hàng đổi ý',
+        'out_of_stock' => 'Hết hàng',
+        'unreachable' => 'Không liên lạc được khách hàng',
+        'duplicate' => 'Đơn hàng trùng lặp',
+        'other' => 'Lý do khác',
+    ],
+
+    'action_history' => 'Lịch sử thao tác',
+    'no_history' => 'Chưa có lịch sử thao tác',
+
+    'feature_in_progress_title' => 'Tính năng đang phát triển',
+    'feature_in_progress_description' => 'Chức năng này sẽ sớm được ra mắt.',
 
     'statuses' => [
-        'pending' => 'Đang chờ',
+        'pending_payment' => 'Chờ thanh toán',
+        'new' => 'Mới',
         'processing' => 'Đang xử lý',
         'shipping' => 'Đang giao',
-        'completed' => 'Hoàn tất',
+        'delivered' => 'Đã giao',
         'cancelled' => 'Đã hủy',
     ],
     'payment_statuses' => [
@@ -53,8 +88,6 @@ return [
 
     'status_required' => 'Vui lòng chọn trạng thái đơn hàng.',
     'status_invalid' => 'Trạng thái đơn hàng không hợp lệ.',
-    'payment_status_required' => 'Vui lòng chọn trạng thái thanh toán.',
-    'payment_status_invalid' => 'Trạng thái thanh toán không hợp lệ.',
 
     'update_success' => 'Cập nhật đơn hàng thành công!',
     'system_error' => 'Lỗi hệ thống',

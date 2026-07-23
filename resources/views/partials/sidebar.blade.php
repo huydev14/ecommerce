@@ -8,15 +8,6 @@
             </a>
         </li>
 
-        <li class="nav-header">{{ __('header.sidebar.sales') }}</li>
-
-        <li class="nav-item">
-            <a href="{{ route('orders.index') }}" class="nav-link {{ request()->routeIs('orders.*') ? 'active' : '' }}">
-                <x-icon-shopping class="nav-icon" />
-                <p>{{ __('order.management_title') }}</p>
-            </a>
-        </li>
-
         <li class="nav-header">{{ __('header.sidebar.products') }}</li>
 
         <li class="nav-item">
@@ -61,6 +52,13 @@
         </li>
 
         <li class="nav-header">{{ __('header.sidebar.operations') }}</li>
+
+        <li class="nav-item">
+            <a href="{{ route('orders.index') }}" class="nav-link {{ request()->routeIs('orders.*') ? 'active' : '' }}">
+                <x-icon-shopping class="nav-icon" />
+                <p>{{ __('order.management_title') }}</p>
+            </a>
+        </li>
 
         <li class="nav-item">
             <a href="{{ route('product-imports.index') }}"
