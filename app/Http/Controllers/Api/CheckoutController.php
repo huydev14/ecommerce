@@ -10,12 +10,12 @@ use App\Models\ProductVariant;
 use App\Services\AuditLogService;
 use App\Services\CartService;
 use App\Services\GhnService;
+use App\Services\OrderService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Redis;
-use Illuminate\Support\Str;
 
 class CheckoutController extends Controller
 {
@@ -165,7 +165,6 @@ class CheckoutController extends Controller
 
             $subtotal = 0;
             $orderItemsData = [];
-            $orderNumber = strtoupper(Str::random(8));
 
             DB::beginTransaction();
 
@@ -222,7 +221,6 @@ class CheckoutController extends Controller
             }
 
             $order = Order::create([
-                'order_number' => $orderNumber,
                 'customer_id' => $user->id,
                 'customer_name' => $address->receiver_name ?? $user->name,
                 'customer_phone' => $address->receiver_phone ?? $user->phone,
@@ -236,11 +234,12 @@ class CheckoutController extends Controller
                 'subtotal' => $subtotal,
                 'shipping_fee' => $shippingFee,
                 'total_amount' => $subtotal + $shippingFee,
-                'status' => 'processing',
+                'status' => $validated['payment_method'] === 'cod' ? Order::STATUS_NEW : Order::STATUS_PENDING_PAYMENT,
                 'payment_method' => $validated['payment_method'],
                 'payment_status' => 'pending',
             ]);
 
+            $order->update(['order_number' => OrderService::generateOrderCode($order->id)]);
             $order->items()->createMany($orderItemsData);
 
             DB::commit();
