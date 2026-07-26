@@ -13,6 +13,10 @@ rm -rf node_modules
 echo "---- Running migrations ----"
 php artisan migrate --force
 
+echo "---- Rebuilding icons cache ----"
+php artisan icons:clear
+php artisan icons:cache
+
 echo "---- Clearing cache ----"
 php artisan optimize
 php artisan view:cache
