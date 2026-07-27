@@ -264,29 +264,4 @@ class ProductVariantController extends Controller
         }
     }
 
-    public function restore($id)
-    {
-        if (!auth()->user()?->can('product-variants.remove')) {
-            abort(403, 'Bạn không có quyền khôi phục biến thể sản phẩm.');
-        }
-
-        try {
-            $variant = ProductVariant::withTrashed()->findOrFail($id);
-            $variant->restore();
-
-            return response()->json([
-                'success' => true,
-                'message' => __('product_variant.restore_success'),
-            ]);
-        } catch (Exception $e) {
-            Log::error('Restore product variant failed: ' . $e->getMessage(), [
-                'trace' => $e->getTraceAsString(),
-            ]);
-
-            return response()->json([
-                'success' => false,
-                'message' => __('product_variant.restore_error'),
-            ], 500);
-        }
-    }
 }

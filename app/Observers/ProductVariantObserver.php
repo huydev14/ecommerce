@@ -55,29 +55,4 @@ class ProductVariantObserver
         );
     }
 
-    /**
-     * Handle the ProductVariant "restored" event.
-     */
-    public function restored(ProductVariant $variant): void
-    {
-        AuditLogService::log(
-            "Khôi phục biến thể: $variant->sku (ID: $variant->id)",
-            $variant,
-            'product_variant',
-            Auth::user(),
-        );
-    }
-
-    /**
-     * Handle the ProductVariant "force deleted" event.
-     */
-    public function forceDeleted(ProductVariant $variant): void
-    {
-        AuditLogService::log(
-            "Xóa vĩnh viễn biến thể: $variant->sku (ID: $variant->id)",
-            $variant,
-            'product_variant',
-            Auth::user(),
-        );
-    }
 }

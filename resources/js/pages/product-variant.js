@@ -88,33 +88,6 @@ $(function () {
         });
     }
 
-    function attemptRestoreProductVariant(restoreUrl) {
-        $.ajax({
-            type: 'POST',
-            url: restoreUrl,
-            success: function (res) {
-                productVariantTable.ajax.reload(null, false);
-
-                fluentToast({
-                    type: 'success',
-                    title: Lang.get('product_variant.undo_success_title'),
-                    description: res.message || Lang.get('product_variant.undo_success_description'),
-                    actionType: 'close',
-                });
-            },
-            error: function (xhr) {
-                fluentToast({
-                    type: 'error',
-                    title: Lang.get('product_variant.restore_error_title'),
-                    description: xhr.responseJSON?.message || Lang.get('product_variant.restore_error_description'),
-                    subtitle: 'Code: ' + ' ' + xhr.status,
-                });
-                console.error('Load error:', xhr.status);
-                console.error('Load error:', xhr.responseText);
-            },
-        });
-    }
-
     globalThis.productVariantTable = new DataTable('#productVariantTable', {
         processing: true,
         serverSide: true,
@@ -208,7 +181,6 @@ $(function () {
     $(document).on('click', '#delete-product-variant-btn', function () {
         let $btn = $(this);
         let deleteUrl = $btn.data('delete-url');
-        let restoreUrl = $btn.data('restore-url');
 
         if (!confirm(Lang.get('product_variant.confirm_delete'))) {
             return;
@@ -227,14 +199,6 @@ $(function () {
                     description: Lang.get('product_variant.delete_description'),
                     subtitle: res.status,
                     actionType: 'close',
-                    bottomActions: [
-                        {
-                            text: Lang.get('product_variant.undo'),
-                            onClick: function () {
-                                attemptRestoreProductVariant(restoreUrl);
-                            },
-                        },
-                    ],
                 });
             },
             error: function (xhr) {

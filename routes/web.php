@@ -109,7 +109,6 @@ Route::prefix('admin')->middleware('auth')->group(function () {
     Route::prefix('product-variants')->name('product-variants.')->group(function () {
         Route::get('/data', [ProductVariantController::class, 'data'])->name('data');
         Route::get('/filter-data', [ProductVariantController::class, 'getFilterData'])->name('filter_data');
-        Route::post('/{id}/restore', [ProductVariantController::class, 'restore'])->name('restore');
     });
     Route::resource('product-variants', ProductVariantController::class);
 
