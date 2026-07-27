@@ -43,6 +43,7 @@ class ProductDetailResource extends JsonResource
                     return [
                         'id' => $variant->id,
                         'sku' => $variant->sku,
+                        'name' => $variant->name,
                         'price' => (float) $variant->price,
                         'compare_at_price' => $variant->compare_at_price
                             ? (float) $variant->compare_at_price

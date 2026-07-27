@@ -64,7 +64,7 @@ class CartController extends Controller
                 'product_name' => $variant->product->name,
                 'product_slug' => $variant->product->slug,
                 'brand_name' => $variant->product->brand ? $variant->product->brand->name : 'No Brand',
-                'variant_name' => $variant->attributes['variant_name'] ?? $variant->sku,
+                'variant_name' => $variant->name,
                 'thumbnail' => $variant->product->optimized_thumbnail_url,
                 'price' => (float) $variant->price,
                 'compare_at_price' => $displayCompareAtPrice,

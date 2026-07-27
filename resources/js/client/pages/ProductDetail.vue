@@ -59,7 +59,7 @@ const soldCountLabel = computed(() => t('productDetail.boughtInPastMonth', { cou
 const getVariantLabel = (variant, fallback = t('productDetail.fallback_defaultVariant')) => {
     const attributes = variant?.attributes || {};
 
-    return attributes.variant_name || attributes.name || attributes.size || attributes.color || variant?.sku || fallback;
+    return variant?.name || attributes.size || attributes.color || variant?.sku || fallback;
 };
 
 const variantLabels = computed(() => {

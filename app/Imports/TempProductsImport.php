@@ -163,15 +163,13 @@ class TempProductsImport implements ToCollection, WithChunkReading, WithHeadingR
             ],
             'variant' => [
                 'sku' => trim($row[self::EXCEL_COL_SKU] ?? ''),
+                'name' => trim($row[self::EXCEL_COL_VARIANT] ?? '') ?: null,
                 'price' => $row[self::EXCEL_COL_PRICE] ?? 0,
                 'cost_price' => $row[self::EXCEL_COL_COST_PRICE] ?? null,
                 'unit_id' => $unitsMap[$unitKey] ?? null,
                 'unit_name' => $unitKey ?: null,
                 'tax_id' => $taxesMap[$taxRateKey] ?? null,
                 'tax' => $taxRateKey,
-                'attributes' => !empty($row[self::EXCEL_COL_VARIANT])
-                    ? json_encode(['variant_name' => trim($row[self::EXCEL_COL_VARIANT])])
-                    : null,
                 'is_active' => true,
             ],
             'stock' => [

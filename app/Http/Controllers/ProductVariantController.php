@@ -27,7 +27,7 @@ class ProductVariantController extends Controller
                     return $variant->product?->name ?? '<span class="tw-text-gray-400 tw-italic tw-text-sm">---</span>';
                 })
                 ->addColumn('variant_name', function ($variant) {
-                    return $variant->attributes['variant_name'] ?? '<span class="tw-text-gray-400 tw-italic tw-text-sm">---</span>';
+                    return $variant->name ?? '<span class="tw-text-gray-400 tw-italic tw-text-sm">---</span>';
                 })
                 ->editColumn('price', function ($variant) {
                     return $this->formatVnd($variant->price);
@@ -125,6 +125,7 @@ class ProductVariantController extends Controller
         $request->validate([
             'product_id' => 'required|exists:products,id',
             'sku' => 'required|string|max:100|unique:product_variants,sku',
+            'name' => 'nullable|string|max:150',
             'price' => 'required|numeric|min:0',
             'compare_at_price' => 'nullable|numeric|min:0',
             'cost_price' => 'nullable|numeric|min:0',
@@ -141,6 +142,7 @@ class ProductVariantController extends Controller
             ProductVariant::create([
                 'product_id' => $request->product_id,
                 'sku' => $request->sku,
+                'name' => $request->name,
                 'price' => $request->price,
                 'compare_at_price' => $request->compare_at_price,
                 'cost_price' => $request->cost_price,
@@ -195,6 +197,7 @@ class ProductVariantController extends Controller
         $request->validate([
             'product_id' => 'required|exists:products,id',
             'sku' => 'required|string|max:100|unique:product_variants,sku,' . $product_variant->id,
+            'name' => 'nullable|string|max:150',
             'price' => 'required|numeric|min:0',
             'compare_at_price' => 'nullable|numeric|min:0',
             'cost_price' => 'nullable|numeric|min:0',
@@ -211,6 +214,7 @@ class ProductVariantController extends Controller
             $product_variant->update([
                 'product_id' => $request->product_id,
                 'sku' => $request->sku,
+                'name' => $request->name,
                 'price' => $request->price,
                 'compare_at_price' => $request->compare_at_price,
                 'cost_price' => $request->cost_price,

@@ -63,6 +63,12 @@
         </div>
 
         <div>
+            <label for="name" class="tw-block tw-text-sm tw-font-medium tw-text-gray-700 tw-mb-1.5">{{ __('product_variant.variant_name') }}</label>
+            <input type="text" name="name" id="name" value="{{ $variant->name }}" placeholder="{{ __('product_variant.variant_name') }}"
+                class="tw-w-full tw-rounded-md tw-border-gray-300 tw-shadow-sm focus:tw-border-[#0078D4] focus:tw-ring-[#0078D4] tw-text-sm tw-px-3 tw-py-2 tw-transition-colors tw-outline-none">
+        </div>
+
+        <div>
             <label for="attributes" class="tw-block tw-text-sm tw-font-medium tw-text-gray-700 tw-mb-1.5">{{ __('product_variant.attributes') }}</label>
             <textarea name="attributes" id="attributes" rows="1" placeholder="{{ __('product_variant.attributes_placeholder') }}"
                 class="tw-w-full tw-rounded-md tw-border-gray-300 tw-shadow-sm focus:tw-border-[#0078D4] focus:tw-ring-[#0078D4] tw-text-sm tw-px-3 tw-py-2 tw-transition-colors tw-outline-none">{{ $variant->attributes ? json_encode($variant->attributes) : '' }}</textarea>

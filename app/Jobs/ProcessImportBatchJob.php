@@ -106,7 +106,7 @@ class ProcessImportBatchJob implements ShouldQueue
                             foreach ($groupedVariants[$identityKey] as $variantPayload) {
                                 $finalVariants[] = [
                                     'product_id' => $productId,
-                                    'attributes' => !empty($variantPayload['attributes']) ? json_encode(json_decode($variantPayload['attributes'], true)) : null,
+                                    'name' => $variantPayload['name'] ?? null,
                                     'sku' => $variantPayload['sku'],
                                     'price' => round($variantPayload['price']),
                                     'cost_price' => $variantPayload['cost_price'] ? round($variantPayload['cost_price']) : null,
