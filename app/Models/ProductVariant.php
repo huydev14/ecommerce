@@ -5,21 +5,21 @@ namespace App\Models;
 use App\Observers\ProductVariantObserver;
 use Illuminate\Database\Eloquent\Attributes\ObservedBy;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\SoftDeletes;
 
 #[ObservedBy(ProductVariantObserver::class)]
 class ProductVariant extends Model
 {
-    use SoftDeletes;
-
     protected $fillable = [
         'product_id',
         'sku',
+        'name',
         'price',
         'compare_at_price',
         'cost_price',
         'unit_id',
         'tax_id',
+        'net_weight',
+        'gross_weight',
         'attributes',
         'is_active',
     ];
@@ -29,6 +29,8 @@ class ProductVariant extends Model
         'price' => 'decimal:2',
         'compare_at_price' => 'decimal:2',
         'cost_price' => 'decimal:2',
+        'net_weight' => 'decimal:3',
+        'gross_weight' => 'decimal:3',
         'unit_id' => 'integer',
         'tax_id' => 'integer',
         'is_active' => 'boolean',
